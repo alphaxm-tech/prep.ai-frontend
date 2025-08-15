@@ -1,103 +1,140 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState } from "react";
+import { EnvelopeIcon, LockClosedIcon } from "@heroicons/react/24/outline";
+import { ArrowRightOnRectangleIcon } from "@heroicons/react/24/solid";
+
+export default function LoginPage() {
+  const [isSignUp, setIsSignUp] = useState(false);
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="min-h-screen flex items-center justify-center bg-[#fffbe6] px-4">
+      <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md">
+        {/* Logo / Brand */}
+        <div className="text-center mb-6">
+          <h1 className="text-3xl font-bold text-gray-800">
+            Prep<span className="text-yellow-500">.ai</span>
+          </h1>
+          <p className="text-gray-500 mt-2">
+            {isSignUp ? "Create your account" : "Welcome back! Please log in."}
+          </p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+
+        {/* Form */}
+        <form className="space-y-4">
+          {isSignUp && (
+            <div>
+              <label className="block text-sm font-medium text-gray-600">
+                Full Name
+              </label>
+              <div className="relative mt-1">
+                <input
+                  type="text"
+                  placeholder="John Doe"
+                  className="w-full px-4 py-2 pl-10 border rounded-lg focus:ring-2 focus:ring-yellow-400 outline-none"
+                />
+              </div>
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-600">
+              Email
+            </label>
+            <div className="relative mt-1">
+              <EnvelopeIcon className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+              <input
+                type="email"
+                placeholder="you@example.com"
+                className="w-full px-4 py-2 pl-10 border rounded-lg focus:ring-2 focus:ring-yellow-400 outline-none"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-600">
+              Password
+            </label>
+            <div className="relative mt-1">
+              <LockClosedIcon className="absolute left-3 top-2.5 h-5 w-5 text-gray-400" />
+              <input
+                type="password"
+                placeholder="••••••••"
+                className="w-full px-4 py-2 pl-10 border rounded-lg focus:ring-2 focus:ring-yellow-400 outline-none"
+              />
+            </div>
+          </div>
+
+          {!isSignUp && (
+            <div className="text-right">
+              <a
+                href="/forgot-password"
+                className="text-sm text-yellow-600 hover:underline"
+              >
+                Forgot password?
+              </a>
+            </div>
+          )}
+
+          <button
+            type="submit"
+            className="w-full flex items-center justify-center gap-2 bg-yellow-500 text-white font-semibold py-2 rounded-lg hover:bg-yellow-600 transition"
+          >
+            <ArrowRightOnRectangleIcon className="h-5 w-5" />
+            {isSignUp ? "Sign Up" : "Sign In"}
+          </button>
+        </form>
+
+        {/* OR Divider */}
+        <div className="my-4 flex items-center">
+          <hr className="flex-grow border-gray-300" />
+          <span className="mx-2 text-gray-500 text-sm">OR</span>
+          <hr className="flex-grow border-gray-300" />
+        </div>
+
+        {/* Google Login */}
+        <button
+          type="button"
+          className="w-full flex items-center justify-center gap-2 border border-gray-300 py-2 rounded-lg hover:bg-gray-50 transition"
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          <svg
+            className="w-5 h-5"
+            viewBox="0 0 533.5 544.3"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M533.5 278.4c0-17.4-1.5-34-4.3-50.1H272.1v95h146.9c-6.4 34.5-25 63.8-53.4 83.2v68h86.1c50.3-46.3 81.8-114.7 81.8-196.1z"
+              fill="#4285f4"
+            />
+            <path
+              d="M272.1 544.3c72.4 0 133.2-23.9 177.6-64.8l-86.1-68c-23.8 16-54.1 25.4-91.5 25.4-70 0-129.3-47.2-150.5-110.4h-89v69.4c44.3 88.3 135.8 148.4 239.5 148.4z"
+              fill="#34a853"
+            />
+            <path
+              d="M121.6 326.5c-10.3-30.1-10.3-62.8 0-92.9v-69.4h-89c-37.7 75.3-37.7 164.7 0 240.1l89-69.4z"
+              fill="#fbbc04"
+            />
+            <path
+              d="M272.1 107.7c38.9 0 74 13.4 101.7 39.7l76.3-76.3C405.3 24.6 344.5 0 272.1 0 168.4 0 76.9 60.1 32.6 148.4l89 69.4c21.2-63.2 80.5-110.4 150.5-110.4z"
+              fill="#ea4335"
+            />
+          </svg>
+          <span className="text-gray-700 font-medium">
+            Continue with Google
+          </span>
+        </button>
+
+        {/* Switch Auth Mode */}
+        <p className="text-center text-sm text-gray-600 mt-6">
+          {isSignUp ? "Already have an account?" : "Don’t have an account?"}{" "}
+          <button
+            onClick={() => setIsSignUp(!isSignUp)}
+            className="text-yellow-600 font-medium hover:underline"
+          >
+            {isSignUp ? "Sign In" : "Sign Up"}
+          </button>
+        </p>
+      </div>
     </div>
   );
 }
