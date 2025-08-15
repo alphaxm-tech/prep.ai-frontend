@@ -1,15 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import Card from "../../components/Card";
+import Card from "../../../components/Card";
 import {
   CalendarDaysIcon,
   ClipboardDocumentCheckIcon,
   ClockIcon,
   ArrowTrendingUpIcon,
 } from "@heroicons/react/24/outline";
+import { useRouter } from "next/navigation";
 
 export default function Dashboard() {
+  const router = useRouter();
   const stats = [
     {
       label: "Days Active",
@@ -33,9 +35,26 @@ export default function Dashboard() {
     },
   ];
 
+  const handleCardClick = (cardTitle: string) => {
+    console.log(cardTitle);
+    let route;
+    if (cardTitle === "Home") {
+      route = "home";
+    } else if (cardTitle === "Quizzes") {
+      route = "quiz";
+    } else if (cardTitle === "Resume Builder") {
+      route = "resume-builder";
+    } else if (cardTitle === "AI Interviews") {
+      route = "ai-interview";
+    } else if (cardTitle === "Study Materials") {
+      route = "study-material";
+    }
+    router.push(`/${route}`);
+  };
+
   return (
     <div className="min-h-screen bg-white text-gray-800 font-sans">
-      <section className="bg-white text-center py-12 px-4">
+      <section className="text-center py-12 px-4">
         <h2
           className="text-3xl md:text-4xl font-normal mb-4"
           style={{
@@ -68,26 +87,29 @@ export default function Dashboard() {
             title="Build Resume"
             description="Create a professional resume with AI assistance"
             variant="yellow"
+            onClick={() => handleCardClick("Resume Builder")}
           />
           <Card
             title="Mock Interview"
             description="Practice with AI interviewer"
             variant="green"
+            onClick={() => handleCardClick("AI Interviews")}
           />
           <Card
             title="Take Quiz"
             description="Test your knowledge"
             variant="purple"
+            onClick={() => handleCardClick("Quizzes")}
           />
           <Card
             title="Study Materials"
             description="Access learning resources"
             variant="blue"
+            onClick={() => handleCardClick("Study Materials")}
           />
         </div>
 
-        <div className="mb-12">
-          {/* Greeting Section */}
+        {/* <div className="mb-12">
           <div className="mb-6">
             <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
               👋 Hello Sanket
@@ -97,7 +119,6 @@ export default function Dashboard() {
             </p>
           </div>
 
-          {/* Progress Stats Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
             {stats.map((stat: any) => (
               <div
@@ -130,7 +151,7 @@ export default function Dashboard() {
           <button className="mt-4 w-full bg-yellow-300 hover:bg-yellow-400 text-gray-900 font-semibold py-2 rounded-lg">
             View Profile
           </button>
-        </div>
+        </div> */}
       </main>
     </div>
   );

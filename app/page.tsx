@@ -3,12 +3,18 @@
 import { useState } from "react";
 import { EnvelopeIcon, LockClosedIcon } from "@heroicons/react/24/outline";
 import { ArrowRightOnRectangleIcon } from "@heroicons/react/24/solid";
+import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const [isSignUp, setIsSignUp] = useState(false);
+  const router = useRouter();
+
+  const handleSignIn = () => {
+    router.push("/home");
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#fffbe6] px-4">
+    <div className="min-h-screen flex items-center justify-center bg-yellow-50/40 px-4">
       <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md">
         {/* Logo / Brand */}
         <div className="text-center mb-6">
@@ -78,7 +84,8 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            className="w-full flex items-center justify-center gap-2 bg-yellow-500 text-white font-semibold py-2 rounded-lg hover:bg-yellow-600 transition"
+            className="w-full flex items-center justify-center gap-2 bg-yellow-400 text-white font-semibold py-2 rounded-lg hover:bg-yellow-500 transition"
+            onClick={handleSignIn}
           >
             <ArrowRightOnRectangleIcon className="h-5 w-5" />
             {isSignUp ? "Sign Up" : "Sign In"}
@@ -134,6 +141,13 @@ export default function LoginPage() {
             {isSignUp ? "Sign In" : "Sign Up"}
           </button>
         </p>
+
+        <button
+          onClick={handleSignIn}
+          className="w-full my-4 flex items-center justify-center gap-2 bg-yellow-400 font-semibold py-2 rounded-lg hover:bg-yellow-500 transition text-black"
+        >
+          Test Enter
+        </button>
       </div>
     </div>
   );

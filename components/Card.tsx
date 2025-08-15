@@ -24,17 +24,20 @@ export default function Card({
   description,
   icon,
   variant = "yellow",
+  onClick,
 }: {
   title: string;
   description: string;
   icon?: React.ReactNode;
   variant?: Variant;
+  onClick?: () => void; // Add this prop
 }) {
   const styles = variantStyles[variant];
 
   return (
     <div
       className={`p-6 rounded-xl ${styles.bg} ${styles.border} backdrop-blur-md shadow-md hover:shadow-lg transition-all duration-300`}
+      onClick={onClick}
     >
       {icon && <div className="mb-3">{icon}</div>}
       <h3 className="text-lg font-semibold text-gray-800 mb-1">{title}</h3>
