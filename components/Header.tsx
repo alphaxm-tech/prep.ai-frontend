@@ -1,9 +1,11 @@
 "use client";
 
+// import { useRouter } from "next/router";
 import { useState } from "react";
 
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
+  // const router = useRouter();
 
   const navLinks = [
     "Home",
@@ -13,16 +15,25 @@ export function Header() {
     "Quizzes",
     "Study Materials",
   ];
+
+  const handleAdminNavigation = () => {
+    // router.push("/admin/home");
+  };
   return (
     <>
       {/* Main Header */}
       <header className="bg-yellow-200 py-3 px-6 shadow-sm flex justify-between items-center md:relative">
-        <h1 className="text-xl font-bold text-gray-900">prep.ai</h1>
+        <h1 className="text-xl font-bold text-gray-900">AI prep buddy</h1>
 
         {/* Desktop Admin Text */}
-        <div className="hidden md:block text-sm font-medium text-gray-700">
+        <button
+          className="hidden md:block relative px-4 py-2 text-sm font-medium text-gray-800 rounded-lg 
+             bg-white/20 backdrop-blur-md shadow-md border border-white/30
+             hover:bg-white/30 hover:shadow-lg transition-all duration-300"
+          onClick={handleAdminNavigation}
+        >
           Admin User
-        </div>
+        </button>
 
         {/* Mobile Hamburger */}
         <div className="md:hidden">

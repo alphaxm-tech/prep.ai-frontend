@@ -1,7 +1,14 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { ArrowDownTrayIcon, SparklesIcon } from "@heroicons/react/24/outline";
+import { useQuery } from "@tanstack/react-query";
+import { resumeService } from "@/utils/services/resume.service";
+import VerticalAccordion from "../../../components/Accordian";
+import EducationForm from "@/components/EducationForm";
+import ResumeScroller, { ResumeItem } from "../../../components/ResumeScroller";
+import ResumeDropdown from "@/components/ResumeDropdown";
+import { SkillsPanel } from "@/components/SkillsPanel";
 
 type TemplateKey = "modern" | "classic" | "creative" | "minimal";
 
@@ -94,12 +101,14 @@ function ResumePreview({
 }
 
 export default function ResumeBuilderPage() {
-  const [template, setTemplate] = useState<TemplateKey>("modern");
+  const [resumeFormat, setResumeFormat] = useState<TemplateKey>("modern");
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [location, setLocation] = useState("");
+  const [portfolioLink, setPortfolioLink] = useState("");
+  const [githubLink, setGithubLink] = useState("");
   const [summary, setSummary] = useState("");
   const [experience, setExperience] = useState("");
   const [education, setEducation] = useState("");
@@ -112,6 +121,87 @@ export default function ResumeBuilderPage() {
     alert("Download PDF - integrate react-to-print or jsPDF (TODO)");
   };
 
+  const {
+    data: apiData,
+    isPending,
+    isError,
+  } = useQuery({
+    queryKey: ["resume", "format"],
+    queryFn: resumeService.getResumeFormats,
+    staleTime: 1000 * 60 * 5, // 5 minutes fresh, no refetch
+    refetchOnWindowFocus: false, // prevent refetch when tab is focused
+    refetchOnReconnect: false, // prevent refetch when network comes back
+  });
+
+  console.log(apiData?.resumeFormats);
+
+  const [resumes, setResumes] = useState<ResumeItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Mock fetch - replace with real API call
+  useEffect(() => {
+    setLoading(true);
+    setTimeout(() => {
+      setResumes([
+        {
+          id: "r1",
+          title: "Software Engineer Resume",
+          createdAt: "2025-09-01T10:00:00Z",
+        },
+        {
+          id: "r2",
+          title: "Blockchain Developer Resume",
+          createdAt: "2025-06-18T12:00:00Z",
+        },
+        {
+          id: "r3",
+          title: "SDE Internship Resume",
+          createdAt: "2024-12-01T08:30:00Z",
+        },
+        // add many to test horizontal scrolling
+        ...Array.from({ length: 3 }).map((_, i) => ({
+          id: `r-extra-${i}`,
+          title: `Past Resume ${i + 1}`,
+          createdAt: new Date(2024, i, 1).toISOString(),
+        })),
+      ]);
+      setLoading(false);
+    }, 600);
+  }, []);
+
+  const handleSelect = (r: ResumeItem) => {
+    if (r.id === "new") {
+      // route to create new resume page or open modal
+      console.log("create new resume");
+    } else {
+      // open selected resume
+      console.log("open resume", r.id);
+    }
+  };
+
+  const resumes2 = [
+    {
+      id: "r1",
+      title: "Software Engineer Resume",
+      createdAt: "2025-09-01T10:00:00Z",
+    },
+    {
+      id: "r2",
+      title: "Blockchain Developer Resume",
+      createdAt: "2025-06-18T12:00:00Z",
+    },
+    {
+      id: "r3",
+      title: "SDE Internship Resume",
+      createdAt: "2024-12-01T08:30:00Z",
+    },
+  ];
+
+  const handleSelect2 = (resume: { id: string; title: string }) => {
+    console.log("Selected resume:", resume);
+    // TODO: navigate to resume detail page or open editor
+  };
+
   return (
     <div className="min-h-screen bg-white px-12 py-8">
       <main className="w-full px-2 sm:px-4 lg:px-6">
@@ -119,70 +209,194 @@ export default function ResumeBuilderPage() {
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
           <div className="flex flex-col items-start justify-start gap-2">
             <h1 className="text-3xl font-bold text-gray-800">
-              Smart resume builder
+              Smart resume builder with AI
             </h1>
             <p className="text-lg text-yellow-900">
               Build smarter resumes with AI and stand out from the competition
             </p>
           </div>
+
+          <ResumeDropdown resumes={resumes2} onSelect={handleSelect2} />
         </div>
 
-        {/* Content area */}
-        <div className="mt-6 grid grid-cols-1 lg:grid-cols-[1.5fr_2fr] gap-6">
-          {/* LEFT: Form */}
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Full Name
-                </label>
-                <input
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="mt-2 w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-200"
-                  placeholder="John Doe"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Location
-                </label>
-                <input
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  className="mt-2 w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-200"
-                  placeholder="New York, NY"
-                />
-              </div>
-            </div>
+        {/* <div className="p-4 my-4 bg-yellow-100/40 shadow-md rounded-xl border border-yellow-100 background-blur-md">
+          <h2 className="text-2xl font-bold mb-2">Your Resumes</h2>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Email
-                </label>
-                <input
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="mt-2 w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-200"
-                  placeholder="you@example.com"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Phone
-                </label>
-                <input
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  className="mt-2 w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-200"
-                  placeholder="+1 (555) 123-4567"
-                />
-              </div>
+          {loading ? (
+            <div>Loading...</div>
+          ) : resumes.length === 0 ? (
+            <div>No resumes yet. Create one!</div>
+          ) : (
+            <ResumeScroller resumes={resumes} onSelect={handleSelect} />
+          )}
+        </div> */}
+        {/* Content area */}
+        <div className="mt-6 grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-6">
+          {/* LEFT: Form */}
+
+          <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-4">
+            <div className="p-1 space-y-4">
+              <VerticalAccordion isOpenProp={true} title="Personal details">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Full Name
+                    </label>
+                    <input
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      className="mt-2 w-full px-3 py-1 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-200"
+                      placeholder="Vaishnavi"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Location
+                    </label>
+                    <input
+                      value={location}
+                      onChange={(e) => setLocation(e.target.value)}
+                      className="mt-2 w-full px-3 py-1 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-200"
+                      placeholder="Hyderabad"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Email
+                    </label>
+                    <input
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="mt-2 w-full px-3 py-1 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-200"
+                      placeholder="vaishnavi@gmail.com"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Phone
+                    </label>
+                    <input
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      className="mt-2 w-full px-3 py-1 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-200"
+                      placeholder="0123456789"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex items-center justify-between">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Objective
+                    </label>
+                    <button
+                      onClick={() => handleAIEnhance(setSummary, summary)}
+                      className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium text-gray-800 bg-gradient-to-r from-purple-100 via-pink-100 to-orange-100 shadow-sm hover:shadow-md transition-transform transform hover:-translate-y-0.5 hover:brightness-105"
+                    >
+                      <SparklesIcon className="w-3 h-3 text-pink-500" /> AI
+                      Enhance
+                    </button>
+                  </div>
+                  <textarea
+                    value={summary}
+                    onChange={(e) => setSummary(e.target.value)}
+                    rows={2}
+                    className="mt-2 w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-200"
+                    placeholder="Write your objective"
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Portfolio link
+                    </label>
+                    <input
+                      value={portfolioLink}
+                      onChange={(e) => setPortfolioLink(e.target.value)}
+                      className="mt-2 w-full px-3 py-1 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-200"
+                      placeholder="vaishnavi@gmail.com"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Github link
+                    </label>
+                    <input
+                      value={githubLink}
+                      onChange={(e) => setGithubLink(e.target.value)}
+                      className="mt-2 w-full px-3 py-1 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-200"
+                      placeholder="0123456789"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">
+                      Linkedin profile
+                    </label>
+                    <input
+                      value={portfolioLink}
+                      onChange={(e) => setPortfolioLink(e.target.value)}
+                      className="mt-2 w-full px-3 py-1 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-200"
+                      placeholder="vaishnavi@gmail.com"
+                    />
+                  </div>
+                </div>
+              </VerticalAccordion>
+
+              <VerticalAccordion isOpenProp={false} title="Skills">
+                <SkillsPanel />
+              </VerticalAccordion>
+
+              <VerticalAccordion isOpenProp={false} title="Education">
+                <EducationForm></EducationForm>
+              </VerticalAccordion>
+
+              <VerticalAccordion isOpenProp={false} title="Work Experience">
+                <ul className="list-disc pl-5">
+                  <li>Blockchain Resume Builder</li>
+                  <li>Stack: React, Golang, Ethereum</li>
+                  <li>Status: In Progress</li>
+                </ul>
+              </VerticalAccordion>
+              <VerticalAccordion isOpenProp={false} title="Project Details">
+                <ul className="list-disc pl-5">
+                  <li>Blockchain Resume Builder</li>
+                  <li>Stack: React, Golang, Ethereum</li>
+                  <li>Status: In Progress</li>
+                </ul>
+              </VerticalAccordion>
             </div>
 
             {/* Summary */}
-            <div>
+            {/* <div>
+              <div className="flex items-center justify-between">
+                <label className="block text-sm font-medium text-gray-700">
+                  Objective
+                </label>
+                <button
+                  onClick={() => handleAIEnhance(setSummary, summary)}
+                  className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium text-gray-800 bg-gradient-to-r from-purple-100 via-pink-100 to-orange-100 shadow-sm hover:shadow-md transition-transform transform hover:-translate-y-0.5 hover:brightness-105"
+                >
+                  <SparklesIcon className="w-3 h-3 text-pink-500" /> AI Enhance
+                </button>
+              </div>
+              <textarea
+                value={summary}
+                onChange={(e) => setSummary(e.target.value)}
+                rows={2}
+                className="mt-2 w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-200"
+                placeholder="Write your objective"
+              />
+            </div> */}
+
+            {/* Summary */}
+            {/* <div>
               <div className="flex items-center justify-between">
                 <label className="block text-sm font-medium text-gray-700">
                   Professional Summary
@@ -201,10 +415,10 @@ export default function ResumeBuilderPage() {
                 className="mt-2 w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-200"
                 placeholder="Write a short summary..."
               />
-            </div>
+            </div> */}
 
             {/* Experience */}
-            <div>
+            {/* <div>
               <div className="flex items-center justify-between">
                 <label className="block text-sm font-medium text-gray-700">
                   Experience
@@ -223,10 +437,10 @@ export default function ResumeBuilderPage() {
                 className="mt-2 w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-200"
                 placeholder="Your experience..."
               />
-            </div>
+            </div> */}
 
             {/* Education */}
-            <div>
+            {/* <div>
               <div className="flex items-center justify-between">
                 <label className="block text-sm font-medium text-gray-700">
                   Education
@@ -245,17 +459,17 @@ export default function ResumeBuilderPage() {
                 className="mt-2 w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-200"
                 placeholder="Your education..."
               />
-            </div>
+            </div> */}
 
             {/* Actions */}
-            <div className="flex items-center gap-3 mt-2">
+            {/* <div className="flex items-center gap-3 mt-2">
               <button
                 onClick={handleDownload}
                 className="bg-yellow-400 hover:bg-yellow-500 px-4 py-2 rounded-lg text-sm font-semibold shadow flex items-center gap-2"
               >
                 <ArrowDownTrayIcon className="w-4 h-4" /> Download PDF
               </button>
-            </div>
+            </div> */}
           </div>
 
           <div className="space-y-6">
@@ -269,16 +483,22 @@ export default function ResumeBuilderPage() {
                   </div>
                   <div className="relative inline-block">
                     <select
-                      value={template}
+                      value={apiData?.resumeFormats}
                       onChange={(e) =>
-                        setTemplate(e.target.value as TemplateKey)
+                        setResumeFormat(e.target.value as TemplateKey)
                       }
                       className="appearance-none px-4 py-2 pr-10 rounded-lg border border-gray-300 bg-white shadow-sm text-gray-700 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:border-yellow-300 transition-all cursor-pointer hover:shadow-md"
                     >
-                      <option value="modern">Modern</option>
-                      <option value="classic">Classic</option>
-                      <option value="creative">Creative</option>
-                      <option value="minimal">Minimal</option>
+                      {apiData?.resumeFormats.map((format: any) => {
+                        return (
+                          <option
+                            key={format.format_id}
+                            value={format.format_key}
+                          >
+                            {format?.title}
+                          </option>
+                        );
+                      })}
                     </select>
                     <svg
                       className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
@@ -299,7 +519,7 @@ export default function ResumeBuilderPage() {
 
                 {/* Resume Preview */}
                 <ResumePreview
-                  template={template}
+                  template={resumeFormat}
                   data={{
                     fullName,
                     email,
