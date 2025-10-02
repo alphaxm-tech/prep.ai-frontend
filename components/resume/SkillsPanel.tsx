@@ -1,20 +1,6 @@
+// components/resume/SkillsPanel.tsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
-type Tag = {
-  id: string;
-  text: string;
-  // optional extra metadata (proficiency etc.)
-  proficiency?: "Basic" | "Intermediate" | "Advanced" | null;
-};
-
-function uid(prefix = "id") {
-  return `${prefix}_${Math.random().toString(36).slice(2, 9)}`;
-}
-
-/* ---------------- VerticalAccordion ----------------
-   Small accessible accordion wrapper. Controlled open via prop,
-   but also supports internal toggle.
-*/
 export function VerticalAccordion({
   title,
   children,
@@ -52,67 +38,70 @@ export function VerticalAccordion({
   );
 }
 
-/* ---------------- SkillsPanel ----------------
-   Two halves (50% each). Minimal, modern look.
-   - Add new tags via input (Enter)
-   - Click chip to edit (inline)
-   - Remove via small ✕ button
-   - Optional proficiency select when editing
-*/
-export function SkillsPanel({
-  initialSkills,
-  initialSoft,
-  onChange,
-}: {
-  initialSkills?: Tag[];
-  initialSoft?: Tag[];
-  onChange?: (skills: Tag[], soft: Tag[]) => void;
-}) {
-  const [skills, setSkills] = useState<Tag[]>(initialSkills ?? []);
-  const [softSkills, setSoftSkills] = useState<Tag[]>(initialSoft ?? []);
+export type Tag = {
+  id: string;
+  text: string;
+  proficiency?: "Basic" | "Intermediate" | "Advanced" | null;
+};
 
+function uid(prefix = "id") {
+  return `${prefix}_${Math.random().toString(36).slice(2, 9)}`;
+}
+
+/**
+ * SkillsPanel now fully controlled via props:
+ * - skills, setSkills
+ * - softSkills, setSoftSkills
+ */
+export function SkillsPanel({
+  skills,
+  setSkills,
+  softSkills,
+  setSoftSkills,
+}: {
+  skills: Tag[];
+  setSkills: (t: Tag[]) => void;
+  softSkills: Tag[];
+  setSoftSkills: (t: Tag[]) => void;
+}) {
   // input controls
   const [inputSkill, setInputSkill] = useState("");
   const [inputSoft, setInputSoft] = useState("");
-  // NEW: proficiency choice at add-time
   const [inputSkillProf, setInputSkillProf] = useState<Tag["proficiency"] | "">(
-    ""
+    "Basic"
   );
 
   // editing state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingText, setEditingText] = useState("");
-  const [editingProf, setEditingProf] = useState<Tag["proficiency"]>(null);
+  const [editingProf, setEditingProf] = useState<Tag["proficiency"] | null>(
+    null
+  );
 
   const editRef = useRef<HTMLInputElement | null>(null);
-
   useEffect(() => {
     if (editingId && editRef.current) editRef.current.focus();
   }, [editingId]);
 
-  useEffect(() => {
-    onChange?.(skills, softSkills);
-  }, [skills, softSkills, onChange]);
-
   // helpers
   const addTag = (
-    listSetter: React.Dispatch<React.SetStateAction<Tag[]>>,
+    list: Tag[],
+    listSetter: (v: Tag[]) => void,
     text: string,
     prof: Tag["proficiency"] | null = null
   ) => {
     const t = text.trim();
     if (!t) return;
-    listSetter((s) => {
-      if (s.some((x) => x.text.toLowerCase() === t.toLowerCase())) return s;
-      return [...s, { id: uid("tag"), text: t, proficiency: prof }];
-    });
+    if (list.some((x) => x.text.toLowerCase() === t.toLowerCase())) return;
+    listSetter([...list, { id: uid("tag"), text: t, proficiency: prof }]);
   };
 
   const removeTag = (
-    listSetter: React.Dispatch<React.SetStateAction<Tag[]>>,
+    listSetter: (v: Tag[]) => void,
+    list: Tag[],
     id: string
   ) => {
-    listSetter((s) => s.filter((x) => x.id !== id));
+    listSetter(list.filter((x) => x.id !== id));
     if (editingId === id) {
       setEditingId(null);
       setEditingText("");
@@ -138,9 +127,9 @@ export function SkillsPanel({
           : t
       );
     if (skills.some((t) => t.id === editingId)) {
-      setSkills((s) => update(s));
+      setSkills(update(skills));
     } else {
-      setSoftSkills((s) => update(s));
+      setSoftSkills(update(softSkills));
     }
     setEditingId(null);
     setEditingText("");
@@ -153,7 +142,6 @@ export function SkillsPanel({
     setEditingProf(null);
   };
 
-  // keyboard handlers
   const handleKeyAdd = (
     e: React.KeyboardEvent<HTMLInputElement>,
     isSoft = false
@@ -161,14 +149,14 @@ export function SkillsPanel({
     if (e.key === "Enter") {
       e.preventDefault();
       if (isSoft) {
-        addTag(setSoftSkills, inputSoft);
+        addTag(softSkills, setSoftSkills, inputSoft);
         setInputSoft("");
       } else {
-        // use selected proficiency when creating
         addTag(
+          skills,
           setSkills,
           inputSkill,
-          inputSkillProf === "" ? null : (inputSkillProf as Tag["proficiency"])
+          inputSkillProf === "" ? null : inputSkillProf
         );
         setInputSkill("");
         setInputSkillProf("");
@@ -176,16 +164,22 @@ export function SkillsPanel({
     }
   };
 
-  // NEW: click handler for + button
-  const handleAddClick = () => {
+  const handleAddSkill = () => {
     if (!inputSkill.trim()) return;
     addTag(
+      skills,
       setSkills,
       inputSkill,
-      inputSkillProf === "" ? null : (inputSkillProf as Tag["proficiency"])
+      inputSkillProf === "" ? null : inputSkillProf
     );
     setInputSkill("");
     setInputSkillProf("");
+  };
+
+  const handleAddSoftSkill = () => {
+    if (!inputSoft.trim()) return;
+    addTag(softSkills, setSoftSkills, inputSoft);
+    setInputSoft("");
   };
 
   const handleEditKey = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -193,7 +187,6 @@ export function SkillsPanel({
     if (e.key === "Escape") cancelEdit();
   };
 
-  // simple counts (helpful for UX)
   const counts = useMemo(
     () => ({ skills: skills.length, soft: softSkills.length }),
     [skills.length, softSkills.length]
@@ -201,11 +194,9 @@ export function SkillsPanel({
 
   return (
     <div className="w-full">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         {/* Left: Skills */}
         <div className="relative p-4 rounded-xl border border-gray-100 bg-white min-h-[180px]">
-          {/* + button positioned top-right */}
-
           <div className="flex items-start justify-between">
             <div>
               <h4 className="text-sm font-semibold text-gray-800">Skills</h4>
@@ -216,57 +207,59 @@ export function SkillsPanel({
             <div className="text-xs text-gray-500">{counts.skills}</div>
           </div>
 
-          <div className="mt-3 flex gap-2">
+          <div className="mt-3 flex flex-col gap-2">
+            {/* Input on first line */}
             <input
               aria-label="Add technical skill"
               value={inputSkill}
               onChange={(e) => setInputSkill(e.target.value)}
-              //   onKeyDown={(e) => handleKeyAdd(e, false)}
-              placeholder="Enter a skill, e.g. React, Go, Solidity"
-              className="flex-1 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-indigo-300"
+              onKeyDown={(e) => handleKeyAdd(e, false)}
+              placeholder="e.g. React, TypeScript"
+              className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:border-yellow-300"
             />
 
-            <div className="relative inline-block w-36">
-              <select
-                aria-label="Select proficiency for new skill"
-                value={inputSkillProf ?? ""}
-                onChange={(e) =>
-                  setInputSkillProf(e.target.value as Tag["proficiency"] | "")
-                }
-                className="appearance-none w-full px-4 py-2 pr-10 rounded-lg border border-gray-300 bg-white shadow-sm text-gray-700 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:border-yellow-300 transition-all cursor-pointer hover:shadow-md"
-              >
-                <option value="">Proficiency</option>
-                <option value="Basic">Basic</option>
-                <option value="Intermediate">Intermediate</option>
-                <option value="Advanced">Advanced</option>
-              </select>
+            {/* Dropdown + button on second line */}
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <select
+                  aria-label="Select proficiency for new skill"
+                  value={inputSkillProf ?? ""}
+                  onChange={(e) =>
+                    setInputSkillProf(e.target.value as Tag["proficiency"] | "")
+                  }
+                  className="appearance-none w-full px-4 py-2 pr-10 rounded-lg border border-gray-300 bg-white text-sm font-medium shadow-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:border-yellow-300 transition-all cursor-pointer hover:shadow-md"
+                >
+                  <option value="Basic">Basic</option>
+                  <option value="Intermediate">Intermediate</option>
+                  <option value="Advanced">Advanced</option>
+                </select>
 
-              {/* custom arrow (keeps visual parity across browsers) */}
-              <svg
-                className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-3 w-3 text-gray-500"
-                viewBox="0 0 20 20"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                aria-hidden
+                <svg
+                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-3 w-3 text-gray-500"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden
+                >
+                  <path
+                    d="M6 8l4 4 4-4"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
+
+              <button
+                onClick={handleAddSkill}
+                aria-label="Add skill"
+                title="Add skill"
+                className="flex items-center justify-center w-8 h-8 rounded-full bg-yellow-300 text-white text-xl shadow-sm hover:bg-yellow-400 focus:outline-none"
               >
-                <path
-                  d="M6 8l4 4 4-4"
-                  stroke="currentColor"
-                  strokeWidth="1.6"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+                +
+              </button>
             </div>
-
-            <button
-              onClick={handleAddClick}
-              aria-label="Add skill"
-              title="Add skill"
-              className="flex items-center justify-center w-8 h-8 rounded-full bg-yellow-300 text-white text-sm shadow-sm hover:bg-yellow-400 focus:outline-none"
-            >
-              +
-            </button>
           </div>
 
           <div className="mt-3 flex flex-wrap gap-2">
@@ -304,7 +297,7 @@ export function SkillsPanel({
                   </select>
                   <button
                     onClick={commitEdit}
-                    className="text-xs font-semibold text-indigo-600 px-2 py-1"
+                    className="text-xs font-semibold text-indigo-600 px-2"
                     aria-label="save"
                   >
                     Save
@@ -339,7 +332,7 @@ export function SkillsPanel({
                     ✎
                   </button>
                   <button
-                    onClick={() => removeTag(setSkills, t.id)}
+                    onClick={() => removeTag(setSkills, skills, t.id)}
                     className="text-xs text-gray-400 px-2"
                     aria-label={`Remove ${t.text}`}
                     title="Remove"
@@ -366,15 +359,24 @@ export function SkillsPanel({
             <div className="text-xs text-gray-500">{counts.soft}</div>
           </div>
 
-          <div className="mt-3">
+          <div className="mt-3 flex items-center gap-2">
             <input
               aria-label="Add soft skill"
               value={inputSoft}
               onChange={(e) => setInputSoft(e.target.value)}
               onKeyDown={(e) => handleKeyAdd(e, true)}
               placeholder="e.g. Communication, Leadership"
-              className="w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-indigo-300"
+              className="flex-1 rounded-md border border-gray-200 bg-white px-3 py-2 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:border-yellow-300"
             />
+
+            <button
+              onClick={handleAddSoftSkill}
+              aria-label="Add skill"
+              title="Add skill"
+              className="flex items-center justify-center w-8 h-8 rounded-full bg-yellow-300 text-white text-xl shadow-sm hover:bg-yellow-400 focus:outline-none"
+            >
+              +
+            </button>
           </div>
 
           <div className="mt-3 flex flex-wrap gap-2">
@@ -425,7 +427,7 @@ export function SkillsPanel({
                     ✎
                   </button>
                   <button
-                    onClick={() => removeTag(setSoftSkills, t.id)}
+                    onClick={() => removeTag(setSoftSkills, softSkills, t.id)}
                     className="text-xs text-gray-400 px-2"
                   >
                     ✕
@@ -435,31 +437,6 @@ export function SkillsPanel({
             )}
           </div>
         </div>
-      </div>
-
-      {/* small action row */}
-      <div className="mt-3 flex items-center justify-end gap-3">
-        <button
-          onClick={() => {
-            // quick add suggestions (example)
-            addTag(setSkills, "React", "Intermediate");
-            addTag(setSkills, "TypeScript", "Intermediate");
-            addTag(setSoftSkills, "Communication");
-          }}
-          className="text-xs px-3 py-1 rounded-md border border-gray-200 bg-gray-50 text-gray-700"
-        >
-          Quick add
-        </button>
-
-        <button
-          onClick={() => {
-            setSkills([]);
-            setSoftSkills([]);
-          }}
-          className="text-xs px-3 py-1 rounded-md border border-transparent text-red-600"
-        >
-          Clear
-        </button>
       </div>
     </div>
   );

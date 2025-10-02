@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 
-interface ResumeItem {
+export interface ResumeItem {
   id: string;
   title: string;
   createdAt?: string;

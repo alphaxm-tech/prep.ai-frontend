@@ -1,537 +1,433 @@
+// app/(your-route)/resume-builder/page.tsx
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
-import { ArrowDownTrayIcon, SparklesIcon } from "@heroicons/react/24/outline";
+import React, { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { resumeService } from "@/utils/services/resume.service";
-import VerticalAccordion from "../../../components/Accordian";
-import EducationForm from "@/components/EducationForm";
-import ResumeScroller, { ResumeItem } from "../../../components/ResumeScroller";
-import ResumeDropdown from "@/components/ResumeDropdown";
-import { SkillsPanel } from "@/components/SkillsPanel";
+import {
+  VerticalAccordion,
+  SkillsPanel,
+  Tag as SkillTag,
+} from "@/components/resume/SkillsPanel";
+import EducationForm, { Education } from "@/components/resume/EducationForm";
+import ResumeDropdown, { ResumeItem } from "@/components/ResumeDropdown";
+import BasicDetails from "@/components/resume/BasicDetails";
+import WorkExperienceForm, {
+  WorkExperience,
+} from "@/components/resume/WorkExperienceForm";
+import ProjectsForm, { Project } from "@/components/resume/ProjectForm";
 
-type TemplateKey = "modern" | "classic" | "creative" | "minimal";
+import CreativeResumeTemplate from "@/components/resume-formats/CreativeResume";
+import ProfessionalResumeTemplateVertical from "@/components/resume-formats/ProfessionalResume";
+import ModernResumeTemplate from "@/components/resume-formats/ModernResume";
+import MinimalResumeTemplate from "@/components/resume-formats/MinimalResume";
+import StandardResumeTemplate from "@/components/resume-formats/StandardResume";
 
-function ResumePreview({
-  template,
-  data,
-}: {
-  template: TemplateKey;
-  data: {
-    fullName: string;
-    email: string;
-    phone: string;
-    location: string;
-    summary: string;
-    experience: string;
-    education: string;
-  };
-}) {
-  const { fullName, email, phone, location, summary, experience, education } =
-    data;
+type TemplateKey = "modern" | "classic" | "creative" | "minimal" | "standard";
 
-  const variant = useMemo(() => {
-    switch (template) {
-      case "classic":
-        return {
-          headingClass: "text-2xl font-bold text-gray-900",
-          accent: "border-l-4 border-yellow-300 pl-4",
-          bg: "bg-white",
-        };
-      case "creative":
-        return {
-          headingClass: "text-2xl font-extrabold text-yellow-800",
-          accent: "bg-gradient-to-r from-yellow-100 to-yellow-50 p-4 rounded",
-          bg: "bg-white",
-        };
-      case "minimal":
-        return {
-          headingClass: "text-xl font-semibold text-gray-800",
-          accent: "text-gray-700",
-          bg: "bg-white",
-        };
-      case "modern":
-      default:
-        return {
-          headingClass: "text-2xl font-bold text-gray-800",
-          accent: "flex items-center gap-4",
-          bg: "bg-white",
-        };
-    }
-  }, [template]);
-
-  return (
-    <div className={`rounded-xl border border-gray-100 p-6 ${variant.bg}`}>
-      <div className={variant.accent}>
-        <div className={variant.headingClass}>{fullName || "Full Name"}</div>
-        <div className="text-sm text-gray-600 mt-1">
-          {email || "email@example.com"} • {phone || "Phone"} •{" "}
-          {location || "Location"}
-        </div>
-      </div>
-
-      <section className="mt-4">
-        <h4 className="text-sm font-semibold text-gray-700">
-          Professional Summary
-        </h4>
-        <p className="text-sm text-gray-600 mt-1">
-          {summary ||
-            "Short, crisp summary that highlights skills, goals and impact."}
-        </p>
-      </section>
-
-      <section className="mt-4 grid grid-cols-1 gap-3">
-        <div>
-          <h4 className="text-sm font-semibold text-gray-700">Experience</h4>
-          <p className="text-sm text-gray-600 mt-1">
-            {experience ||
-              "Role • Company • Achievements (use numbers where possible)"}
-          </p>
-        </div>
-
-        <div>
-          <h4 className="text-sm font-semibold text-gray-700">Education</h4>
-          <p className="text-sm text-gray-600 mt-1">
-            {education || "Degree • Institution • Year"}
-          </p>
-        </div>
-      </section>
-    </div>
-  );
-}
+/**
+ * Dummy defaults used to populate the inline preview when user hasn't entered data.
+ */
+const DEFAULT_SAMPLE = {
+  fullName: "Sanket N.",
+  title: "Fullstack Blockchain Developer",
+  email: "sanket@example.com",
+  phone: "9130859725",
+  location: "New York, USA",
+  objective:
+    "Fullstack blockchain developer focused on building reliable systems. Experience with TypeScript, Go, and Solidity. Passionate about developer experience and high-quality production software.",
+  portfolioLink: "https://yourportfolio.com",
+  githubLink: "https://github.com/username",
+  linkedinLink: "https://linkedin.com/in/username",
+  technicalSkills: ["React", "TypeScript", "Go", "Solidity"],
+  softSkills: ["Communication", "Ownership", "Curiosity"],
+  educations: [
+    {
+      level: "B.Tech",
+      institute: "IIT Bombay",
+      location: "Mumbai",
+      duration: "2018–2022",
+      grade: "8.5",
+    },
+  ],
+  experiences: [
+    {
+      company: "Acme Corp",
+      role: "Fullstack Developer",
+      duration: "2023 - Present",
+      description:
+        "Built high-throughput services and front-end features. Improved observability and reduced incident MTTR.",
+      logo: "",
+    },
+  ],
+  projects: [
+    {
+      title: "Resume Builder",
+      description:
+        "A resume builder with live preview and clean printable templates. Focused on UX and developer productivity.",
+    },
+  ],
+};
 
 export default function ResumeBuilderPage() {
-  const [resumeFormat, setResumeFormat] = useState<TemplateKey>("modern");
+  // --- MAIN LIFTED STATE (single source of truth for basic details) ---
+  const [fullName, setFullName] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+  const [phone, setPhone] = useState<string>("");
+  const [location, setLocation] = useState<string>("");
+  const [summary, setSummary] = useState<string>("");
+  const [portfolioLink, setPortfolioLink] = useState<string>("");
+  const [githubLink, setGithubLink] = useState<string>("");
+  const [linkedinLink, setLinkedinLink] = useState<string>("");
 
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
-  const [location, setLocation] = useState("");
-  const [portfolioLink, setPortfolioLink] = useState("");
-  const [githubLink, setGithubLink] = useState("");
-  const [summary, setSummary] = useState("");
-  const [experience, setExperience] = useState("");
-  const [education, setEducation] = useState("");
+  // Lists and arrays lifted
+  const [technicalSkills, setTechnicalSkills] = useState<SkillTag[]>([]);
+  const [softSkills, setSoftSkills] = useState<SkillTag[]>([]);
+  const [educations, setEducations] = useState<Education[]>([]);
+  const [experiences, setExperiences] = useState<WorkExperience[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
 
-  const handleAIEnhance = (setter: (value: string) => void, value: string) => {
-    setter(value ? `${value} — polished by AI` : "Generated by AI.");
-  };
+  // other page state
+  const [resumeFormat, setResumeFormat] = useState<TemplateKey>("creative");
+  const [showPreviewModal, setShowPreviewModal] = useState<boolean>(false);
 
-  const handleDownload = () => {
-    alert("Download PDF - integrate react-to-print or jsPDF (TODO)");
-  };
-
-  const {
-    data: apiData,
-    isPending,
-    isError,
-  } = useQuery({
+  const { data: apiData } = useQuery({
     queryKey: ["resume", "format"],
-    queryFn: resumeService.getResumeFormats,
-    staleTime: 1000 * 60 * 5, // 5 minutes fresh, no refetch
-    refetchOnWindowFocus: false, // prevent refetch when tab is focused
-    refetchOnReconnect: false, // prevent refetch when network comes back
+    queryFn: async () => {
+      try {
+        return await resumeService.getResumeFormats();
+      } catch {
+        return null;
+      }
+    },
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
-  console.log(apiData?.resumeFormats);
+  const localFormats: { key: TemplateKey; title: string }[] = [
+    { key: "modern", title: "Modern" },
+    { key: "classic", title: "Classic" },
+    { key: "creative", title: "Creative" },
+    { key: "minimal", title: "Minimal" },
+    { key: "standard", title: "Standard" },
+  ];
 
-  const [resumes, setResumes] = useState<ResumeItem[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  // Mock fetch - replace with real API call
-  useEffect(() => {
-    setLoading(true);
-    setTimeout(() => {
-      setResumes([
-        {
-          id: "r1",
-          title: "Software Engineer Resume",
-          createdAt: "2025-09-01T10:00:00Z",
-        },
-        {
-          id: "r2",
-          title: "Blockchain Developer Resume",
-          createdAt: "2025-06-18T12:00:00Z",
-        },
-        {
-          id: "r3",
-          title: "SDE Internship Resume",
-          createdAt: "2024-12-01T08:30:00Z",
-        },
-        // add many to test horizontal scrolling
-        ...Array.from({ length: 3 }).map((_, i) => ({
-          id: `r-extra-${i}`,
-          title: `Past Resume ${i + 1}`,
-          createdAt: new Date(2024, i, 1).toISOString(),
-        })),
-      ]);
-      setLoading(false);
-    }, 600);
-  }, []);
-
-  const handleSelect = (r: ResumeItem) => {
-    if (r.id === "new") {
-      // route to create new resume page or open modal
-      console.log("create new resume");
-    } else {
-      // open selected resume
-      console.log("open resume", r.id);
-    }
-  };
-
-  const resumes2 = [
+  // demo resumes list
+  const [resumes, setResumes] = useState<ResumeItem[]>([
     {
       id: "r1",
       title: "Software Engineer Resume",
-      createdAt: "2025-09-01T10:00:00Z",
+      createdAt: new Date().toISOString(),
     },
     {
       id: "r2",
       title: "Blockchain Developer Resume",
-      createdAt: "2025-06-18T12:00:00Z",
+      createdAt: new Date().toISOString(),
     },
-    {
-      id: "r3",
-      title: "SDE Internship Resume",
-      createdAt: "2024-12-01T08:30:00Z",
-    },
-  ];
+  ]);
 
-  const handleSelect2 = (resume: { id: string; title: string }) => {
-    console.log("Selected resume:", resume);
-    // TODO: navigate to resume detail page or open editor
+  // assemble live data for templates (actual user-entered values)
+  const assembledData = useMemo(
+    () => ({
+      fullName,
+      title: undefined as string | undefined,
+      email,
+      phone,
+      location,
+      objective: summary,
+      portfolioLink,
+      githubLink,
+      linkedinLink,
+      technicalSkills: technicalSkills.map((s) => s.text),
+      softSkills: softSkills.map((s) => s.text),
+      educations,
+      experiences,
+      projects,
+    }),
+    [
+      fullName,
+      email,
+      phone,
+      location,
+      summary,
+      portfolioLink,
+      githubLink,
+      linkedinLink,
+      technicalSkills,
+      softSkills,
+      educations,
+      experiences,
+      projects,
+    ]
+  );
+
+  // Build data with defaults for inline preview
+  const assembledDataWithDefaults = useMemo(() => {
+    return {
+      fullName:
+        assembledData.fullName && assembledData.fullName.trim()
+          ? assembledData.fullName
+          : DEFAULT_SAMPLE.fullName,
+      title: DEFAULT_SAMPLE.title,
+      email:
+        assembledData.email && assembledData.email.trim()
+          ? assembledData.email
+          : DEFAULT_SAMPLE.email,
+      phone:
+        assembledData.phone && assembledData.phone.trim()
+          ? assembledData.phone
+          : DEFAULT_SAMPLE.phone,
+      location:
+        assembledData.location && assembledData.location.trim()
+          ? assembledData.location
+          : DEFAULT_SAMPLE.location,
+      objective:
+        assembledData.objective && assembledData.objective.trim()
+          ? assembledData.objective
+          : DEFAULT_SAMPLE.objective,
+      portfolioLink:
+        assembledData.portfolioLink && assembledData.portfolioLink.trim()
+          ? assembledData.portfolioLink
+          : DEFAULT_SAMPLE.portfolioLink,
+      githubLink:
+        assembledData.githubLink && assembledData.githubLink.trim()
+          ? assembledData.githubLink
+          : DEFAULT_SAMPLE.githubLink,
+      linkedinLink:
+        assembledData.linkedinLink && assembledData.linkedinLink.trim()
+          ? assembledData.linkedinLink
+          : DEFAULT_SAMPLE.linkedinLink,
+      technicalSkills:
+        assembledData.technicalSkills && assembledData.technicalSkills.length
+          ? assembledData.technicalSkills
+          : DEFAULT_SAMPLE.technicalSkills,
+      softSkills:
+        assembledData.softSkills && assembledData.softSkills.length
+          ? assembledData.softSkills
+          : DEFAULT_SAMPLE.softSkills,
+      educations:
+        assembledData.educations && assembledData.educations.length
+          ? assembledData.educations
+          : DEFAULT_SAMPLE.educations,
+      experiences:
+        assembledData.experiences && assembledData.experiences.length
+          ? assembledData.experiences
+          : DEFAULT_SAMPLE.experiences,
+      projects:
+        assembledData.projects && assembledData.projects.length
+          ? assembledData.projects
+          : DEFAULT_SAMPLE.projects,
+    };
+  }, [assembledData]);
+
+  const renderSelectedTemplate = (showPlaceholders = true) => {
+    const data = showPlaceholders ? assembledDataWithDefaults : assembledData;
+    const props = { data, showPlaceholders };
+
+    switch (resumeFormat) {
+      case "creative":
+        return <CreativeResumeTemplate {...props} />;
+      case "classic":
+        return <ProfessionalResumeTemplateVertical {...props} />;
+      case "modern":
+        return <ModernResumeTemplate {...props} />;
+      case "minimal":
+        return <MinimalResumeTemplate {...props} />;
+      case "standard":
+      default:
+        return <StandardResumeTemplate {...props} />;
+    }
   };
 
   return (
-    <div className="min-h-screen bg-white px-12 py-8">
-      <main className="w-full px-2 sm:px-4 lg:px-6">
+    <div className="min-h-screen bg-white py-8">
+      <main className="w-full">
         {/* Heading + Dropdown */}
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-          <div className="flex flex-col items-start justify-start gap-2">
+        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-6 max-w-[1550px] mx-auto">
+          <div>
             <h1 className="text-3xl font-bold text-gray-800">
               Smart resume builder with AI
             </h1>
-            <p className="text-lg text-yellow-900">
-              Build smarter resumes with AI and stand out from the competition
+            <p className="text-sm text-gray-600 mt-1">
+              Live preview while you edit — placeholders shown inline, clean
+              preview on modal
             </p>
           </div>
 
-          <ResumeDropdown resumes={resumes2} onSelect={handleSelect2} />
+          <ResumeDropdown
+            resumes={resumes}
+            onSelect={(r) => console.log("select", r)}
+          />
         </div>
 
-        {/* <div className="p-4 my-4 bg-yellow-100/40 shadow-md rounded-xl border border-yellow-100 background-blur-md">
-          <h2 className="text-2xl font-bold mb-2">Your Resumes</h2>
-
-          {loading ? (
-            <div>Loading...</div>
-          ) : resumes.length === 0 ? (
-            <div>No resumes yet. Create one!</div>
-          ) : (
-            <ResumeScroller resumes={resumes} onSelect={handleSelect} />
-          )}
-        </div> */}
-        {/* Content area */}
-        <div className="mt-6 grid grid-cols-1 lg:grid-cols-[3fr_2fr] gap-6">
-          {/* LEFT: Form */}
-
+        <div className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-6 max-w-[1550px] mx-auto">
+          {/* Left: forms */}
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-4">
-            <div className="p-1 space-y-4">
+            <div className="space-y-4">
               <VerticalAccordion isOpenProp={true} title="Personal details">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Full Name
-                    </label>
-                    <input
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      className="mt-2 w-full px-3 py-1 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-200"
-                      placeholder="Vaishnavi"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Location
-                    </label>
-                    <input
-                      value={location}
-                      onChange={(e) => setLocation(e.target.value)}
-                      className="mt-2 w-full px-3 py-1 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-200"
-                      placeholder="Hyderabad"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Email
-                    </label>
-                    <input
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="mt-2 w-full px-3 py-1 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-200"
-                      placeholder="vaishnavi@gmail.com"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Phone
-                    </label>
-                    <input
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
-                      className="mt-2 w-full px-3 py-1 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-200"
-                      placeholder="0123456789"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between">
-                    <label className="block text-sm font-medium text-gray-700">
-                      Objective
-                    </label>
-                    <button
-                      onClick={() => handleAIEnhance(setSummary, summary)}
-                      className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium text-gray-800 bg-gradient-to-r from-purple-100 via-pink-100 to-orange-100 shadow-sm hover:shadow-md transition-transform transform hover:-translate-y-0.5 hover:brightness-105"
-                    >
-                      <SparklesIcon className="w-3 h-3 text-pink-500" /> AI
-                      Enhance
-                    </button>
-                  </div>
-                  <textarea
-                    value={summary}
-                    onChange={(e) => setSummary(e.target.value)}
-                    rows={2}
-                    className="mt-2 w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-200"
-                    placeholder="Write your objective"
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Portfolio link
-                    </label>
-                    <input
-                      value={portfolioLink}
-                      onChange={(e) => setPortfolioLink(e.target.value)}
-                      className="mt-2 w-full px-3 py-1 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-200"
-                      placeholder="vaishnavi@gmail.com"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Github link
-                    </label>
-                    <input
-                      value={githubLink}
-                      onChange={(e) => setGithubLink(e.target.value)}
-                      className="mt-2 w-full px-3 py-1 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-200"
-                      placeholder="0123456789"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Linkedin profile
-                    </label>
-                    <input
-                      value={portfolioLink}
-                      onChange={(e) => setPortfolioLink(e.target.value)}
-                      className="mt-2 w-full px-3 py-1 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-200"
-                      placeholder="vaishnavi@gmail.com"
-                    />
-                  </div>
-                </div>
+                <BasicDetails
+                  fullName={fullName}
+                  setFullName={setFullName}
+                  email={email}
+                  setEmail={setEmail}
+                  phone={phone}
+                  setPhone={setPhone}
+                  location={location}
+                  setLocation={setLocation}
+                  portfolioLink={portfolioLink}
+                  setPortfolioLink={setPortfolioLink}
+                  githubLink={githubLink}
+                  setGithubLink={setGithubLink}
+                  linkedinLink={linkedinLink}
+                  setLinkedinLink={setLinkedinLink}
+                  summary={summary}
+                  setSummary={setSummary}
+                />
               </VerticalAccordion>
 
               <VerticalAccordion isOpenProp={false} title="Skills">
-                <SkillsPanel />
+                <SkillsPanel
+                  skills={technicalSkills}
+                  setSkills={
+                    setTechnicalSkills as React.Dispatch<
+                      React.SetStateAction<SkillTag[]>
+                    >
+                  }
+                  softSkills={softSkills}
+                  setSoftSkills={
+                    setSoftSkills as React.Dispatch<
+                      React.SetStateAction<SkillTag[]>
+                    >
+                  }
+                />
               </VerticalAccordion>
 
               <VerticalAccordion isOpenProp={false} title="Education">
-                <EducationForm></EducationForm>
+                <EducationForm
+                  educations={educations}
+                  setEducations={setEducations}
+                />
               </VerticalAccordion>
 
               <VerticalAccordion isOpenProp={false} title="Work Experience">
-                <ul className="list-disc pl-5">
-                  <li>Blockchain Resume Builder</li>
-                  <li>Stack: React, Golang, Ethereum</li>
-                  <li>Status: In Progress</li>
-                </ul>
+                <WorkExperienceForm
+                  experiences={experiences}
+                  setExperiences={setExperiences}
+                />
               </VerticalAccordion>
+
               <VerticalAccordion isOpenProp={false} title="Project Details">
-                <ul className="list-disc pl-5">
-                  <li>Blockchain Resume Builder</li>
-                  <li>Stack: React, Golang, Ethereum</li>
-                  <li>Status: In Progress</li>
-                </ul>
+                <ProjectsForm projects={projects} setProjects={setProjects} />
               </VerticalAccordion>
             </div>
-
-            {/* Summary */}
-            {/* <div>
-              <div className="flex items-center justify-between">
-                <label className="block text-sm font-medium text-gray-700">
-                  Objective
-                </label>
-                <button
-                  onClick={() => handleAIEnhance(setSummary, summary)}
-                  className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium text-gray-800 bg-gradient-to-r from-purple-100 via-pink-100 to-orange-100 shadow-sm hover:shadow-md transition-transform transform hover:-translate-y-0.5 hover:brightness-105"
-                >
-                  <SparklesIcon className="w-3 h-3 text-pink-500" /> AI Enhance
-                </button>
-              </div>
-              <textarea
-                value={summary}
-                onChange={(e) => setSummary(e.target.value)}
-                rows={2}
-                className="mt-2 w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-200"
-                placeholder="Write your objective"
-              />
-            </div> */}
-
-            {/* Summary */}
-            {/* <div>
-              <div className="flex items-center justify-between">
-                <label className="block text-sm font-medium text-gray-700">
-                  Professional Summary
-                </label>
-                <button
-                  onClick={() => handleAIEnhance(setSummary, summary)}
-                  className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium text-gray-800 bg-gradient-to-r from-purple-100 via-pink-100 to-orange-100 shadow-sm hover:shadow-md transition-transform transform hover:-translate-y-0.5 hover:brightness-105"
-                >
-                  <SparklesIcon className="w-3 h-3 text-pink-500" /> AI Enhance
-                </button>
-              </div>
-              <textarea
-                value={summary}
-                onChange={(e) => setSummary(e.target.value)}
-                rows={4}
-                className="mt-2 w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-200"
-                placeholder="Write a short summary..."
-              />
-            </div> */}
-
-            {/* Experience */}
-            {/* <div>
-              <div className="flex items-center justify-between">
-                <label className="block text-sm font-medium text-gray-700">
-                  Experience
-                </label>
-                <button
-                  onClick={() => handleAIEnhance(setExperience, experience)}
-                  className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium text-gray-800 bg-gradient-to-r from-purple-100 via-pink-100 to-orange-100 shadow-sm hover:shadow-md transition-transform transform hover:-translate-y-0.5 hover:brightness-105"
-                >
-                  <SparklesIcon className="w-3 h-3 text-pink-500" /> AI Enhance
-                </button>
-              </div>
-              <textarea
-                value={experience}
-                onChange={(e) => setExperience(e.target.value)}
-                rows={4}
-                className="mt-2 w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-200"
-                placeholder="Your experience..."
-              />
-            </div> */}
-
-            {/* Education */}
-            {/* <div>
-              <div className="flex items-center justify-between">
-                <label className="block text-sm font-medium text-gray-700">
-                  Education
-                </label>
-                <button
-                  onClick={() => handleAIEnhance(setEducation, education)}
-                  className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium text-gray-800 bg-gradient-to-r from-purple-100 via-pink-100 to-orange-100 shadow-sm hover:shadow-md transition-transform transform hover:-translate-y-0.5 hover:brightness-105"
-                >
-                  <SparklesIcon className="w-3 h-3 text-pink-500" /> AI Enhance
-                </button>
-              </div>
-              <textarea
-                value={education}
-                onChange={(e) => setEducation(e.target.value)}
-                rows={3}
-                className="mt-2 w-full p-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-200"
-                placeholder="Your education..."
-              />
-            </div> */}
-
-            {/* Actions */}
-            {/* <div className="flex items-center gap-3 mt-2">
-              <button
-                onClick={handleDownload}
-                className="bg-yellow-400 hover:bg-yellow-500 px-4 py-2 rounded-lg text-sm font-semibold shadow flex items-center gap-2"
-              >
-                <ArrowDownTrayIcon className="w-4 h-4" /> Download PDF
-              </button>
-            </div> */}
           </div>
 
-          <div className="space-y-6">
-            <div className="sticky top-24">
-              {/* Card container */}
-              <div className="bg-green-100/40 shadow-md rounded-2xl  border border-gray-100 p-6 space-y-4">
-                {/* Header with text and select */}
-                <div className="flex items-center justify-between">
+          {/* Right: preview */}
+          <div className="space-y-4">
+            <div className="sticky top-20">
+              <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                <div className="flex items-center justify-between mb-3">
                   <div className="text-sm font-semibold text-gray-700">
                     Template Preview
                   </div>
-                  <div className="relative inline-block">
+
+                  <div className="flex items-center gap-2">
                     <select
-                      value={apiData?.resumeFormats}
+                      value={resumeFormat}
                       onChange={(e) =>
                         setResumeFormat(e.target.value as TemplateKey)
                       }
-                      className="appearance-none px-4 py-2 pr-10 rounded-lg border border-gray-300 bg-white shadow-sm text-gray-700 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:border-yellow-300 transition-all cursor-pointer hover:shadow-md"
+                      className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm"
                     >
-                      {apiData?.resumeFormats.map((format: any) => {
-                        return (
-                          <option
-                            key={format.format_id}
-                            value={format.format_key}
-                          >
-                            {format?.title}
-                          </option>
-                        );
-                      })}
+                      {
+                        (apiData?.resumeFormats && apiData.resumeFormats.length
+                          ? apiData.resumeFormats.map((f: any) => (
+                              <option key={f.format_id} value={f.format_key}>
+                                {f.title}
+                              </option>
+                            ))
+                          : localFormats.map((f) => (
+                              <option key={f.key} value={f.key}>
+                                {f.title}
+                              </option>
+                            ))) as any
+                      }
                     </select>
-                    <svg
-                      className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
+
+                    <button
+                      onClick={() => setShowPreviewModal(true)}
+                      className="px-3 py-2 rounded-lg bg-yellow-400 text-white font-bold text-sm"
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M19 9l-7 7-7-7"
-                      />
-                    </svg>
+                      Save Resume
+                    </button>
                   </div>
                 </div>
 
-                {/* Resume Preview */}
-                <ResumePreview
-                  template={resumeFormat}
-                  data={{
-                    fullName,
-                    email,
-                    phone,
-                    location,
-                    summary,
-                    experience,
-                    education,
-                  }}
-                />
+                {/* Inline compact preview: showPlaceholders = true */}
+                <div className="border border-gray-50 rounded-md overflow-hidden">
+                  <div className="bg-white">{renderSelectedTemplate(true)}</div>
+                </div>
               </div>
             </div>
+
+            {/* Modal preview (clean): showPlaceholders = false */}
+            {showPreviewModal && (
+              <div className="fixed inset-0 z-50 flex items-start md:items-center justify-center p-4">
+                <div
+                  className="absolute inset-0 bg-black/40"
+                  onClick={() => setShowPreviewModal(false)}
+                />
+                <div className="relative max-w-4xl w-full max-h-[90vh] overflow-auto rounded-2xl bg-white shadow-xl border border-gray-100 z-10">
+                  <div className="flex items-center justify-between p-4 border-b">
+                    <div className="text-sm font-semibold text-gray-800">
+                      Resume Preview
+                    </div>
+
+                    {/* Buttons grouped on the right */}
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => {
+                          /* call your save handler here */
+                        }}
+                        aria-label="Save resume"
+                        title="Save resume"
+                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-yellow-400 hover:bg-yellow-450 focus:bg-yellow-500 text-white text-sm font-semibold shadow-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-yellow-300"
+                      >
+                        {/* optional icon (SVG) */}
+                        <svg
+                          className="w-4 h-4"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          aria-hidden
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                        Save
+                      </button>
+
+                      <button
+                        onClick={() => setShowPreviewModal(false)}
+                        aria-label="Close preview"
+                        title="Close preview"
+                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-gray-100 hover:bg-gray-200 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-200 transition"
+                      >
+                        Close
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="p-6">{renderSelectedTemplate(false)}</div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </main>

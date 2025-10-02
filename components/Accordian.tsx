@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { ChevronDownIcon } from "@heroicons/react/24/outline";
 
 interface AccordionProps {
   isOpenProp: boolean;
@@ -25,13 +26,11 @@ const VerticalAccordion: React.FC<AccordionProps> = ({
         onClick={() => setIsOpen(!isOpen)}
       >
         {title}
-        <span
-          className={`transform transition-transform ${
+        <ChevronDownIcon
+          className={`w-5 h-5 text-gray-500 transform transition-transform duration-300 ${
             isOpen ? "rotate-180" : ""
           }`}
-        >
-          ▼
-        </span>
+        />
       </button>
 
       {/* Accordion Content (slides vertically) */}
@@ -47,23 +46,3 @@ const VerticalAccordion: React.FC<AccordionProps> = ({
 };
 
 export default VerticalAccordion;
-
-// Example usage
-// export default function App() {
-//   return (
-//     <div className="p-10 space-y-4">
-//       <VerticalAccordion title="User Info">
-//         <p>Name: Sanket</p>
-//         <p>Email: sanket@example.com</p>
-//       </VerticalAccordion>
-
-//       <VerticalAccordion title="Project Details">
-//         <ul className="list-disc pl-5">
-//           <li>Blockchain Resume Builder</li>
-//           <li>Stack: React, Golang, Ethereum</li>
-//           <li>Status: In Progress</li>
-//         </ul>
-//       </VerticalAccordion>
-//     </div>
-//   );
-// }
