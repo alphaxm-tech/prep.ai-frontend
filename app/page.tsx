@@ -316,7 +316,7 @@ export default function LoginPage() {
                 onClick={() => router.push("/home")}
                 aria-pressed={mode === "signin"}
               >
-                Test enter
+                Enter without login
               </button>
             </div>
 
