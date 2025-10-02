@@ -17,11 +17,12 @@ import WorkExperienceForm, {
 } from "@/components/resume/WorkExperienceForm";
 import ProjectsForm, { Project } from "@/components/resume/ProjectForm";
 
-import CreativeResumeTemplate from "@/components/resume-formats/CreativeResume";
-import ProfessionalResumeTemplateVertical from "@/components/resume-formats/ProfessionalResume";
-import ModernResumeTemplate from "@/components/resume-formats/ModernResume";
-import MinimalResumeTemplate from "@/components/resume-formats/MinimalResume";
-import StandardResumeTemplate from "@/components/resume-formats/StandardResume";
+// import CreativeResumeTemplate from "@/components/resume-formats/CreativeResume";
+import CreativeResumeTemplate from "../../../components/resume-formats/CreativeResume";
+import ProfessionalResumeTemplateVertical from "../../../components/resume-formats/ProfessionalResume";
+import ModernResumeTemplate from "../../../components/resume-formats/ModernResume";
+import MinimalResumeTemplate from "../../../components/resume-formats/MinimalResume";
+import StandardResumeTemplate from "../../../components/resume-formats/StandardResume";
 
 type TemplateKey = "modern" | "classic" | "creative" | "minimal" | "standard";
 
