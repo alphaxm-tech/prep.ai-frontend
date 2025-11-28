@@ -2,7 +2,6 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import Image from "next/image";
 import QuestionCard from "@/components/QuestionCard";
 import InterviewRecorder from "@/components/InterviewRecorder";
 
@@ -177,12 +176,13 @@ const DEFAULT_QUESTIONS: Q[] = [
 ];
 
 export default function InterviewClient() {
+  // client-only hook — safe because this entire file is a client component
   const searchParams = useSearchParams();
-  const companyParam = searchParams.get("company") ?? "";
-  const titleParam = searchParams.get("title") ?? "";
+  const companyParam = searchParams?.get("company") ?? "";
+  const titleParam = searchParams?.get("title") ?? "";
 
-  // select questions based on company (case-insensitive match)
   const companyKey = useMemo(() => {
+    if (!companyParam) return null;
     const k = Object.keys(QUESTIONS_MAP).find(
       (c) => c.toLowerCase() === companyParam.toLowerCase()
     );
@@ -217,9 +217,10 @@ export default function InterviewClient() {
   const total = interviewQuestions.length;
   const currentQuestion = interviewQuestions[currentIndex];
 
-  const progress = useMemo(() => {
-    return Math.round(((currentIndex + (started ? 1 : 0)) / total) * 100);
-  }, [currentIndex, started, total]);
+  const progress = useMemo(
+    () => Math.round(((currentIndex + (started ? 1 : 0)) / total) * 100),
+    [currentIndex, started, total]
+  );
 
   useEffect(() => {
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
@@ -229,15 +230,12 @@ export default function InterviewClient() {
 
   useEffect(() => {
     if (countdown === null) return;
-
     let seconds = countdown;
     const iv = setInterval(() => {
       seconds = seconds - 1;
-      setCountdown((prev) => {
-        if (prev === null) return null;
-        return Math.max(0, (prev ?? 0) - 1);
-      });
-
+      setCountdown((prev) =>
+        prev === null ? null : Math.max(0, (prev ?? 0) - 1)
+      );
       if (seconds <= 0) {
         clearInterval(iv);
         setTimeout(() => {
@@ -246,18 +244,15 @@ export default function InterviewClient() {
         }, 250);
       }
     }, 1000);
-
     return () => clearInterval(iv);
   }, [countdown]);
 
   const speakText = (text: string) => {
     if (!synthRef.current) return;
-
     synthRef.current.cancel();
     const u = new SpeechSynthesisUtterance(text);
     u.lang = "en-US";
     u.rate = Math.max(0.5, Math.min(2, rate));
-
     utterRef.current = u;
     synthRef.current.speak(u);
   };
@@ -272,7 +267,6 @@ export default function InterviewClient() {
       stopSpeaking();
       return;
     }
-
     const t = setTimeout(() => speakText(currentQuestion.text), 200);
     return () => clearTimeout(t);
   }, [currentIndex, started, paused, mute, rate, currentQuestion.text]);
@@ -327,14 +321,10 @@ export default function InterviewClient() {
                 </div>
               </div>
 
+              {/* safe preview box (avoid referencing local /mnt/data paths) */}
               <div className="hidden md:flex items-center">
-                <div className="relative w-36 h-12 rounded-lg overflow-hidden border border-gray-100 shadow-sm">
-                  <Image
-                    src={"/mnt/data/Screenshot 2025-11-26 at 1.59.34 AM.png"}
-                    alt="preview"
-                    fill
-                    style={{ objectFit: "cover" }}
-                  />
+                <div className="w-36 h-12 rounded-lg overflow-hidden border border-gray-100 shadow-sm bg-gradient-to-br from-yellow-100 to-yellow-200 flex items-center justify-center text-sm text-yellow-800">
+                  Preview
                 </div>
               </div>
             </div>
