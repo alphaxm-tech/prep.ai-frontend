@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useMutation } from "@tanstack/react-query";
 import { authService } from "@/utils/services/auth.service";
 import Loader from "@/components/Loader";
+import { useToast } from "@/components/ToastProvider";
 
 /**
  * IMPORTANT FIX:
@@ -64,7 +65,9 @@ export default function LoginPage() {
   const [loader, setLoader] = useState(false);
   const [loginLoader, setLoginLoader] = useState(false);
   const [otpLoader, setOtpLoader] = useState(false);
-  const [sendingOtp, setSendingOtp] = useState(false);
+  const [sendOtpForLoginLoader, setSendOtpForLoginLoader] = useState(false);
+
+  const { success, error: showError } = useToast();
 
   // keep existing mutations intact (no changes to logic)
   const registerMutation = useMutation({
@@ -95,25 +98,27 @@ export default function LoginPage() {
 
   // OTP flow (assume authService has sendOtp & verifyOtp; keep commented if not used)
   const sendOtpMutation = useMutation({
-    // mutationFn: authService.sendOtp, // expects { email }
+    mutationFn: authService.sendOtpForLogin, // expects { email }
     onSuccess: (data) => {
       console.log("OTP sent:", data);
-      setSendingOtp(false);
+      setSendOtpForLoginLoader(false);
     },
     onError: (error) => {
       console.error("Send OTP failed:", error);
-      setSendingOtp(false);
+      showError("Failed to send OTP. Please try again.");
+      setSendOtpForLoginLoader(false);
     },
   });
 
   const verifyOtpMutation = useMutation({
-    // mutationFn: authService.verifyOtp, // expects { email, code }
+    mutationFn: authService.verifyOtpForLogin, // expects { email, otp }
     onSuccess: (data) => {
       setOtpLoader(false);
       router.push("/home");
     },
-    onError: (error) => {
-      console.error("Verify OTP failed:", error);
+    onError: (err) => {
+      console.error("Verify OTP failed:", err);
+      showError("Failed to send OTP. Please try again.");
       setOtpLoader(false);
     },
   });
@@ -145,13 +150,14 @@ export default function LoginPage() {
   ]);
 
   const handleSendOtp = useCallback(() => {
-    setSendingOtp(true);
-    // sendOtpMutation.mutate({ email });
-  }, []);
+    // console.log(email);
+    setSendOtpForLoginLoader(true);
+    sendOtpMutation.mutate({ email });
+  }, [sendOtpMutation, email]);
 
   const handleVerifyOtp = useCallback(() => {
     setOtpLoader(true);
-    // verifyOtpMutation.mutate({ email, code: otp });
+    verifyOtpMutation.mutate({ email, otp: otp });
   }, [otp, email]);
 
   const handleGoogleLogin = () => {
@@ -249,6 +255,10 @@ export default function LoginPage() {
         message="Almost there, Preparing your dashboard..."
       ></Loader>
       <Loader show={otpLoader} message="Verifying OTP..."></Loader>
+      <Loader
+        show={sendOtpForLoginLoader}
+        message="Sending otp to your email id"
+      ></Loader>
 
       <div className="min-h-screen flex items-start justify-center bg-yellow-50/40 px-4 py-12">
         <div className="bg-white rounded-2xl shadow-lg w-full max-w-4xl grid grid-cols-1 md:grid-cols-2">
@@ -426,9 +436,9 @@ export default function LoginPage() {
                   <button
                     className="col-span-1 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white font-semibold py-2 rounded-xl shadow-md hover:-translate-y-0.5 transform transition"
                     onClick={handleSendOtp}
-                    disabled={sendingOtp}
+                    disabled={sendOtpForLoginLoader}
                   >
-                    {sendingOtp ? "Sending..." : "Send OTP"}
+                    {sendOtpForLoginLoader ? "Sending..." : "Send OTP"}
                   </button>
 
                   <button

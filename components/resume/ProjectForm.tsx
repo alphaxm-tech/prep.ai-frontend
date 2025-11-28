@@ -10,9 +10,11 @@ export interface Project {
 export default function ProjectsForm({
   projects,
   setProjects,
+  validationErrors = {},
 }: {
   projects: Project[];
   setProjects: (p: Project[]) => void;
+  validationErrors?: Record<string, boolean>;
 }) {
   const [newProj, setNewProj] = useState<Project>({
     title: "",
@@ -43,6 +45,7 @@ export default function ProjectsForm({
   };
 
   const addProject = () => {
+    // require both title and description
     if (!newProj.title || !newProj.description) return;
     setProjects([...projects, newProj]);
     setNewProj({ title: "", description: "" });
@@ -73,7 +76,13 @@ export default function ProjectsForm({
   };
 
   const inputClasses =
-    "px-3 py-2 border border-gray-200 text-sm font-medium bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-200 focus:border-yellow-300";
+    "px-3 py-2 border text-sm font-medium bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-200 focus:border-yellow-300";
+
+  const baseBorder = "border-gray-200";
+  const invalidBorder = "border-red-400 ring-1 ring-red-200";
+
+  // If parent says projects are required and none exist -> section invalid
+  const sectionInvalid = !!validationErrors?.projects && projects.length === 0;
 
   const handleAIEnhance = (
     setter: (val: string) => void,
@@ -108,7 +117,17 @@ export default function ProjectsForm({
   return (
     <div>
       {/* --- Add New Project Form --- */}
-      <div className="p-4 bg-white rounded-lg shadow flex flex-col gap-3 mb-6">
+      <div
+        className={`p-4 bg-white rounded-lg shadow flex flex-col gap-3 mb-6 ${
+          sectionInvalid ? invalidBorder : baseBorder
+        }`}
+      >
+        {sectionInvalid && (
+          <div className="text-sm text-red-600">
+            Please add at least one project.
+          </div>
+        )}
+
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Project Title
@@ -119,7 +138,7 @@ export default function ProjectsForm({
               placeholder="Add a title for your project"
               value={newProj.title}
               onChange={(e) => handleNewChange("title", e.target.value)}
-              className={`flex-1 ${inputClasses}`}
+              className={`flex-1 ${inputClasses} ${baseBorder}`}
             />
             <button
               onClick={addProject}
@@ -157,6 +176,7 @@ export default function ProjectsForm({
                       )
                     }
                     className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50"
+                    type="button"
                   >
                     ✨ Polish
                   </button>
@@ -169,6 +189,7 @@ export default function ProjectsForm({
                       )
                     }
                     className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50"
+                    type="button"
                   >
                     ✂️ Make Concise
                   </button>
@@ -181,6 +202,7 @@ export default function ProjectsForm({
                       )
                     }
                     className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50"
+                    type="button"
                   >
                     🔧 More Technical
                   </button>
@@ -193,6 +215,7 @@ export default function ProjectsForm({
                       )
                     }
                     className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50"
+                    type="button"
                   >
                     🏢 Recruiter-Friendly
                   </button>
@@ -206,13 +229,17 @@ export default function ProjectsForm({
             value={newProj.description}
             onChange={(e) => handleNewChange("description", e.target.value)}
             rows={3}
-            className={`mt-2 w-full ${inputClasses}`}
+            className={`mt-2 w-full ${inputClasses} ${baseBorder}`}
           />
         </div>
       </div>
 
       {/* --- List of Added Projects --- */}
       <div className="space-y-4">
+        {sectionInvalid && projects.length === 0 ? (
+          <div className="text-sm text-red-600">No project entries yet.</div>
+        ) : null}
+
         {projects.map((proj, index) => (
           <div
             key={index}
@@ -226,7 +253,7 @@ export default function ProjectsForm({
                   onChange={(e) =>
                     setEditProj({ ...editProj, title: e.target.value })
                   }
-                  className={`w-full ${inputClasses}`}
+                  className={`w-full ${inputClasses} ${baseBorder}`}
                 />
                 <textarea
                   value={editProj.description}
@@ -234,7 +261,7 @@ export default function ProjectsForm({
                     setEditProj({ ...editProj, description: e.target.value })
                   }
                   rows={3}
-                  className={`w-full ${inputClasses}`}
+                  className={`w-full ${inputClasses} ${baseBorder}`}
                 />
               </div>
             ) : (

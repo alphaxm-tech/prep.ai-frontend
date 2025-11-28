@@ -13,9 +13,11 @@ export interface WorkExperience {
 export default function WorkExperienceForm({
   experiences,
   setExperiences,
+  validationErrors = {},
 }: {
   experiences: WorkExperience[];
   setExperiences: (v: WorkExperience[]) => void;
+  validationErrors?: Record<string, boolean>;
 }) {
   const [newExp, setNewExp] = useState<WorkExperience>({
     company: "",
@@ -49,6 +51,7 @@ export default function WorkExperienceForm({
   };
 
   const addExperience = () => {
+    // require the primary fields before adding
     if (
       !newExp.company ||
       !newExp.role ||
@@ -92,7 +95,14 @@ export default function WorkExperienceForm({
   };
 
   const inputClasses =
-    "px-3 py-2 border border-gray-200 text-sm font-medium bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-200 focus:border-yellow-300";
+    "px-3 py-2 border text-sm font-medium bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-200 focus:border-yellow-300";
+
+  const baseBorder = "border-gray-200";
+  const invalidBorder = "border-red-400 ring-1 ring-red-200";
+
+  // If parent says experiences are required and none exist -> section invalid
+  const sectionInvalid =
+    !!validationErrors?.experiences && experiences.length === 0;
 
   const handleAIEnhance = (
     setter: (val: string) => void,
@@ -127,7 +137,17 @@ export default function WorkExperienceForm({
   return (
     <div>
       {/* --- Add New Work Experience Form --- */}
-      <div className="p-4 bg-white rounded-lg shadow flex flex-col gap-3 mb-6">
+      <div
+        className={`p-4 bg-white rounded-lg shadow flex flex-col gap-3 mb-6 ${
+          sectionInvalid ? invalidBorder : baseBorder
+        }`}
+      >
+        {sectionInvalid && (
+          <div className="text-sm text-red-600">
+            Please add at least one work experience.
+          </div>
+        )}
+
         {/* Row 1: Company, Role, Duration */}
         <div className="flex items-end gap-3">
           <div className="flex-1">
@@ -138,7 +158,7 @@ export default function WorkExperienceForm({
               type="text"
               value={newExp.company}
               onChange={(e) => handleNewChange("company", e.target.value)}
-              className={`w-full ${inputClasses}`}
+              className={`w-full ${inputClasses} ${baseBorder}`}
               placeholder="Google, Microsoft"
             />
           </div>
@@ -151,7 +171,7 @@ export default function WorkExperienceForm({
               type="text"
               value={newExp.role}
               onChange={(e) => handleNewChange("role", e.target.value)}
-              className={`w-full ${inputClasses}`}
+              className={`w-full ${inputClasses} ${baseBorder}`}
               placeholder="Fullstack developer"
             />
           </div>
@@ -164,7 +184,7 @@ export default function WorkExperienceForm({
               type="text"
               value={newExp.duration}
               onChange={(e) => handleNewChange("duration", e.target.value)}
-              className={`w-full ${inputClasses}`}
+              className={`w-full ${inputClasses} ${baseBorder}`}
               placeholder="2022-2024"
             />
           </div>
@@ -254,27 +274,19 @@ export default function WorkExperienceForm({
             onChange={(e) => handleNewChange("description", e.target.value)}
             rows={3}
             placeholder="Describe your work (50–70 words)"
-            className={`w-full ${inputClasses}`}
+            className={`w-full ${inputClasses} ${baseBorder}`}
           />
         </div>
-
-        {/* Row 3: Logo */}
-        {/* <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Company Logo
-          </label>
-          <input
-            type="text"
-            value={newExp.logo}
-            onChange={(e) => handleNewChange("logo", e.target.value)}
-            className={`w-full ${inputClasses}`}
-            placeholder="https://example.com/logo.png"
-          />
-        </div> */}
       </div>
 
       {/* --- List of Added Experiences --- */}
       <div className="space-y-4">
+        {sectionInvalid && experiences.length === 0 ? (
+          <div className="text-sm text-red-600">
+            No work experience entries yet.
+          </div>
+        ) : null}
+
         {experiences.map((exp, index) => (
           <div
             key={index}
@@ -289,7 +301,7 @@ export default function WorkExperienceForm({
                     onChange={(e) =>
                       setEditExp({ ...editExp, company: e.target.value })
                     }
-                    className={`flex-1 ${inputClasses}`}
+                    className={`flex-1 ${inputClasses} ${baseBorder}`}
                   />
                   <input
                     type="text"
@@ -297,7 +309,7 @@ export default function WorkExperienceForm({
                     onChange={(e) =>
                       setEditExp({ ...editExp, role: e.target.value })
                     }
-                    className={`flex-1 ${inputClasses}`}
+                    className={`flex-1 ${inputClasses} ${baseBorder}`}
                   />
                   <input
                     type="text"
@@ -305,7 +317,7 @@ export default function WorkExperienceForm({
                     onChange={(e) =>
                       setEditExp({ ...editExp, duration: e.target.value })
                     }
-                    className={`w-40 ${inputClasses}`}
+                    className={`w-40 ${inputClasses} ${baseBorder}`}
                   />
                 </div>
                 <textarea
@@ -314,7 +326,7 @@ export default function WorkExperienceForm({
                     setEditExp({ ...editExp, description: e.target.value })
                   }
                   rows={3}
-                  className={`w-full ${inputClasses}`}
+                  className={`w-full ${inputClasses} ${baseBorder}`}
                 />
                 <input
                   type="text"
@@ -322,7 +334,7 @@ export default function WorkExperienceForm({
                   onChange={(e) =>
                     setEditExp({ ...editExp, logo: e.target.value })
                   }
-                  className={`w-full ${inputClasses}`}
+                  className={`w-full ${inputClasses} ${baseBorder}`}
                 />
               </div>
             ) : (

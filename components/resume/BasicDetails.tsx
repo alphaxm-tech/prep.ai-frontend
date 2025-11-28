@@ -23,6 +23,9 @@ type Props = {
   setLinkedinLink: (v: string) => void;
   summary: string;
   setSummary: (v: string) => void;
+
+  // new optional prop: validation flags coming from parent
+  validationErrors?: Record<string, boolean>;
 };
 
 export default function BasicDetails({
@@ -42,16 +45,15 @@ export default function BasicDetails({
   setLinkedinLink,
   summary,
   setSummary,
+  validationErrors = {},
 }: Props) {
   const [showDropdown, setShowDropdown] = useState(false);
 
-  const inputClasses =
-    "mt-2 w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-200 focus:border-yellow-300";
+  const { modifyDescription, loading } = useModifyDescription();
 
   const [keywords, setKeywords] = useState("");
-  const [tone, setTone] = useState("neutral");
-
-  const { modifyDescription, loading, error } = useModifyDescription();
+  // tone kept for potential future use; not wired currently
+  const [tone] = useState("neutral");
 
   const handleAIEnhance = async (value: string, type: string) => {
     const kwArr = keywords
@@ -68,9 +70,18 @@ export default function BasicDetails({
     setShowDropdown(false);
   };
 
+  // helper to check invalid flags
+  const invalid = (k: string) => !!validationErrors[k];
+
+  const inputBase =
+    "mt-2 w-full px-3 py-2 rounded-lg bg-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-200 focus:border-yellow-300";
+  const inputNormal = "border border-gray-300";
+  const inputInvalid = "border-red-400 ring-1 ring-red-200";
+
   return (
     <>
-      <Loader show={loading} message="Modifying your text with AI"></Loader>
+      <Loader show={loading} message="Modifying your text with AI" />
+
       {/* Full Name + Location */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
@@ -80,10 +91,17 @@ export default function BasicDetails({
           <input
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
-            className={inputClasses}
+            className={`${inputBase} ${
+              invalid("fullName") ? inputInvalid : inputNormal
+            }`}
             placeholder="e.g. Vaishnavi"
+            aria-invalid={invalid("fullName")}
           />
+          {invalid("fullName") && (
+            <p className="mt-1 text-xs text-red-600">Full name is required.</p>
+          )}
         </div>
+
         <div>
           <label className="block text-sm font-medium text-gray-700">
             Location
@@ -91,9 +109,15 @@ export default function BasicDetails({
           <input
             value={location}
             onChange={(e) => setLocation(e.target.value)}
-            className={inputClasses}
+            className={`${inputBase} ${
+              invalid("location") ? inputInvalid : inputNormal
+            }`}
             placeholder="e.g. New York"
+            aria-invalid={invalid("location")}
           />
+          {invalid("location") && (
+            <p className="mt-1 text-xs text-red-600">Location is required.</p>
+          )}
         </div>
       </div>
 
@@ -106,9 +130,15 @@ export default function BasicDetails({
           <input
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className={inputClasses}
+            className={`${inputBase} ${
+              invalid("email") ? inputInvalid : inputNormal
+            }`}
             placeholder="e.g. name@example.com"
+            aria-invalid={invalid("email")}
           />
+          {invalid("email") && (
+            <p className="mt-1 text-xs text-red-600">Email is required.</p>
+          )}
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700">
@@ -117,9 +147,15 @@ export default function BasicDetails({
           <input
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            className={inputClasses}
+            className={`${inputBase} ${
+              invalid("phone") ? inputInvalid : inputNormal
+            }`}
             placeholder="e.g. 0123456789"
+            aria-invalid={invalid("phone")}
           />
+          {invalid("phone") && (
+            <p className="mt-1 text-xs text-red-600">Phone is required.</p>
+          )}
         </div>
       </div>
 
@@ -135,6 +171,7 @@ export default function BasicDetails({
             <button
               onClick={() => setShowDropdown((prev) => !prev)}
               className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium text-gray-800 bg-gradient-to-r from-purple-100 via-pink-100 to-orange-100 shadow-sm hover:shadow-md transition-transform transform hover:-translate-y-0.5 hover:brightness-105"
+              type="button"
             >
               <SparklesIcon className="w-3 h-3 text-pink-500" /> AI Enhance
             </button>
@@ -144,24 +181,28 @@ export default function BasicDetails({
                 <button
                   onClick={() => handleAIEnhance(summary, "polish")}
                   className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50"
+                  type="button"
                 >
                   ✨ Polish
                 </button>
                 <button
                   onClick={() => handleAIEnhance(summary, "concise")}
                   className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50"
+                  type="button"
                 >
                   ✂️ Make Concise
                 </button>
                 <button
                   onClick={() => handleAIEnhance(summary, "technical")}
                   className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50"
+                  type="button"
                 >
                   🔧 More Technical
                 </button>
                 <button
                   onClick={() => handleAIEnhance(summary, "recruiter")}
                   className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50"
+                  type="button"
                 >
                   🏢 Recruiter-Friendly
                 </button>
@@ -174,9 +215,15 @@ export default function BasicDetails({
           value={summary}
           onChange={(e) => setSummary(e.target.value)}
           rows={2}
-          className="mt-2 w-full p-3 border border-gray-300 rounded-lg bg-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-200 focus:border-yellow-300"
+          className={`${inputBase} ${
+            invalid("summary") ? inputInvalid : inputNormal
+          } mt-2`}
           placeholder="Write your objective"
+          aria-invalid={invalid("summary")}
         />
+        {invalid("summary") && (
+          <p className="mt-1 text-xs text-red-600">Objective is required.</p>
+        )}
       </div>
 
       {/* Portfolio + Github */}
@@ -188,7 +235,7 @@ export default function BasicDetails({
           <input
             value={portfolioLink}
             onChange={(e) => setPortfolioLink(e.target.value)}
-            className={inputClasses}
+            className={`${inputBase} ${inputNormal}`}
             placeholder="https://yourportfolio.com"
           />
         </div>
@@ -199,7 +246,7 @@ export default function BasicDetails({
           <input
             value={githubLink}
             onChange={(e) => setGithubLink(e.target.value)}
-            className={inputClasses}
+            className={`${inputBase} ${inputNormal}`}
             placeholder="https://github.com/username"
           />
         </div>
@@ -214,7 +261,7 @@ export default function BasicDetails({
           <input
             value={linkedinLink}
             onChange={(e) => setLinkedinLink(e.target.value)}
-            className={inputClasses}
+            className={`${inputBase} ${inputNormal}`}
             placeholder="https://linkedin.com/in/username"
           />
         </div>

@@ -1,4 +1,3 @@
-// components/resume/SkillsPanel.tsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
 export function VerticalAccordion({
@@ -52,17 +51,22 @@ function uid(prefix = "id") {
  * SkillsPanel now fully controlled via props:
  * - skills, setSkills
  * - softSkills, setSoftSkills
+ *
+ * New prop:
+ * - validation?: { skillsMissing?: boolean }  -> when true, highlights skills input area
  */
 export function SkillsPanel({
   skills,
   setSkills,
   softSkills,
   setSoftSkills,
+  validation,
 }: {
   skills: Tag[];
   setSkills: (t: Tag[]) => void;
   softSkills: Tag[];
   setSoftSkills: (t: Tag[]) => void;
+  validation?: { skillsMissing?: boolean };
 }) {
   // input controls
   const [inputSkill, setInputSkill] = useState("");
@@ -192,11 +196,18 @@ export function SkillsPanel({
     [skills.length, softSkills.length]
   );
 
+  // dynamic classes when validation indicates skillsMissing
+  const skillsContainerBorderClass = validation?.skillsMissing
+    ? "border-red-300 ring-1 ring-red-200"
+    : "border-gray-100";
+
   return (
     <div className="w-full">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         {/* Left: Skills */}
-        <div className="relative p-4 rounded-xl border border-gray-100 bg-white min-h-[180px]">
+        <div
+          className={`relative p-4 rounded-xl border ${skillsContainerBorderClass} bg-white min-h-[180px]`}
+        >
           <div className="flex items-start justify-between">
             <div>
               <h4 className="text-sm font-semibold text-gray-800">Skills</h4>
@@ -215,7 +226,9 @@ export function SkillsPanel({
               onChange={(e) => setInputSkill(e.target.value)}
               onKeyDown={(e) => handleKeyAdd(e, false)}
               placeholder="e.g. React, TypeScript"
-              className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:border-yellow-300"
+              className={`w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:border-yellow-300 ${
+                validation?.skillsMissing ? "border-red-400" : ""
+              }`}
             />
 
             {/* Dropdown + button on second line */}
@@ -264,7 +277,15 @@ export function SkillsPanel({
 
           <div className="mt-3 flex flex-wrap gap-2">
             {skills.length === 0 && (
-              <div className="text-xs text-gray-400">No skills added yet</div>
+              <div
+                className={`text-xs ${
+                  validation?.skillsMissing ? "text-red-600" : "text-gray-400"
+                }`}
+              >
+                {validation?.skillsMissing
+                  ? "Please add at least one technical skill"
+                  : "No skills added yet"}
+              </div>
             )}
 
             {skills.map((t) =>

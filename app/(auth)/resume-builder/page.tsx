@@ -1,7 +1,6 @@
-// app/(your-route)/resume-builder/page.tsx
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { resumeService } from "@/utils/services/resume.service";
 import {
@@ -17,7 +16,7 @@ import WorkExperienceForm, {
 } from "@/components/resume/WorkExperienceForm";
 import ProjectsForm, { Project } from "@/components/resume/ProjectForm";
 
-// import CreativeResumeTemplate from "@/components/resume-formats/CreativeResume";   wdeew
+// resume templates (assumed paths - adjust if required)
 import CreativeResumeTemplate from "../../../components/Resume-formats/CreativeResume";
 import ProfessionalResumeTemplateVertical from "../../../components/Resume-formats/ProfessionalResume";
 import ModernResumeTemplate from "../../../components/Resume-formats/ModernResume";
@@ -30,45 +29,60 @@ type TemplateKey = "modern" | "classic" | "creative" | "minimal" | "standard";
  * Dummy defaults used to populate the inline preview when user hasn't entered data.
  */
 const DEFAULT_SAMPLE = {
-  fullName: "Sanket N.",
-  title: "Fullstack Blockchain Developer",
-  email: "sanket@example.com",
-  phone: "9130859725",
-  location: "New York, USA",
+  fullName: "Your Full Name",
+  title: "Your Job Title (e.g., Fullstack Blockchain Developer)",
+  email: "your.email@example.com",
+  phone: "0000000000",
+  location: "Your City, Country",
   objective:
-    "Fullstack blockchain developer focused on building reliable systems. Experience with TypeScript, Go, and Solidity. Passionate about developer experience and high-quality production software.",
-  portfolioLink: "https://yourportfolio.com",
-  githubLink: "https://github.com/username",
-  linkedinLink: "https://linkedin.com/in/username",
-  technicalSkills: ["React", "TypeScript", "Go", "Solidity"],
-  softSkills: ["Communication", "Ownership", "Curiosity"],
+    "Write a short 2–3 line summary about your experience, strengths, and the type of work you're looking for.",
+  portfolioLink: "https://your-portfolio-link.com",
+  githubLink: "https://github.com/your-username",
+  linkedinLink: "https://linkedin.com/in/your-profile",
+
+  technicalSkills: [
+    "Skill 1 (e.g., React)",
+    "Skill 2 (e.g., TypeScript)",
+    "Skill 3 (e.g., Solidity)",
+  ],
+
+  softSkills: [
+    "Soft Skill 1 (e.g., Communication)",
+    "Soft Skill 2 (e.g., Ownership)",
+    "Soft Skill 3 (e.g., Curiosity)",
+  ],
+
   educations: [
     {
-      level: "B.Tech",
-      institute: "IIT Bombay",
-      location: "Mumbai",
-      duration: "2018–2022",
-      grade: "8.5",
+      level: "Degree (e.g., B.Tech)",
+      institute: "Your College Name",
+      location: "City",
+      duration: "Start–End (e.g., 2019–2023)",
+      grade: "CGPA/Percentage (e.g., 8.0)",
     },
   ],
+
   experiences: [
     {
-      company: "Acme Corp",
-      role: "Fullstack Developer",
-      duration: "2023 - Present",
+      company: "Company Name",
+      role: "Your Role (e.g., Fullstack Developer)",
+      duration: "2023 – Present",
       description:
-        "Built high-throughput services and front-end features. Improved observability and reduced incident MTTR.",
+        "Describe your impact. Example: Built features, improved performance, collaborated across teams, etc.",
       logo: "",
     },
   ],
+
   projects: [
     {
-      title: "Resume Builder",
+      title: "Project Title",
       description:
-        "A resume builder with live preview and clean printable templates. Focused on UX and developer productivity.",
+        "Describe what the project does, why you built it, and what tech you used.",
     },
   ],
 };
+
+const MAX_RESUMES = 5;
 
 export default function ResumeBuilderPage() {
   // --- MAIN LIFTED STATE (single source of truth for basic details) ---
@@ -127,6 +141,20 @@ export default function ResumeBuilderPage() {
       createdAt: new Date().toISOString(),
     },
   ]);
+
+  // quota derived values
+  const usedResumes = resumes.length;
+  const remainingResumes = Math.max(0, MAX_RESUMES - usedResumes);
+  const canCreateMore = usedResumes < MAX_RESUMES;
+
+  // small state for quota error display
+  const [quotaError, setQuotaError] = useState<string | null>(null);
+
+  // Validation state
+  // keys represent logical sections/fields; true => invalid (missing)
+  const [validationErrors, setValidationErrors] = useState<
+    Record<string, boolean>
+  >({});
 
   // assemble live data for templates (actual user-entered values)
   const assembledData = useMemo(
@@ -241,6 +269,131 @@ export default function ResumeBuilderPage() {
     }
   };
 
+  // Validation rules (you can adjust which fields are required)
+  const validateAll = () => {
+    const errors: Record<string, boolean> = {};
+
+    // Required simple fields
+    errors.fullName = !(fullName && fullName.trim().length > 0);
+    errors.email = !(email && email.trim().length > 0);
+    errors.phone = !(phone && phone.trim().length > 0);
+    errors.location = !(location && location.trim().length > 0);
+    errors.summary = !(summary && summary.trim().length > 0);
+
+    // Collections: require at least one item
+    errors.technicalSkills = !(technicalSkills && technicalSkills.length > 0);
+    errors.educations = !(educations && educations.length > 0);
+    errors.experiences = !(experiences && experiences.length > 0);
+    errors.projects = !(projects && projects.length > 0);
+
+    return errors;
+  };
+
+  const hasAnyErrors = (errors: Record<string, boolean>) =>
+    Object.values(errors).some((v) => v === true);
+
+  // Called when user clicks the top-level "Save Resume" button
+  const handleSaveClick = () => {
+    // reset quota error each time user attempts save
+    setQuotaError(null);
+
+    // check quota first
+    if (!canCreateMore) {
+      setQuotaError(
+        `Resume limit reached (${usedResumes}/${MAX_RESUMES}). Delete an existing resume to create a new one.`
+      );
+      return;
+    }
+
+    const errors = validateAll();
+    setValidationErrors(errors);
+
+    if (hasAnyErrors(errors)) {
+      // If invalid, DO NOT open preview modal; user must fix fields.
+      // Optionally we could scroll to first invalid — omitted for brevity.
+      return;
+    }
+
+    // All good: open modal for clean preview and final save
+    setShowPreviewModal(true);
+  };
+
+  // Called from modal Save button (final commit)
+  const handleFinalSave = async () => {
+    // reset quota error
+    setQuotaError(null);
+
+    // final quota check (race-safety)
+    if (!canCreateMore) {
+      setQuotaError(
+        `Unable to save — resume limit reached (${usedResumes}/${MAX_RESUMES}).`
+      );
+      return;
+    }
+
+    const errors = validateAll();
+    setValidationErrors(errors);
+    if (hasAnyErrors(errors)) {
+      // Shouldn't happen because modal only opens when valid, but be safe
+      return;
+    }
+
+    try {
+      // Replace with your real save endpoint. Use resumeService.saveResume if available.
+      if (typeof (resumeService as any).saveResume === "function") {
+        await (resumeService as any).saveResume({
+          format: resumeFormat,
+          payload: assembledData,
+        });
+      } else {
+        // fallback to fetch if service not present
+        await fetch("/api/resumes", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            format: resumeFormat,
+            payload: assembledData,
+          }),
+        });
+      }
+
+      // Add the newly saved resume to local list (so UI shows updated counts)
+      setResumes((prev) => [
+        ...prev,
+        {
+          id: `r${Date.now()}`,
+          title: assembledData.fullName
+            ? `${assembledData.fullName} Resume`
+            : "Untitled Resume",
+          createdAt: new Date().toISOString(),
+        },
+      ]);
+
+      // Optionally show success toast or update resumes list
+      setShowPreviewModal(false);
+    } catch (err) {
+      console.error("Failed to save resume", err);
+      // show error UI/toast as needed
+    }
+  };
+
+  // helper to compute whether Save (final) should be disabled (real-time)
+  const currentValidation = useMemo(
+    () => validateAll(),
+    [
+      fullName,
+      email,
+      phone,
+      location,
+      summary,
+      technicalSkills,
+      educations,
+      experiences,
+      projects,
+    ]
+  );
+  const canSaveNow = !hasAnyErrors(currentValidation);
+
   return (
     <div className="min-h-screen bg-white py-8">
       <main className="w-full">
@@ -256,10 +409,24 @@ export default function ResumeBuilderPage() {
             </p>
           </div>
 
-          <ResumeDropdown
-            resumes={resumes}
-            onSelect={(r) => console.log("select", r)}
-          />
+          <div className="flex items-center gap-4">
+            <ResumeDropdown
+              resumes={resumes}
+              onSelect={(r) => console.log("select", r)}
+            />
+
+            {/* Quota display */}
+            <div className="text-sm text-gray-600">
+              <div className="flex items-center gap-2">
+                <div className="font-medium text-gray-800">
+                  {usedResumes}/{MAX_RESUMES} resumes
+                </div>
+                <div className="text-xs text-gray-500">
+                  ({remainingResumes} left)
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-6 max-w-[1550px] mx-auto">
@@ -284,6 +451,7 @@ export default function ResumeBuilderPage() {
                   setLinkedinLink={setLinkedinLink}
                   summary={summary}
                   setSummary={setSummary}
+                  validationErrors={validationErrors}
                 />
               </VerticalAccordion>
 
@@ -301,6 +469,9 @@ export default function ResumeBuilderPage() {
                       React.SetStateAction<SkillTag[]>
                     >
                   }
+                  validation={{
+                    skillsMissing: !!validationErrors.technicalSkills,
+                  }}
                 />
               </VerticalAccordion>
 
@@ -308,6 +479,7 @@ export default function ResumeBuilderPage() {
                 <EducationForm
                   educations={educations}
                   setEducations={setEducations}
+                  validationErrors={validationErrors}
                 />
               </VerticalAccordion>
 
@@ -315,11 +487,16 @@ export default function ResumeBuilderPage() {
                 <WorkExperienceForm
                   experiences={experiences}
                   setExperiences={setExperiences}
+                  validationErrors={validationErrors}
                 />
               </VerticalAccordion>
 
               <VerticalAccordion isOpenProp={false} title="Project Details">
-                <ProjectsForm projects={projects} setProjects={setProjects} />
+                <ProjectsForm
+                  projects={projects}
+                  setProjects={setProjects}
+                  validationErrors={validationErrors}
+                />
               </VerticalAccordion>
             </div>
           </div>
@@ -357,8 +534,22 @@ export default function ResumeBuilderPage() {
                     </select>
 
                     <button
-                      onClick={() => setShowPreviewModal(true)}
-                      className="px-3 py-2 rounded-lg bg-yellow-400 text-white font-bold text-sm"
+                      onClick={handleSaveClick}
+                      className={`px-3 py-2 rounded-lg text-white font-bold text-sm ${
+                        !canCreateMore || hasAnyErrors(validationErrors)
+                          ? "bg-gray-300 cursor-not-allowed"
+                          : "bg-yellow-400"
+                      }`}
+                      aria-disabled={
+                        !canCreateMore || hasAnyErrors(validationErrors)
+                      }
+                      title={
+                        !canCreateMore
+                          ? `Resume limit reached (${usedResumes}/${MAX_RESUMES})`
+                          : hasAnyErrors(validationErrors)
+                          ? "Fill required fields to save"
+                          : "Save Resume"
+                      }
                     >
                       Save Resume
                     </button>
@@ -388,14 +579,16 @@ export default function ResumeBuilderPage() {
                     {/* Buttons grouped on the right */}
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => {
-                          /* call your save handler here */
-                        }}
+                        onClick={handleFinalSave}
                         aria-label="Save resume"
                         title="Save resume"
-                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-yellow-400 hover:bg-yellow-450 focus:bg-yellow-500 text-white text-sm font-semibold shadow-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-yellow-300"
+                        disabled={!canSaveNow || !canCreateMore}
+                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-white text-sm font-semibold shadow-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-yellow-300 ${
+                          canSaveNow && canCreateMore
+                            ? "bg-yellow-400 hover:bg-yellow-450 focus:bg-yellow-500"
+                            : "bg-gray-300 cursor-not-allowed"
+                        }`}
                       >
-                        {/* optional icon (SVG) */}
                         <svg
                           className="w-4 h-4"
                           xmlns="http://www.w3.org/2000/svg"
@@ -432,6 +625,28 @@ export default function ResumeBuilderPage() {
           </div>
         </div>
       </main>
+
+      {/* Helpful inline validation & quota hints */}
+      <div className="fixed bottom-6 right-6 space-y-2">
+        {hasAnyErrors(validationErrors) && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-md text-sm shadow-sm">
+            Please fill required fields highlighted in red before saving.
+          </div>
+        )}
+
+        {quotaError && (
+          <div className="bg-orange-50 border border-orange-200 text-orange-700 px-3 py-2 rounded-md text-sm shadow-sm">
+            {quotaError}
+          </div>
+        )}
+
+        {!quotaError && !hasAnyErrors(validationErrors) && !canCreateMore && (
+          <div className="bg-orange-50 border border-orange-200 text-orange-700 px-3 py-2 rounded-md text-sm shadow-sm">
+            You've reached the resume creation limit ({usedResumes}/
+            {MAX_RESUMES}).
+          </div>
+        )}
+      </div>
     </div>
   );
 }

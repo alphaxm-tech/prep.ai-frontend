@@ -1,11 +1,11 @@
 "use client";
 
-// import { useRouter } from "next/router";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
-  // const router = useRouter();
+  const router = useRouter();
 
   const navLinks = [
     "Home",
@@ -17,7 +17,7 @@ export function Header() {
   ];
 
   const handleAdminNavigation = () => {
-    // router.push("/admin/home");
+    router.push("/admin/home");
   };
   return (
     <>
@@ -32,7 +32,7 @@ export function Header() {
              hover:bg-white/30 hover:shadow-lg transition-all duration-300"
           onClick={handleAdminNavigation}
         >
-          Admin User
+          Admin
         </button>
 
         {/* Mobile Hamburger */}

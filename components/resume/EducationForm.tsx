@@ -12,9 +12,11 @@ export interface Education {
 export default function EducationForm({
   educations,
   setEducations,
+  validationErrors = {},
 }: {
   educations: Education[];
   setEducations: (e: Education[]) => void;
+  validationErrors?: Record<string, boolean>;
 }) {
   const [newEdu, setNewEdu] = useState<Education>({
     level: "",
@@ -32,6 +34,7 @@ export default function EducationForm({
   };
 
   const addEducation = () => {
+    // prevent adding completely empty record
     if (
       !newEdu.level &&
       !newEdu.institute &&
@@ -76,12 +79,29 @@ export default function EducationForm({
   };
 
   const inputClasses =
-    "px-3 py-2 border border-gray-200 text-sm font-medium bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-200 focus:border-yellow-300";
+    "px-3 py-2 border text-sm font-medium bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-200 focus:border-yellow-300";
+
+  const baseBorder = "border-gray-200";
+  const invalidBorder = "border-red-400 ring-1 ring-red-200";
+
+  const sectionInvalid =
+    !!validationErrors?.educations && educations.length === 0;
 
   return (
     <div>
       {/* --- Add New Education Form --- */}
-      <div className="mb-6 p-4 bg-white rounded-lg shadow space-y-3">
+      <div
+        className={`mb-6 p-4 bg-white rounded-lg shadow space-y-3 ${
+          sectionInvalid ? invalidBorder : baseBorder
+        }`}
+      >
+        {/* show error message when whole section is required but empty */}
+        {sectionInvalid && (
+          <div className="text-sm text-red-600 mb-1">
+            Please add at least one education.
+          </div>
+        )}
+
         {/* First line: Degree + Institute + Location */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
@@ -93,7 +113,7 @@ export default function EducationForm({
               placeholder="B.Tech"
               value={newEdu.level}
               onChange={(e) => handleNewChange("level", e.target.value)}
-              className={`w-full ${inputClasses}`}
+              className={`w-full ${inputClasses} ${baseBorder}`}
             />
           </div>
 
@@ -106,7 +126,7 @@ export default function EducationForm({
               placeholder="IIT Bombay"
               value={newEdu.institute}
               onChange={(e) => handleNewChange("institute", e.target.value)}
-              className={`w-full ${inputClasses}`}
+              className={`w-full ${inputClasses} ${baseBorder}`}
             />
           </div>
 
@@ -119,7 +139,7 @@ export default function EducationForm({
               placeholder="Mumbai"
               value={newEdu.location}
               onChange={(e) => handleNewChange("location", e.target.value)}
-              className={`w-full ${inputClasses}`}
+              className={`w-full ${inputClasses} ${baseBorder}`}
             />
           </div>
         </div>
@@ -135,7 +155,7 @@ export default function EducationForm({
               placeholder="2018–2022"
               value={newEdu.duration}
               onChange={(e) => handleNewChange("duration", e.target.value)}
-              className={`w-full ${inputClasses}`}
+              className={`w-full ${inputClasses} ${baseBorder}`}
             />
           </div>
 
@@ -148,7 +168,7 @@ export default function EducationForm({
               placeholder="8.5"
               value={newEdu.grade}
               onChange={(e) => handleNewChange("grade", e.target.value)}
-              className={`w-full ${inputClasses}`}
+              className={`w-full ${inputClasses} ${baseBorder}`}
             />
           </div>
 
@@ -167,6 +187,10 @@ export default function EducationForm({
 
       {/* --- List of Added Educations --- */}
       <div className="space-y-4">
+        {educations.length === 0 && sectionInvalid ? (
+          <div className="text-sm text-red-600">No education entries yet.</div>
+        ) : null}
+
         {educations.map((edu, index) => (
           <div
             key={index}
@@ -180,7 +204,7 @@ export default function EducationForm({
                   onChange={(e) =>
                     setEditEdu({ ...editEdu, level: e.target.value })
                   }
-                  className={`w-full sm:w-1/4 ${inputClasses}`}
+                  className={`w-full sm:w-1/4 ${inputClasses} ${baseBorder}`}
                 />
                 <input
                   type="text"
@@ -188,7 +212,7 @@ export default function EducationForm({
                   onChange={(e) =>
                     setEditEdu({ ...editEdu, institute: e.target.value })
                   }
-                  className={`w-full sm:w-1/4 ${inputClasses}`}
+                  className={`w-full sm:w-1/4 ${inputClasses} ${baseBorder}`}
                 />
                 <input
                   type="text"
@@ -196,7 +220,7 @@ export default function EducationForm({
                   onChange={(e) =>
                     setEditEdu({ ...editEdu, location: e.target.value })
                   }
-                  className={`w-full sm:w-1/6 ${inputClasses}`}
+                  className={`w-full sm:w-1/6 ${inputClasses} ${baseBorder}`}
                 />
                 <input
                   type="text"
@@ -204,7 +228,7 @@ export default function EducationForm({
                   onChange={(e) =>
                     setEditEdu({ ...editEdu, duration: e.target.value })
                   }
-                  className={`w-full sm:w-1/6 ${inputClasses}`}
+                  className={`w-full sm:w-1/6 ${inputClasses} ${baseBorder}`}
                 />
                 <input
                   type="text"
@@ -212,7 +236,7 @@ export default function EducationForm({
                   onChange={(e) =>
                     setEditEdu({ ...editEdu, grade: e.target.value })
                   }
-                  className={`w-full sm:w-1/6 ${inputClasses}`}
+                  className={`w-full sm:w-1/6 ${inputClasses} ${baseBorder}`}
                 />
               </div>
             ) : (
