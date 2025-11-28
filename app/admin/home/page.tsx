@@ -1,11 +1,11 @@
-// AdminLanding.tsx
+// app/admin/home/page.tsx
 "use client";
 
 import AdminCollegeCard from "@/components/AdminCollegeCard";
 import React, { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 
-export type College = {
+type College = {
   id: string;
   name: string;
   city: string;
@@ -20,7 +20,9 @@ export type College = {
   active?: boolean;
 };
 
-export const MOCK_COLLEGES: College[] = [
+// NOTE: DO NOT export this const from a page file in app/ - Next treats extra exports as invalid page exports.
+// If you need to reuse MOCK_COLLEGES in multiple places, move it to e.g. `lib/mockData.ts` and import it.
+const MOCK_COLLEGES: College[] = [
   {
     id: "c1",
     name: "IIT Bombay",
@@ -101,7 +103,6 @@ export default function AdminLanding() {
   }, [colleges, cityFilter, query]);
 
   function handleAddCollege() {
-    // alert("Open create college modal (stub).");
     router.push("/admin/add-colleg/college");
   }
 
