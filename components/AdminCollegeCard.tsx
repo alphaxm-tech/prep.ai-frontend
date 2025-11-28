@@ -1,4 +1,7 @@
-import { College } from "@/app/admin/home/page";
+// components/AdminCollegeCard.tsx
+"use client";
+
+import type { College } from "@/lib/college";
 
 export default function AdminCollegeCard({
   college,
