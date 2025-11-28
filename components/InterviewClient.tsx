@@ -17,7 +17,12 @@ import {
   SpeakerXMarkIcon,
 } from "@heroicons/react/24/solid";
 
-import { useSearchParams } from "next/navigation";
+/**
+ * NOTE:
+ * We intentionally DO NOT use `useSearchParams` here because it causes Next's
+ * CSR-bailout / Suspense errors during build in some setups. Instead we read
+ * `window.location.search` on mount (client-only), which is robust and simple.
+ */
 
 type Q = {
   id: number;
@@ -175,11 +180,30 @@ const DEFAULT_QUESTIONS: Q[] = [
   { id: 5, text: "Tell me about a production incident you handled." },
 ];
 
+function parseQueryParams(search: string) {
+  try {
+    const sp = new URLSearchParams(search);
+    return {
+      company: sp.get("company") ?? "",
+      title: sp.get("title") ?? "",
+    };
+  } catch {
+    return { company: "", title: "" };
+  }
+}
+
 export default function InterviewClient() {
-  // client-only hook — safe because this entire file is a client component
-  const searchParams = useSearchParams();
-  const companyParam = searchParams?.get("company") ?? "";
-  const titleParam = searchParams?.get("title") ?? "";
+  // We'll store company/title in state and set them on mount (client-only).
+  const [companyParam, setCompanyParam] = useState<string>("");
+  const [titleParam, setTitleParam] = useState<string>("");
+
+  // read query params on mount (client environment)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const { company, title } = parseQueryParams(window.location.search || "");
+    setCompanyParam(company);
+    setTitleParam(title);
+  }, []);
 
   const companyKey = useMemo(() => {
     if (!companyParam) return null;
@@ -202,6 +226,7 @@ export default function InterviewClient() {
 
   const [countdown, setCountdown] = useState<number | null>(3);
 
+  // reset when company/title changes (we set these on mount)
   useEffect(() => {
     setCurrentIndex(0);
     setStarted(false);
@@ -321,7 +346,6 @@ export default function InterviewClient() {
                 </div>
               </div>
 
-              {/* safe preview box (avoid referencing local /mnt/data paths) */}
               <div className="hidden md:flex items-center">
                 <div className="w-36 h-12 rounded-lg overflow-hidden border border-gray-100 shadow-sm bg-gradient-to-br from-yellow-100 to-yellow-200 flex items-center justify-center text-sm text-yellow-800">
                   Preview
