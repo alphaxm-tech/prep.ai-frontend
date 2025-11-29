@@ -45,8 +45,7 @@ export default function ProjectsForm({
   };
 
   const addProject = () => {
-    // require both title and description
-    if (!newProj.title || !newProj.description) return;
+    // Validation removed — allow adding any project (including empty fields)
     setProjects([...projects, newProj]);
     setNewProj({ title: "", description: "" });
   };
@@ -79,10 +78,6 @@ export default function ProjectsForm({
     "px-3 py-2 border text-sm font-medium bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-200 focus:border-yellow-300";
 
   const baseBorder = "border-gray-200";
-  const invalidBorder = "border-red-400 ring-1 ring-red-200";
-
-  // If parent says projects are required and none exist -> section invalid
-  const sectionInvalid = !!validationErrors?.projects && projects.length === 0;
 
   const handleAIEnhance = (
     setter: (val: string) => void,
@@ -118,16 +113,8 @@ export default function ProjectsForm({
     <div>
       {/* --- Add New Project Form --- */}
       <div
-        className={`p-4 bg-white rounded-lg shadow flex flex-col gap-3 mb-6 ${
-          sectionInvalid ? invalidBorder : baseBorder
-        }`}
+        className={`p-4 bg-white rounded-lg shadow flex flex-col gap-3 mb-6 ${baseBorder}`}
       >
-        {sectionInvalid && (
-          <div className="text-sm text-red-600">
-            Please add at least one project.
-          </div>
-        )}
-
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Project Title
@@ -236,10 +223,6 @@ export default function ProjectsForm({
 
       {/* --- List of Added Projects --- */}
       <div className="space-y-4">
-        {sectionInvalid && projects.length === 0 ? (
-          <div className="text-sm text-red-600">No project entries yet.</div>
-        ) : null}
-
         {projects.map((proj, index) => (
           <div
             key={index}

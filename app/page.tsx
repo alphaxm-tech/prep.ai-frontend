@@ -41,7 +41,7 @@ const InputWithIcon = memo(function InputWithIcon({
         value={value}
         placeholder={placeholder}
         onChange={handleChange}
-        className="w-full px-4 py-2 pl-10 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-400 outline-none"
+        className="w-full px-4 py-3 pl-10 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-400 outline-none text-sm sm:text-base"
         {...rest}
       />
     </div>
@@ -166,14 +166,15 @@ export default function LoginPage() {
 
   // Left column: AI emphasis panel (yellow-themed)
   const HeroIllustration = () => (
-    <div className="hidden md:flex flex-col items-center justify-center gap-6 p-8">
+    <div className="flex flex-col items-center justify-center gap-4 p-6">
       <svg
-        width="220"
-        height="220"
+        width="160"
+        height="160"
         viewBox="0 0 220 220"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
         className="drop-shadow-md"
+        aria-hidden
       >
         <rect
           x="0"
@@ -198,10 +199,10 @@ export default function LoginPage() {
       </svg>
 
       <div className="text-center">
-        <h3 className="text-lg font-semibold text-gray-800">
+        <h3 className="text-base font-semibold text-gray-800">
           AI-powered career portal
         </h3>
-        <p className="text-sm text-gray-500">
+        <p className="text-xs text-gray-500">
           Resumes curated with AI • Conversational AI interviews • Smart job
           matching
         </p>
@@ -260,20 +261,25 @@ export default function LoginPage() {
         message="Sending otp to your email id"
       ></Loader>
 
-      <div className="min-h-screen flex items-start justify-center bg-yellow-50/40 px-4 py-12">
-        <div className="bg-white rounded-2xl shadow-lg w-full max-w-4xl grid grid-cols-1 md:grid-cols-2">
-          {/* Left: Illustration & AI selling points */}
+      <div className="min-h-screen flex items-start justify-center bg-yellow-50/40 px-4 py-8 sm:py-12">
+        <div className="bg-white rounded-2xl shadow-lg w-full max-w-4xl overflow-hidden grid grid-cols-1 md:grid-cols-2">
+          {/* Small-screen hero: show above form on mobile */}
+          <div className="md:hidden border-b border-gray-100">
+            <HeroIllustration />
+          </div>
+
+          {/* Left: Illustration & AI selling points for md+ */}
           <div className="hidden md:flex flex-col justify-center p-8 border-r border-gray-100">
             <HeroIllustration />
           </div>
 
           {/* Right: Form card */}
-          <div className="p-8">
+          <div className="p-6 sm:p-8">
             <div className="text-center mb-4">
-              <h1 className="text-3xl font-bold text-gray-800">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
                 AI prep <span className="text-yellow-500">buddy</span>
               </h1>
-              <p className="text-gray-500 mt-2">
+              <p className="text-gray-500 mt-2 text-sm sm:text-base">
                 {mode === "signup"
                   ? "Create your account"
                   : mode === "otp"
@@ -283,9 +289,9 @@ export default function LoginPage() {
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-2 mb-6 justify-center">
+            <div className="flex flex-wrap gap-2 mb-6 justify-center">
               <button
-                className={`px-3 py-1 rounded-full text-sm font-medium ${
+                className={`px-3 py-2 rounded-full text-sm font-medium focus:outline-none focus:ring-2 focus:ring-yellow-300 ${
                   mode === "signin"
                     ? "bg-yellow-400 text-white"
                     : "bg-yellow-50 text-yellow-600"
@@ -296,7 +302,7 @@ export default function LoginPage() {
                 Email
               </button>
               <button
-                className={`px-3 py-1 rounded-full text-sm font-medium ${
+                className={`px-3 py-2 rounded-full text-sm font-medium focus:outline-none focus:ring-2 focus:ring-yellow-300 ${
                   mode === "otp"
                     ? "bg-yellow-400 text-white"
                     : "bg-yellow-50 text-yellow-600"
@@ -307,7 +313,7 @@ export default function LoginPage() {
                 OTP
               </button>
               <button
-                className={`px-3 py-1 rounded-full text-sm font-medium ${
+                className={`px-3 py-2 rounded-full text-sm font-medium focus:outline-none focus:ring-2 focus:ring-yellow-300 ${
                   mode === "signup"
                     ? "bg-yellow-400 text-white"
                     : "bg-yellow-50 text-yellow-600"
@@ -317,16 +323,13 @@ export default function LoginPage() {
               >
                 Sign Up
               </button>
+
+              {/* Enter without login: smaller on mobile so it doesn't dominate */}
               <button
-                className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  mode === "signin"
-                    ? "bg-yellow-400 text-white"
-                    : "bg-yellow-50 text-yellow-600"
-                }`}
+                className="px-3 py-2 rounded-full text-sm font-medium bg-yellow-50 text-yellow-600"
                 onClick={() => router.push("/home")}
-                aria-pressed={mode === "signin"}
               >
-                Enter without login
+                Enter
               </button>
             </div>
 
@@ -381,6 +384,26 @@ export default function LoginPage() {
                 </div>
               )}
 
+              {mode === "signup" && (
+                <>
+                  {/* ADD THIS: Password for signup */}
+                  <div className="mt-3">
+                    <label className="block text-sm font-medium text-gray-600">
+                      Password
+                    </label>
+                    <InputWithIcon
+                      name="password"
+                      autoComplete="new-password"
+                      icon={<LockClosedIcon className="h-5 w-5" />}
+                      type="password"
+                      placeholder="Create a strong password"
+                      value={password}
+                      onChange={(e: any) => setPassword(e.target.value)}
+                    />
+                  </div>
+                </>
+              )}
+
               {mode === "signin" && (
                 <div>
                   <label className="block text-sm font-medium text-gray-600">
@@ -404,7 +427,6 @@ export default function LoginPage() {
                     Enter OTP
                   </label>
                   <div className="flex gap-2">
-                    {/* increased vertical padding so text isn't cramped and bottom padding is present */}
                     <input
                       name="otp"
                       autoComplete="one-time-code"
@@ -412,7 +434,7 @@ export default function LoginPage() {
                       placeholder="123456"
                       value={otp}
                       onChange={(e) => setOtp(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-400 outline-none"
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-400 outline-none text-sm sm:text-base"
                     />
                   </div>
                 </div>
@@ -434,7 +456,7 @@ export default function LoginPage() {
               {mode === "otp" ? (
                 <div className="grid grid-cols-2 gap-3">
                   <button
-                    className="col-span-1 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white font-semibold py-2 rounded-xl shadow-md hover:-translate-y-0.5 transform transition"
+                    className="col-span-1 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white font-semibold py-3 rounded-xl shadow-md hover:-translate-y-0.5 transform transition text-sm sm:text-base"
                     onClick={handleSendOtp}
                     disabled={sendOtpForLoginLoader}
                   >
@@ -442,7 +464,7 @@ export default function LoginPage() {
                   </button>
 
                   <button
-                    className="col-span-1 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white font-semibold py-2 rounded-xl shadow-md hover:-translate-y-0.5 transform transition"
+                    className="col-span-1 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white font-semibold py-3 rounded-xl shadow-md hover:-translate-y-0.5 transform transition text-sm sm:text-base"
                     onClick={handleVerifyOtp}
                   >
                     Verify OTP
@@ -451,7 +473,7 @@ export default function LoginPage() {
               ) : (
                 <button
                   type="button"
-                  className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white font-semibold py-2 rounded-xl shadow-md hover:-translate-y-0.5 transform transition"
+                  className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white font-semibold py-3 rounded-xl shadow-md hover:-translate-y-0.5 transform transition text-sm sm:text-base"
                   onClick={handleSignIn}
                 >
                   <ArrowRightOnRectangleIcon className="h-5 w-5" />
@@ -470,13 +492,14 @@ export default function LoginPage() {
             {/* Single Google button kept here for discoverability */}
             <button
               type="button"
-              className="w-full flex items-center justify-center gap-2 border border-gray-300 py-2 rounded-lg hover:bg-gray-50 transition"
+              className="w-full flex items-center justify-center gap-2 border border-gray-300 py-3 rounded-lg hover:bg-gray-50 transition text-sm sm:text-base"
               onClick={handleGoogleLogin}
             >
               <svg
                 className="w-5 h-5"
                 viewBox="0 0 533.5 544.3"
                 xmlns="http://www.w3.org/2000/svg"
+                aria-hidden
               >
                 <path
                   d="M533.5 278.4c0-17.4-1.5-34-4.3-50.1H272.1v95h146.9c-6.4 34.5-25 63.8-53.4 83.2v68h86.1c50.3-46.3 81.8-114.7 81.8-196.1z"

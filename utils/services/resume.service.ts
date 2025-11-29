@@ -1,3 +1,5 @@
+import { BASE_API_URL, GET_RESUME_FORMATS, RESUME } from "../CONSTANTS";
+
 // utils/services/resume.service.ts
 export type ResumeFormat = {
   format_id: string;
@@ -10,26 +12,25 @@ export type ResumePayload = {
   payload: any; // tighten this type if you have a schema
 };
 
-const API_BASE = "/api"; // change to your real base URL if needed
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "/api/v1";
 
 async function getResumeFormats(): Promise<{ resumeFormats: ResumeFormat[] }> {
   // Example: fetch formats from your backend. If you don't have an endpoint,
   // return a fallback list so the UI still works.
   try {
-    const res = await fetch(`${API_BASE}/resume-formats`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-    });
+    const res = await fetch(
+      `${BASE_API_URL()}/${RESUME()}/${GET_RESUME_FORMATS()}`,
+      {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      }
+    );
 
     if (!res.ok) {
       // fallback if server returns error
       return {
         resumeFormats: [
           { format_id: "modern", format_key: "modern", title: "Modern" },
-          { format_id: "classic", format_key: "classic", title: "Classic" },
-          { format_id: "creative", format_key: "creative", title: "Creative" },
-          { format_id: "minimal", format_key: "minimal", title: "Minimal" },
-          { format_id: "standard", format_key: "standard", title: "Standard" },
         ],
       };
     }

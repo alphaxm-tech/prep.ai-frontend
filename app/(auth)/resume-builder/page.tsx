@@ -283,8 +283,9 @@ export default function ResumeBuilderPage() {
     // Collections: require at least one item
     errors.technicalSkills = !(technicalSkills && technicalSkills.length > 0);
     errors.educations = !(educations && educations.length > 0);
-    errors.experiences = !(experiences && experiences.length > 0);
-    errors.projects = !(projects && projects.length > 0);
+
+    // NOTE: experiences and projects are intentionally NOT required,
+    // so we do NOT set errors.experiences or errors.projects here.
 
     return errors;
   };
@@ -388,8 +389,8 @@ export default function ResumeBuilderPage() {
       summary,
       technicalSkills,
       educations,
-      experiences,
-      projects,
+      // experiences,
+      // projects,
     ]
   );
   const canSaveNow = !hasAnyErrors(currentValidation);
@@ -487,7 +488,7 @@ export default function ResumeBuilderPage() {
                 <WorkExperienceForm
                   experiences={experiences}
                   setExperiences={setExperiences}
-                  validationErrors={validationErrors}
+                  // validationErrors={validationErrors}
                 />
               </VerticalAccordion>
 
@@ -495,7 +496,7 @@ export default function ResumeBuilderPage() {
                 <ProjectsForm
                   projects={projects}
                   setProjects={setProjects}
-                  validationErrors={validationErrors}
+                  // validationErrors={validationErrors}
                 />
               </VerticalAccordion>
             </div>
@@ -578,6 +579,30 @@ export default function ResumeBuilderPage() {
 
                     {/* Buttons grouped on the right */}
                     <div className="flex items-center gap-2">
+                      <button
+                        // onClick={handleDownload}
+                        aria-label="Download resume"
+                        title="Download resume"
+                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-white text-sm font-semibold shadow-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-blue-300 bg-blue-500 hover:bg-blue-600 focus:bg-blue-700"
+                      >
+                        <svg
+                          className="w-4 h-4"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          aria-hidden="true"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"
+                          />
+                        </svg>
+                        Download
+                      </button>
+
                       <button
                         onClick={handleFinalSave}
                         aria-label="Save resume"

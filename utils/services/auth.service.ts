@@ -1,5 +1,6 @@
 import api from "@/lib/axios";
 import {
+  AUTH,
   BASE_API_URL,
   LOGIN_WITH_OTP,
   LOGIN_WITH_PASSWORD,
@@ -31,7 +32,7 @@ interface VerifyOtpForLogin {
 export const authService = {
   loginWithPassword: async (data: LoginData) => {
     const response = await api.post(
-      `${BASE_API_URL()}${LOGIN_WITH_PASSWORD()}`,
+      `${BASE_API_URL()}/${AUTH()}/${LOGIN_WITH_PASSWORD()}`,
       data
     );
     return response.data;

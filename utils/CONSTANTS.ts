@@ -1,9 +1,18 @@
-export const BASE_API_URL = () => `http://localhost:8080/api/v1/`;
+export const BASE_API_URL = () => `http://localhost:8080/api/v1`;
 
-export const GET_RESUME_FORMATS = () => `resume/get-resume-formats`;
+export const RESUME = () => `resume`;
+export const AUTH = () => `auth`;
+export const HOME = () => `home`;
+
+export const GET_RESUME_FORMATS = () => `get-resume-formats`;
 
 /// AUTH endpoints ///
-export const REGISTER = () => `auth/register`;
-export const LOGIN_WITH_PASSWORD = () => `auth/login`;
+export const REGISTER = () => `register`;
+export const LOGIN_WITH_PASSWORD = () => `login`;
 export const LOGIN_WITH_OTP = () => `auth/login-with-otp`;
 export const VERIFY_LOGIN_OTP = () => `auth/verify-login-otp`;
+
+/// HOME endpoints ///
+export const GET_USER_DETAILS = () => `get-user-details`;
+export const GET_USER_SERVICES = () => `get-user-services`;
+export const GET_USER_LEARNING_PATH = () => `get-user-learningpath`;
