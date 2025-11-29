@@ -1,7 +1,7 @@
 // app/api/evaluate/route.ts
 import { NextRequest, NextResponse } from "next/server";
 
-export const runtime = "node";
+export const runtime = "nodejs"; // FIXED ✔
 
 type QIn = {
   questionId: number;
@@ -35,7 +35,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // system prompt: strict JSON-only response
     const systemPrompt = `
 You are an objective technical interviewer and grader. For each answered question, give a numeric score from 0 to 10 (integer or one decimal) using this rubric:
 - Content correctness/relevance (0-4)
@@ -61,7 +60,6 @@ Return ONLY a JSON object and NOTHING ELSE with this exact schema:
 If a transcript is empty or too short to evaluate, give a low score and a short improvement indicating missing content. Be concise and use neutral, actionable language.
 `.trim();
 
-    // build user content including question transcripts
     const userContent = `
 Company: ${company ?? "N/A"}
 Title: ${title ?? "N/A"}
@@ -81,7 +79,6 @@ suggestedTimeSec: ${q.suggestedTimeSec ?? "N/A"}`
   .join("\n\n")}
 `.trim();
 
-    // call OpenAI Chat Completions
     const openaiRes = await fetch(
       "https://api.openai.com/v1/chat/completions",
       {
@@ -91,7 +88,7 @@ suggestedTimeSec: ${q.suggestedTimeSec ?? "N/A"}`
           Authorization: `Bearer ${OPENAI_KEY}`,
         },
         body: JSON.stringify({
-          model: "gpt-4o-mini", // change to whichever model you prefer/allowed
+          model: "gpt-4o-mini",
           messages: [
             { role: "system", content: systemPrompt },
             { role: "user", content: userContent },
@@ -120,7 +117,6 @@ suggestedTimeSec: ${q.suggestedTimeSec ?? "N/A"}`
       );
     }
 
-    // Try to parse JSON directly, or extract trailing JSON block as fallback
     let parsed: any = null;
     try {
       parsed = JSON.parse(text);
@@ -150,7 +146,6 @@ suggestedTimeSec: ${q.suggestedTimeSec ?? "N/A"}`
       }
     }
 
-    // Basic validation
     if (!parsed || !Array.isArray(parsed.perQuestion)) {
       return NextResponse.json(
         { error: "Unexpected evaluation format", parsed },
@@ -158,13 +153,12 @@ suggestedTimeSec: ${q.suggestedTimeSec ?? "N/A"}`
       );
     }
 
-    // safe normalization: ensure overallScore is average of per-question scores
     try {
       const scores = parsed.perQuestion.map((p: any) => Number(p.score) || 0);
       const avg =
         scores.reduce((a: number, b: number) => a + b, 0) /
         Math.max(1, scores.length);
-      parsed.overallScore = Math.round(avg * 10) / 10; // 1 decimal
+      parsed.overallScore = Math.round(avg * 10) / 10;
     } catch {}
 
     return NextResponse.json(parsed);
