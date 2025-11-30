@@ -3,7 +3,6 @@
 
 import { useState } from "react";
 import { SparklesIcon } from "@heroicons/react/24/outline";
-import { useModifyDescription } from "@/hooks/useModifyDescription";
 import Loader from "../Loader";
 
 type Props = {
@@ -48,27 +47,9 @@ export default function BasicDetails({
   validationErrors = {},
 }: Props) {
   const [showDropdown, setShowDropdown] = useState(false);
-
-  const { modifyDescription, loading } = useModifyDescription();
-
   const [keywords, setKeywords] = useState("");
-  // tone kept for potential future use; not wired currently
   const [tone] = useState("neutral");
-
-  const handleAIEnhance = async (value: string, type: string) => {
-    const kwArr = keywords
-      .split(",")
-      .map((k) => k.trim())
-      .filter(Boolean);
-
-    const modified = await modifyDescription(value, kwArr, type);
-    if (modified) {
-      setSummary(modified);
-    } else {
-      setSummary("❌ Failed to enhance text");
-    }
-    setShowDropdown(false);
-  };
+  const [loading, setLoading] = useState(false);
 
   // helper to check invalid flags
   const invalid = (k: string) => !!validationErrors[k];
@@ -77,6 +58,52 @@ export default function BasicDetails({
     "mt-2 w-full px-3 py-2 rounded-lg bg-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-200 focus:border-yellow-300";
   const inputNormal = "border border-gray-300";
   const inputInvalid = "border-red-400 ring-1 ring-red-200";
+
+  const handleAIEnhance = async (value: string, type: string) => {
+    try {
+      setShowDropdown(false);
+      setLoading(true);
+
+      const kwArr = keywords
+        .split(",")
+        .map((k) => k.trim())
+        .filter(Boolean);
+
+      const resp = await fetch("/api/modify-description", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          description: value,
+          keywords: kwArr,
+          tone,
+          type, // "polish" | "concise" | "technical" | "recruiter"
+        }),
+      });
+
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        console.error("Modify description error:", err);
+        setSummary("❌ Failed to enhance text (server error)");
+        return;
+      }
+
+      const data = await resp.json();
+      const modified = data?.modified ?? "";
+
+      if (!modified) {
+        setSummary("❌ Failed to enhance text (empty response)");
+      } else {
+        setSummary(modified.trim());
+      }
+    } catch (e) {
+      console.error("handleAIEnhance error:", e);
+      setSummary("❌ Failed to enhance text (network error)");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <>
@@ -224,6 +251,19 @@ export default function BasicDetails({
         {invalid("summary") && (
           <p className="mt-1 text-xs text-red-600">Objective is required.</p>
         )}
+      </div>
+
+      {/* Keywords input (comma separated) */}
+      <div className="mt-2">
+        <label className="block text-sm font-medium text-gray-700">
+          Keywords (comma separated)
+        </label>
+        <input
+          value={keywords}
+          onChange={(e) => setKeywords(e.target.value)}
+          className={`${inputBase} ${inputNormal} mt-1`}
+          placeholder="e.g. React, TypeScript, Golang"
+        />
       </div>
 
       {/* Portfolio + Github */}

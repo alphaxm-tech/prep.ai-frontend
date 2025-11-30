@@ -1,4 +1,3 @@
-// components/InterviewClient.tsx
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -23,6 +22,13 @@ import {
  * - When a recording completes, it uploads the blob to /api/transcribe as `file`.
  * - The server route forwards to OpenAI (whisper) and returns { text }.
  * - Evaluation happens via /api/evaluate after the interview ends.
+ *
+ * Changes in this file (minimal, preserves existing flow):
+ * - Adds a live camera preview (asks user to enable camera when the interview starts).
+ * - Displays a small "robot interviewer" window in the top-right.
+ * - Adds a persistent bottom bar that shows the current question text and quick controls
+ *   (read aloud toggle, mute, etc.).
+ * - Keeps the original recording/transcription/evaluation flow intact.
  */
 
 type Q = {
@@ -39,39 +45,10 @@ const QUESTIONS_MAP: Record<string, Q[]> = {
       text: "Tell me about yourself (30 seconds).",
       suggestedTimeSec: 30,
     },
-    {
-      id: 2,
-      text: "What is HTTP? Give a one-sentence answer.",
-      suggestedTimeSec: 20,
-    },
-    {
-      id: 3,
-      text: "What is JSON used for?",
-      suggestedTimeSec: 20,
-    },
-    {
-      id: 4,
-      text: "What's the difference between REST and GraphQL (one short example)?",
-      suggestedTimeSec: 30,
-    },
-    {
-      id: 5,
-      text: "What is SQL vs NoSQL — a one-paragraph answer.",
-      suggestedTimeSec: 30,
-    },
   ],
 };
 
-const DEFAULT_QUESTIONS: Q[] = [
-  { id: 1, text: "Tell me about yourself." },
-  { id: 2, text: "What was the most challenging project you worked on?" },
-  { id: 3, text: "Explain a system design of URL Shortener." },
-  {
-    id: 4,
-    text: "How would you design a safe mechanism to run untrusted code in production?",
-  },
-  { id: 5, text: "Tell me about a production incident you handled." },
-];
+const DEFAULT_QUESTIONS: Q[] = [{ id: 1, text: "Tell me about yourself." }];
 
 function parseQueryParams(search: string) {
   try {
@@ -227,10 +204,10 @@ export function InterviewRecorder({
             }`}
           />
           <div className="flex flex-col">
-            <div className="text-sm font-medium">
+            <div className="text-base font-semibold">
               {recording ? "Recording answer" : "Ready to record"}
             </div>
-            <div className="text-xs text-gray-500">
+            <div className="text-sm text-gray-600 font-medium">
               {recording ? `Remaining: ${remaining}s` : `Max ${maxSeconds}s`}
             </div>
           </div>
@@ -295,6 +272,12 @@ export default function InterviewClient() {
   const [mute, setMute] = useState(false);
   const [rate, setRate] = useState(1);
 
+  // camera states
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const [cameraOn, setCameraOn] = useState(false);
+
   // transcription states
   const [transcript, setTranscript] = useState<string | null>(null);
   const [transcribing, setTranscribing] = useState(false);
@@ -314,6 +297,9 @@ export default function InterviewClient() {
   const [evaluating, setEvaluating] = useState(false);
   const [evaluateError, setEvaluateError] = useState<string | null>(null);
 
+  // show results modal
+  const [showResultsModal, setShowResultsModal] = useState(false);
+
   // speech synthesis refs
   const synthRef = useRef<SpeechSynthesis | null>(null);
   const utterRef = useRef<SpeechSynthesisUtterance | null>(null);
@@ -331,6 +317,35 @@ export default function InterviewClient() {
     setBigCountdown(3);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // start camera when interview starts (non-blocking)
+  useEffect(() => {
+    if (!interviewStarted) return;
+    // attempt to get camera without forcing the user; if it fails we show a button
+    (async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+        });
+        setCameraStream(stream);
+        setCameraOn(true);
+        setCameraError(null);
+        if (videoRef.current) videoRef.current.srcObject = stream;
+      } catch (err: any) {
+        setCameraError(err?.message ?? "Camera access denied");
+        setCameraOn(false);
+      }
+    })();
+  }, [interviewStarted]);
+
+  // cleanup camera on unmount
+  useEffect(() => {
+    return () => {
+      try {
+        cameraStream?.getTracks().forEach((t) => t.stop());
+      } catch {}
+    };
+  }, [cameraStream]);
 
   const speakText = (text: string) => {
     if (!synthRef.current) return;
@@ -481,9 +496,13 @@ export default function InterviewClient() {
 
       const json = await res.json();
       setEvaluation(json);
+      // show modal when evaluation arrives
+      setShowResultsModal(true);
     } catch (err: any) {
       console.error("evaluate error", err);
       setEvaluateError(err?.message ?? String(err));
+      // still show modal so user can see partial/failed state
+      setShowResultsModal(true);
     } finally {
       setEvaluating(false);
     }
@@ -539,6 +558,9 @@ export default function InterviewClient() {
         setInterviewStarted(false);
         setRecorderStartTrigger(null);
 
+        // show the modal immediately (it will show "Evaluating..." until evaluation arrives)
+        setShowResultsModal(true);
+
         // INTERVIEW FINISHED -> call evaluation
         try {
           // include the final answer (we already appended to state above, but setState is async)
@@ -546,6 +568,8 @@ export default function InterviewClient() {
           await evaluateInterview(answersForEval);
         } catch (e) {
           console.error("evaluation failed", e);
+          // ensure modal is visible even on failure
+          setShowResultsModal(true);
         }
       }
     }, 350);
@@ -559,6 +583,7 @@ export default function InterviewClient() {
       setCurrentIndex((s) => s + 1);
     } else {
       setInterviewStarted(false);
+      setShowResultsModal(true);
     }
   };
 
@@ -566,8 +591,250 @@ export default function InterviewClient() {
     if (mute) stopSpeaking();
   }, [mute]);
 
+  const toggleCamera = async () => {
+    if (cameraOn) {
+      try {
+        cameraStream?.getTracks().forEach((t) => t.stop());
+      } catch {}
+      setCameraStream(null);
+      setCameraOn(false);
+      if (videoRef.current) videoRef.current.srcObject = null;
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      setCameraStream(stream);
+      setCameraOn(true);
+      if (videoRef.current) videoRef.current.srcObject = stream;
+      setCameraError(null);
+    } catch (err: any) {
+      setCameraError(err?.message ?? "Camera access denied");
+      setCameraOn(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-yellow-50/60 py-10 px-4 sm:px-8">
+      {/* Results Modal - MODERN & CLASSY STYLING */}
+      {showResultsModal && (
+        <div className="fixed inset-0 z-70 flex items-center justify-center px-4">
+          {/* backdrop */}
+          <div className="absolute inset-0 bg-gradient-to-br from-black/40 via-black/30 to-transparent backdrop-blur-sm" />
+
+          <div className="relative w-full max-w-4xl mx-auto">
+            <div className="bg-white/95 dark:bg-slate-900/90 rounded-3xl shadow-2xl border border-gray-100 dark:border-slate-800 overflow-hidden ring-1 ring-black/5">
+              {/* header */}
+              <div className="flex items-center justify-between gap-4 p-5 bg-gradient-to-r from-yellow-200 to-white dark:from-slate-800 dark:to-slate-900">
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-gradient-to-tr from-yellow-400 to-yellow-600 text-white shadow-md">
+                    <CheckCircleIcon className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <div className="text-lg font-semibold text-slate-900 dark:text-white">
+                      Interview Results
+                    </div>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">
+                      Summary & personalised feedback
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() =>
+                      (window.location.href =
+                        "http://localhost:3000/ai-interview")
+                    }
+                    className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-600 text-white text-sm font-medium shadow hover:brightness-105 transition"
+                  >
+                    Back to interviews
+                  </button>
+                </div>
+              </div>
+
+              {/* body */}
+              <div className="p-6 grid grid-cols-1 gap-6 max-h-[68vh] overflow-auto">
+                {/* ===== UPDATED TOP STATUS ROW (improved layout & wrapping) ===== */}
+                <div className="w-full">
+                  <div className="grid grid-cols-12 gap-4 items-center">
+                    {/* Status */}
+                    <div className="col-span-2 flex items-start">
+                      <div>
+                        <div className="text-xs text-slate-400">Status</div>
+                        <div className="text-sm font-semibold text-slate-900 dark:text-white mt-1">
+                          {evaluating
+                            ? "Evaluating…"
+                            : evaluation
+                            ? "Completed"
+                            : evaluateError
+                            ? "Error"
+                            : "Waiting"}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* vertical separator */}
+                    <div className="col-span-0.5 hidden sm:block">
+                      <div className="h-8 w-px bg-slate-100 dark:bg-slate-800 ml-2" />
+                    </div>
+
+                    {/* Questions */}
+                    <div className="col-span-2 flex items-start">
+                      <div>
+                        <div className="text-xs text-slate-400">Questions</div>
+                        <div className="text-sm font-semibold text-slate-900 dark:text-white mt-1">
+                          {answers.length} answered
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Feedback (long text) */}
+                    <div className="col-span-8">
+                      <div className="text-xs text-slate-400 mb-1">
+                        Feedback
+                      </div>
+                      <div
+                        className="text-sm text-slate-700 dark:text-slate-300 leading-6 break-words max-w-full"
+                        style={{
+                          whiteSpace: "pre-wrap",
+                          wordBreak: "break-word",
+                        }}
+                      >
+                        {/* prefer evaluation.overallFeedback when available, otherwise fallback to hint text */}
+                        {evaluation?.overallFeedback ??
+                          (evaluateError
+                            ? ""
+                            : "The response provided a solid overview of background and skills but could benefit from more relevance to the specific role and examples of impact.")}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                {/* ===== end updated top row ===== */}
+
+                {/* Per-question cards */}
+                <div className="grid grid-cols-1 gap-3">
+                  {evaluation && evaluation.perQuestion?.length > 0 ? (
+                    evaluation.perQuestion.map((pq: any) => (
+                      <div
+                        key={pq.questionId}
+                        className="p-4 rounded-xl bg-gradient-to-b from-white to-slate-50 dark:from-slate-800 dark:to-slate-800 border border-gray-100 dark:border-slate-800 shadow-sm"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3">
+                              <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                                Q#{pq.questionId}
+                              </div>
+                              <div className="text-xs text-slate-400">
+                                • {pq.shortQuestion ?? ""}
+                              </div>
+                            </div>
+
+                            <div className="mt-2 text-sm text-slate-700 dark:text-slate-300">
+                              {pq.summary ?? pq.excerpt ?? ""}
+                            </div>
+
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              {pq.strengths?.length > 0 && (
+                                <span className="text-xs px-2 py-1 rounded-md bg-green-50 text-green-700 border border-green-100">
+                                  Strengths: {pq.strengths.join(", ")}
+                                </span>
+                              )}
+                              {pq.improvements?.length > 0 && (
+                                <span className="text-xs px-2 py-1 rounded-md bg-amber-50 text-amber-700 border border-amber-100">
+                                  Improve: {pq.improvements.join(", ")}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex flex-col items-end">
+                            <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                              {pq.score}/10
+                            </div>
+                            <div className="text-xs text-slate-400 mt-2">
+                              {pq.category ?? ""}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : evaluating ? (
+                    <div className="p-4 rounded-xl bg-white/60 border border-dashed border-slate-100 text-sm text-slate-500">
+                      Evaluating — hang tight (this updates automatically).
+                    </div>
+                  ) : evaluateError ? (
+                    <div className="p-4 rounded-xl bg-white/60 border border-red-100 text-sm text-red-600">
+                      {evaluateError}
+                    </div>
+                  ) : (
+                    <div className="p-4 rounded-xl bg-white/60 border border-slate-100 text-sm text-slate-500">
+                      No per-question results yet.
+                    </div>
+                  )}
+                </div>
+
+                {/* Divider */}
+                <div className="h-px bg-slate-100 dark:bg-slate-800" />
+
+                {/* Raw answers grid */}
+                <div>
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm font-semibold text-slate-900 dark:text-white">
+                      Your answers
+                    </div>
+                    <div className="text-xs text-slate-400">
+                      {answers.length} total
+                    </div>
+                  </div>
+
+                  <div className="mt-3 grid grid-cols-1 gap-3">
+                    {answers.map((a) => (
+                      <div
+                        key={a.questionId}
+                        className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-800 shadow-sm"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="text-sm font-medium text-slate-900 dark:text-white">
+                              Q#{a.questionId} • {a.questionText}
+                            </div>
+                            <div className="text-xs text-slate-400 mt-1">
+                              Duration: {a.durationSec}s • Suggested:{" "}
+                              {a.suggestedTimeSec}s
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-slate-400">
+                              Transcript
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="mt-3 text-sm text-slate-700 dark:text-slate-300">
+                          {a.transcript ? (
+                            a.transcript
+                          ) : (
+                            <span className="text-slate-400">
+                              (No transcript)
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                    {answers.length === 0 && (
+                      <div className="text-sm text-slate-500">
+                        No answers recorded.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Big overlay countdown when starting interview */}
       {bigCountdown !== null && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center">
@@ -585,7 +852,7 @@ export default function InterviewClient() {
         </div>
       )}
 
-      <div className="max-w-screen-xl mx-auto">
+      <div className="max-w-screen-xl mx-auto relative">
         <div className="grid grid-cols-1 gap-8">
           <div className="col-span-1">
             <div className="flex items-center justify-between gap-4 mb-6">
@@ -600,14 +867,31 @@ export default function InterviewClient() {
                 </div>
               </div>
 
-              <div className="hidden md:flex items-center">
-                <div className="w-36 h-12 rounded-lg overflow-hidden border border-gray-100 shadow-sm bg-gradient-to-br from-yellow-100 to-yellow-200 flex items-center justify-center text-sm text-yellow-800">
-                  Preview
+              <div className="flex items-center gap-3">
+                {/* Camera toggle and quick controls */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => toggleCamera()}
+                    className={`px-3 py-2 rounded-md text-sm border transition ${
+                      cameraOn
+                        ? "bg-white border-yellow-200 text-yellow-700"
+                        : "bg-white border-gray-100 text-gray-700"
+                    }`}
+                  >
+                    {cameraOn ? "Camera On" : "Enable Camera"}
+                  </button>
+
+                  {/* <button
+                    onClick={() => setMute((s) => !s)}
+                    className="px-3 py-2 rounded-md text-sm border bg-white border-gray-100"
+                  >
+                    {mute ? "Muted" : "Speak"}
+                  </button> */}
                 </div>
               </div>
             </div>
 
-            <div className="bg-white rounded-2xl shadow-md border border-yellow-100 p-6">
+            <div className="bg-white rounded-2xl shadow-md border border-yellow-100 p-6 relative">
               <div className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
                   <button
@@ -667,125 +951,126 @@ export default function InterviewClient() {
                     </div>
                   )}
 
-                  <QuestionCard
-                    question={currentQuestion.text}
-                    index={currentIndex + 1}
-                    total={total}
-                  />
-
-                  <div className="mt-6">
-                    <InterviewRecorder
-                      questionId={currentQuestion.id}
-                      maxSeconds={currentQuestion.suggestedTimeSec ?? 45}
-                      startTrigger={recorderStartTrigger}
-                      onComplete={handleRecordingComplete}
-                    />
-                  </div>
-
-                  {/* Transcription status / output */}
-                  <div className="mt-4">
-                    {transcribing && (
-                      <div className="text-sm text-gray-600">
-                        Transcribing...
+                  <div className="flex flex-col md:flex-row gap-6">
+                    {/* Camera preview column */}
+                    <div className="w-full md:w-1/3 flex flex-col items-center gap-3">
+                      <div className="w-full bg-slate-50 rounded-xl p-2 border border-gray-100 flex items-center justify-center">
+                        {cameraOn ? (
+                          <video
+                            ref={videoRef}
+                            autoPlay
+                            playsInline
+                            muted
+                            className="w-full rounded-lg h-44 object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-44 flex items-center justify-center text-sm text-gray-500">
+                            Camera is off
+                          </div>
+                        )}
                       </div>
-                    )}
 
-                    {transcribeError && (
-                      <div className="text-sm text-red-600">
-                        Error: {transcribeError}
-                      </div>
-                    )}
-
-                    {transcript && (
-                      <div className="mt-2 bg-gray-50 border border-gray-100 rounded-md p-3 text-sm text-gray-800">
-                        <div className="text-xs text-gray-500 mb-1">
-                          Transcript
-                        </div>
-                        <div>{transcript}</div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="mt-4 flex items-center gap-3">
-                    <button
-                      onClick={() => {
-                        if (!interviewStarted) {
-                          onPressStartInterview();
-                        } else {
-                          setInterviewStarted(true);
-                        }
-                      }}
-                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition whitespace-nowrap ${
-                        interviewStarted
-                          ? "bg-white border border-gray-200 text-yellow-600 hover:bg-yellow-50"
-                          : "bg-yellow-500 text-white hover:bg-yellow-600"
-                      }`}
-                    >
-                      <PlayIcon className="w-5 h-5 flex-none" />
-                      <span className="whitespace-nowrap">
-                        {interviewStarted
-                          ? "Interview Running"
-                          : "Start Interview"}
-                      </span>
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        stopSpeaking();
-                        handleManualNext();
-                      }}
-                      className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition bg-white border border-gray-200 text-gray-700 hover:bg-yellow-50`}
-                    >
-                      <PauseCircleIcon className="w-5 h-5" />
-                      Next
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        setMute((m) => !m);
-                        if (!mute) stopSpeaking();
-                      }}
-                      className="inline-flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-200 bg-white"
-                    >
-                      {mute ? (
-                        <SpeakerXMarkIcon className="w-5 h-5 text-gray-500" />
-                      ) : (
-                        <SpeakerWaveIcon className="w-5 h-5 text-yellow-600" />
-                      )}
-                      <span className="text-xs text-gray-700">
-                        {mute ? "Muted" : "Audio"}
-                      </span>
-                    </button>
-
-                    <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-gray-100 bg-white ml-2">
-                      <label htmlFor="rate" className="text-xs text-gray-500">
-                        Rate
-                      </label>
-                      <input
-                        id="rate"
-                        type="range"
-                        min={0.6}
-                        max={1.6}
-                        step={0.1}
-                        value={rate}
-                        onChange={(e) => setRate(Number(e.target.value))}
-                        className="w-28"
-                      />
-                      <div className="text-xs text-gray-600 w-8 text-right">
-                        {rate.toFixed(1)}
+                      {/* small camera status */}
+                      <div className="text-xs text-gray-500">
+                        {cameraOn
+                          ? "You are on camera"
+                          : cameraError
+                          ? cameraError
+                          : "Camera off"}
                       </div>
                     </div>
 
-                    <button
-                      onClick={() => {
-                        stopSpeaking();
-                        handleManualNext();
-                      }}
-                      disabled={currentIndex >= total - 1}
-                      className="ml-auto inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-yellow-400 hover:bg-yellow-500 text-white font-medium"
-                    >
-                      Skip/Next <ArrowRightIcon className="w-4 h-4" />
-                    </button>
+                    {/* Question and recorder column */}
+                    <div className="flex-1">
+                      <QuestionCard
+                        question={currentQuestion.text}
+                        index={currentIndex + 1}
+                        total={total}
+                      />
+
+                      <div className="mt-6">
+                        <InterviewRecorder
+                          questionId={currentQuestion.id}
+                          maxSeconds={currentQuestion.suggestedTimeSec ?? 45}
+                          startTrigger={recorderStartTrigger}
+                          onComplete={handleRecordingComplete}
+                        />
+                      </div>
+
+                      {/* Transcription status / output */}
+                      <div className="mt-4">
+                        {transcribing && (
+                          <div className="text-sm text-gray-600">
+                            Transcribing...
+                          </div>
+                        )}
+
+                        {transcribeError && (
+                          <div className="text-sm text-red-600">
+                            Error: {transcribeError}
+                          </div>
+                        )}
+
+                        {transcript && (
+                          <div className="mt-2 bg-gray-50 border border-gray-100 rounded-md p-3 text-sm text-gray-800">
+                            <div className="text-xs text-gray-500 mb-1">
+                              Transcript
+                            </div>
+                            <div>{transcript}</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Robot interviewer window - small decorative box in top-right of the interview card */}
+                  <div className="absolute right-6 top-6 z-20">
+                    <div className="w-32 h-20 rounded-lg bg-white/90 border border-gray-100 shadow p-2 flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-md bg-gradient-to-tr from-slate-700 to-slate-500 flex items-center justify-center text-white">
+                        {/* simple robot icon */}
+                        <svg
+                          width="22"
+                          height="22"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <rect
+                            x="3"
+                            y="7"
+                            width="18"
+                            height="10"
+                            rx="2"
+                            fill="white"
+                            opacity="0.06"
+                          />
+                          <path
+                            d="M7 11.5C7 12.3284 6.32843 13 5.5 13C4.67157 13 4 12.3284 4 11.5C4 10.6716 4.67157 10 5.5 10C6.32843 10 7 10.6716 7 11.5Z"
+                            fill="white"
+                          />
+                          <path
+                            d="M20 11.5C20 12.3284 19.3284 13 18.5 13C17.6716 13 17 12.3284 17 11.5C17 10.6716 17.6716 10 18.5 10C19.3284 10 20 10.6716 20 11.5Z"
+                            fill="white"
+                          />
+                          <rect
+                            x="8"
+                            y="3"
+                            width="8"
+                            height="2"
+                            rx="1"
+                            fill="white"
+                          />
+                        </svg>
+                      </div>
+                      <div className="flex-1 text-xs">
+                        <div className="font-semibold text-slate-700">
+                          Automated interviewer
+                        </div>
+                        <div className="text-xs text-slate-500">
+                          Listening & scoring
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -857,6 +1142,44 @@ export default function InterviewClient() {
                   </div>
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom sticky question bar - shows full question text and quick controls */}
+        <div className="fixed left-0 right-0 bottom-4 z-40 flex items-center justify-center px-4">
+          <div className="max-w-screen-lg w-full bg-white/95 border border-gray-100 rounded-2xl p-3 shadow-lg flex items-center gap-3">
+            <div
+              className="flex-1 text-sm text-slate-800 break-words"
+              style={{ whiteSpace: "pre-wrap" }}
+            >
+              <div className="text-xs text-gray-500">Current question</div>
+              <div className="font-medium">{currentQuestion.text}</div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  if (!mute) speakText(currentQuestion.text);
+                }}
+                className="px-3 py-2 rounded-md border bg-white border-gray-100 flex items-center gap-2"
+              >
+                <PlayIcon className="w-4 h-4" /> Read
+              </button>
+
+              <button
+                onClick={() => setMute((s) => !s)}
+                className="px-3 py-2 rounded-md border bg-white border-gray-100"
+              >
+                {mute ? "Unmute TTS" : "Mute TTS"}
+              </button>
+
+              <button
+                onClick={handleManualNext}
+                className="px-3 py-2 rounded-md bg-amber-600 text-white"
+              >
+                Next
+              </button>
             </div>
           </div>
         </div>

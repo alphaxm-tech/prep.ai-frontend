@@ -4,16 +4,11 @@ import React, { useState, useCallback, memo } from "react";
 import { EnvelopeIcon, LockClosedIcon } from "@heroicons/react/24/outline";
 import { ArrowRightOnRectangleIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/navigation";
-import { useMutation } from "@tanstack/react-query";
-import { authService } from "@/utils/services/auth.service";
 import Loader from "@/components/Loader";
 import { useToast } from "@/components/ToastProvider";
 
 /**
- * IMPORTANT FIX:
- * InputWithIcon must be declared at module top-level (not inside the component)
- * so its identity is stable across renders. This prevents React from unmounting/re-mounting
- * the input which causes the focus / 1-character-only typing bug.
+ * InputWithIcon must be declared at module top-level to keep identity stable.
  */
 const InputWithIcon = memo(function InputWithIcon({
   icon,
@@ -48,232 +43,286 @@ const InputWithIcon = memo(function InputWithIcon({
   );
 });
 
+/**
+ * Demo-only Login Page
+ *
+ * UI: uses the original tab/buttons layout (Email | OTP | Sign Up | Enter)
+ * Auth: demo-only client-side check for ALLOWED_EMAIL / ALLOWED_PASSWORD
+ *
+ * Security reminder: credentials are visible in the client bundle. Use only for testing/demo.
+ */
 export default function LoginPage() {
   const router = useRouter();
+  const { success, error: showError } = useToast();
 
-  // auth mode: "signin" | "signup" | "otp"
+  // keep tabs like original UI (so user can click OTP / signup) but auth remains demo-only
   const [mode, setMode] = useState<"signin" | "signup" | "otp">("signin");
 
   // form state
   const [email, setEmail] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [fullname, setFullname] = useState("");
   const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
+  const [fullname, setFullname] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
 
-  // loaders
-  const [loader, setLoader] = useState(false);
+  // loaders / inline error
   const [loginLoader, setLoginLoader] = useState(false);
-  const [otpLoader, setOtpLoader] = useState(false);
-  const [sendOtpForLoginLoader, setSendOtpForLoginLoader] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const { success, error: showError } = useToast();
+  // -----------------------------
+  // Allowed demo credentials (client-side)
+  // -----------------------------
+  const ALLOWED_EMAIL = "vm.prepai@gmail.com";
+  const ALLOWED_PASSWORD = "prepai@1993";
 
-  // keep existing mutations intact (no changes to logic)
-  const registerMutation = useMutation({
-    mutationFn: authService.registerWithPassword,
-    onSuccess: (data) => {
-      console.log("Registered successfully:", data);
-      setLoader(false);
-      router.push("/home");
-    },
-    onError: (error) => {
-      console.error("Registration failed:", error);
-      setLoader(false);
-    },
-  });
+  // clear inline error on input change
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value);
+    if (errorMessage) setErrorMessage(null);
+  };
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value);
+    if (errorMessage) setErrorMessage(null);
+  };
+  const handleOtpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setOtp(e.target.value);
+    if (errorMessage) setErrorMessage(null);
+  };
 
-  const loginMutation = useMutation({
-    mutationFn: authService.loginWithPassword,
-    onSuccess: (data) => {
-      console.log("Login successfully:", data?.user);
-      setLoginLoader(false);
-      router.push("/home");
-    },
-    onError: (error) => {
-      console.error("Registration failed:", error);
-      setLoader(false);
-    },
-  });
-
-  // OTP flow (assume authService has sendOtp & verifyOtp; keep commented if not used)
-  const sendOtpMutation = useMutation({
-    mutationFn: authService.sendOtpForLogin, // expects { email }
-    onSuccess: (data) => {
-      console.log("OTP sent:", data);
-      setSendOtpForLoginLoader(false);
-    },
-    onError: (error) => {
-      console.error("Send OTP failed:", error);
-      showError("Failed to send OTP. Please try again.");
-      setSendOtpForLoginLoader(false);
-    },
-  });
-
-  const verifyOtpMutation = useMutation({
-    mutationFn: authService.verifyOtpForLogin, // expects { email, otp }
-    onSuccess: (data) => {
-      setOtpLoader(false);
-      router.push("/home");
-    },
-    onError: (err) => {
-      console.error("Verify OTP failed:", err);
-      showError("Failed to send OTP. Please try again.");
-      setOtpLoader(false);
-    },
-  });
-
+  // Primary action: kept identical to simplified demo logic:
+  // validate the single allowed credential pair client-side and route to /home on success.
   const handleSignIn = useCallback(() => {
-    if (mode === "signup") {
-      setLoader(true);
-      registerMutation.mutate({
-        email: email,
-        fullname: fullname,
-        phoneNumber: phoneNumber,
-        password: password,
-      });
-    } else if (mode === "signin") {
-      setLoginLoader(true);
-      loginMutation.mutate({
-        email: email,
-        password: password,
-      });
-    }
-  }, [
-    mode,
-    email,
-    fullname,
-    phoneNumber,
-    password,
-    registerMutation,
-    loginMutation,
-  ]);
+    setLoginLoader(true);
+    setErrorMessage(null);
 
+    // Demo-only sign-in check
+    if (
+      email.trim().toLowerCase() === ALLOWED_EMAIL.toLowerCase() &&
+      password === ALLOWED_PASSWORD
+    ) {
+      success?.("Logged in (demo). Redirecting…");
+      setTimeout(() => {
+        setLoginLoader(false);
+        router.push("/home");
+      }, 400);
+      return;
+    }
+
+    // failure
+    setLoginLoader(false);
+    const msg = "Invalid credentials.";
+    setErrorMessage(msg);
+    showError?.(msg);
+  }, [email, password, router, success, showError]);
+
+  // OTP / Signup actions simply reuse the same demo sign-in behavior (keeps functionality identical).
   const handleSendOtp = useCallback(() => {
-    // console.log(email);
-    setSendOtpForLoginLoader(true);
-    sendOtpMutation.mutate({ email });
-  }, [sendOtpMutation, email]);
+    // visually behave like the original: you'd send an OTP here.
+    // For demo mode, we show an inline message and do nothing else.
+    setErrorMessage(null);
+    showError?.("OTP flow not active in demo. Use demo credentials.");
+  }, [showError]);
 
   const handleVerifyOtp = useCallback(() => {
-    setOtpLoader(true);
-    verifyOtpMutation.mutate({ email, otp: otp });
-  }, [otp, email]);
+    // in demo, verify just checks the same allowed credentials (or rejects).
+    setErrorMessage(null);
+    // we won't actually verify OTP — keep behavior consistent with demo-only auth
+    showError?.("OTP verification not active in demo. Use demo credentials.");
+  }, [showError]);
+
+  const handleRegister = useCallback(() => {
+    // registration is not available in demo — show toast/in-line message
+    setErrorMessage(null);
+    showError?.("Sign up not active in demo. Use demo credentials to sign in.");
+  }, [showError]);
 
   const handleGoogleLogin = () => {
+    // keep the existing behavior — may redirect to your OAuth endpoint if configured
     window.location.href = "/api/auth/google";
   };
 
-  // Left column: AI emphasis panel (yellow-themed)
-  const HeroIllustration = () => (
-    <div className="flex flex-col items-center justify-center gap-4 p-6">
-      <svg
-        width="160"
-        height="160"
-        viewBox="0 0 220 220"
-        fill="none"
-        xmlns="http://www.w3.org/2000/svg"
-        className="drop-shadow-md"
-        aria-hidden
-      >
-        <rect
-          x="0"
-          y="0"
-          width="220"
-          height="220"
-          rx="20"
-          fill="url(#gradAIY)"
-        />
-        <defs>
-          <linearGradient id="gradAIY" x1="0" x2="1">
-            <stop offset="0%" stopColor="#fff7ed" />
-            <stop offset="100%" stopColor="#ffedd5" />
-          </linearGradient>
-        </defs>
-        <g transform="translate(40,40)">
-          <circle cx="50" cy="40" r="24" fill="#fff" />
-          <rect x="10" y="80" width="80" height="10" rx="5" fill="#fff" />
-          <rect x="10" y="100" width="60" height="8" rx="4" fill="#fff" />
-          <rect x="10" y="114" width="40" height="8" rx="4" fill="#fff" />
-        </g>
-      </svg>
-
-      <div className="text-center">
-        <h3 className="text-base font-semibold text-gray-800">
-          AI-powered career portal
-        </h3>
-        <p className="text-xs text-gray-500">
-          Resumes curated with AI • Conversational AI interviews • Smart job
-          matching
-        </p>
-      </div>
-
-      <div className="flex flex-col gap-3 w-full">
-        <div className="flex items-center gap-3 bg-yellow-50 px-3 py-2 rounded-lg">
-          <div className="h-8 w-8 rounded-full bg-yellow-200 flex items-center justify-center font-bold text-sm">
-            🤖
-          </div>
-          <div className="text-sm">
-            <div className="text-xs text-gray-500">AI Resume Builder</div>
-            <div className="font-medium text-gray-800">
-              Curated, optimized CVs
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 bg-yellow-50 px-3 py-2 rounded-lg">
-          <div className="h-8 w-8 rounded-full bg-yellow-200 flex items-center justify-center font-bold text-sm">
-            🎤
-          </div>
-          <div className="text-sm">
-            <div className="text-xs text-gray-500">AI Mock Interviews</div>
-            <div className="font-medium text-gray-800">
-              Practice with AI feedback
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-3 bg-yellow-50 px-3 py-2 rounded-lg">
-          <div className="h-8 w-8 rounded-full bg-yellow-200 flex items-center justify-center font-bold text-sm">
-            ⚡
-          </div>
-          <div className="text-sm">
-            <div className="text-xs text-gray-500">Smart Insights</div>
-            <div className="font-medium text-gray-800">
-              Personalized career tips
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <>
-      <Loader show={loader} message="Creating your account"></Loader>
-      <Loader
-        show={loginLoader}
-        message="Almost there, Preparing your dashboard..."
-      ></Loader>
-      <Loader show={otpLoader} message="Verifying OTP..."></Loader>
-      <Loader
-        show={sendOtpForLoginLoader}
-        message="Sending otp to your email id"
-      ></Loader>
+      <Loader show={loginLoader} message="Signing you in..." />
 
       <div className="min-h-screen flex items-start justify-center bg-yellow-50/40 px-4 py-8 sm:py-12">
         <div className="bg-white rounded-2xl shadow-lg w-full max-w-4xl overflow-hidden grid grid-cols-1 md:grid-cols-2">
-          {/* Small-screen hero: show above form on mobile */}
-          <div className="md:hidden border-b border-gray-100">
-            <HeroIllustration />
+          {/* Small-screen hero */}
+          <div className="md:hidden border-b border-gray-100 p-6">
+            <div className="flex flex-col items-center justify-center gap-4">
+              <svg
+                width="160"
+                height="160"
+                viewBox="0 0 220 220"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="drop-shadow-md"
+                aria-hidden
+              >
+                <rect
+                  x="0"
+                  y="0"
+                  width="220"
+                  height="220"
+                  rx="20"
+                  fill="url(#gradAIY)"
+                />
+                <defs>
+                  <linearGradient id="gradAIY" x1="0" x2="1">
+                    <stop offset="0%" stopColor="#fff7ed" />
+                    <stop offset="100%" stopColor="#ffedd5" />
+                  </linearGradient>
+                </defs>
+                <g transform="translate(40,40)">
+                  <circle cx="50" cy="40" r="24" fill="#fff" />
+                  <rect
+                    x="10"
+                    y="80"
+                    width="80"
+                    height="10"
+                    rx="5"
+                    fill="#fff"
+                  />
+                  <rect
+                    x="10"
+                    y="100"
+                    width="60"
+                    height="8"
+                    rx="4"
+                    fill="#fff"
+                  />
+                  <rect
+                    x="10"
+                    y="114"
+                    width="40"
+                    height="8"
+                    rx="4"
+                    fill="#fff"
+                  />
+                </g>
+              </svg>
+              <div className="text-center">
+                <h3 className="text-base font-semibold text-gray-800">
+                  AI-powered career portal
+                </h3>
+                <p className="text-xs text-gray-500">
+                  Resumes curated with AI • Conversational AI interviews • Smart
+                  job matching
+                </p>
+              </div>
+            </div>
           </div>
 
           {/* Left: Illustration & AI selling points for md+ */}
           <div className="hidden md:flex flex-col justify-center p-8 border-r border-gray-100">
-            <HeroIllustration />
+            <div className="flex flex-col items-center justify-center gap-4 p-6">
+              <svg
+                width="160"
+                height="160"
+                viewBox="0 0 220 220"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+                className="drop-shadow-md"
+                aria-hidden
+              >
+                <rect
+                  x="0"
+                  y="0"
+                  width="220"
+                  height="220"
+                  rx="20"
+                  fill="url(#gradAIY)"
+                />
+                <defs>
+                  <linearGradient id="gradAIY" x1="0" x2="1">
+                    <stop offset="0%" stopColor="#fff7ed" />
+                    <stop offset="100%" stopColor="#ffedd5" />
+                  </linearGradient>
+                </defs>
+                <g transform="translate(40,40)">
+                  <circle cx="50" cy="40" r="24" fill="#fff" />
+                  <rect
+                    x="10"
+                    y="80"
+                    width="80"
+                    height="10"
+                    rx="5"
+                    fill="#fff"
+                  />
+                  <rect
+                    x="10"
+                    y="100"
+                    width="60"
+                    height="8"
+                    rx="4"
+                    fill="#fff"
+                  />
+                  <rect
+                    x="10"
+                    y="114"
+                    width="40"
+                    height="8"
+                    rx="4"
+                    fill="#fff"
+                  />
+                </g>
+              </svg>
+
+              <div className="text-center">
+                <h3 className="text-base font-semibold text-gray-800">
+                  AI-powered career portal
+                </h3>
+                <p className="text-xs text-gray-500">
+                  Resumes curated with AI • Conversational AI interviews • Smart
+                  job matching
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-3 w-full">
+                <div className="flex items-center gap-3 bg-yellow-50 px-3 py-2 rounded-lg">
+                  <div className="h-8 w-8 rounded-full bg-yellow-200 flex items-center justify-center">
+                    🤖
+                  </div>
+                  <div className="text-sm">
+                    <div className="text-xs text-gray-500">
+                      AI Resume Builder
+                    </div>
+                    <div className="font-medium text-gray-800">
+                      Curated, optimized CVs
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 bg-yellow-50 px-3 py-2 rounded-lg">
+                  <div className="h-8 w-8 rounded-full bg-yellow-200 flex items-center justify-center">
+                    🎤
+                  </div>
+                  <div className="text-sm">
+                    <div className="text-xs text-gray-500">
+                      AI Mock Interviews
+                    </div>
+                    <div className="font-medium text-gray-800">
+                      Practice with AI feedback
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 bg-yellow-50 px-3 py-2 rounded-lg">
+                  <div className="h-8 w-8 rounded-full bg-yellow-200 flex items-center justify-center">
+                    ⚡
+                  </div>
+                  <div className="text-sm">
+                    <div className="text-xs text-gray-500">Smart Insights</div>
+                    <div className="font-medium text-gray-800">
+                      Personalized career tips
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Right: Form card */}
+          {/* Right: Form card (uses original tab/buttons layout) */}
           <div className="p-6 sm:p-8">
             <div className="text-center mb-4">
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
@@ -288,7 +337,7 @@ export default function LoginPage() {
               </p>
             </div>
 
-            {/* Tabs */}
+            {/* Tabs (original) */}
             <div className="flex flex-wrap gap-2 mb-6 justify-center">
               <button
                 className={`px-3 py-2 rounded-full text-sm font-medium focus:outline-none focus:ring-2 focus:ring-yellow-300 ${
@@ -298,9 +347,11 @@ export default function LoginPage() {
                 }`}
                 onClick={() => setMode("signin")}
                 aria-pressed={mode === "signin"}
+                type="button"
               >
                 Email
               </button>
+
               <button
                 className={`px-3 py-2 rounded-full text-sm font-medium focus:outline-none focus:ring-2 focus:ring-yellow-300 ${
                   mode === "otp"
@@ -309,9 +360,11 @@ export default function LoginPage() {
                 }`}
                 onClick={() => setMode("otp")}
                 aria-pressed={mode === "otp"}
+                type="button"
               >
                 OTP
               </button>
+
               <button
                 className={`px-3 py-2 rounded-full text-sm font-medium focus:outline-none focus:ring-2 focus:ring-yellow-300 ${
                   mode === "signup"
@@ -320,36 +373,46 @@ export default function LoginPage() {
                 }`}
                 onClick={() => setMode("signup")}
                 aria-pressed={mode === "signup"}
+                type="button"
               >
                 Sign Up
               </button>
-
-              {/* Enter without login: smaller on mobile so it doesn't dominate */}
-              <button
-                className="px-3 py-2 rounded-full text-sm font-medium bg-yellow-50 text-yellow-600"
-                onClick={() => router.push("/home")}
-              >
-                Enter
-              </button>
             </div>
 
-            {/* Form area - fixed min height to prevent layout shift and smooth transition */}
+            {/* Form area */}
             <div className="space-y-4 min-h-[320px] transition-all duration-200">
               {mode === "signup" && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-600">
-                    Full Name
-                  </label>
-                  <InputWithIcon
-                    name="fullname"
-                    autoComplete="name"
-                    icon={<></>}
-                    type="text"
-                    placeholder="John Doe"
-                    value={fullname}
-                    onChange={(e: any) => setFullname(e.target.value)}
-                  />
-                </div>
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600">
+                      Full Name
+                    </label>
+                    <InputWithIcon
+                      name="fullname"
+                      autoComplete="name"
+                      icon={<></>}
+                      type="text"
+                      placeholder="John Doe"
+                      value={fullname}
+                      onChange={(e: any) => setFullname(e.target.value)}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600">
+                      Phone number
+                    </label>
+                    <InputWithIcon
+                      name="phone"
+                      autoComplete="tel"
+                      icon={<EnvelopeIcon className="h-5 w-5" />}
+                      type="tel"
+                      placeholder="9130859725"
+                      value={phoneNumber}
+                      onChange={(e: any) => setPhoneNumber(e.target.value)}
+                    />
+                  </div>
+                </>
               )}
 
               <div>
@@ -363,65 +426,11 @@ export default function LoginPage() {
                   type="email"
                   placeholder="you@example.com"
                   value={email}
-                  onChange={(e: any) => setEmail(e.target.value)}
+                  onChange={handleEmailChange}
                 />
               </div>
 
-              {mode === "signup" && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-600">
-                    Phone number
-                  </label>
-                  <InputWithIcon
-                    name="phone"
-                    autoComplete="tel"
-                    icon={<EnvelopeIcon className="h-5 w-5" />}
-                    type="tel"
-                    placeholder="9130859725"
-                    value={phoneNumber}
-                    onChange={(e: any) => setPhoneNumber(e.target.value)}
-                  />
-                </div>
-              )}
-
-              {mode === "signup" && (
-                <>
-                  {/* ADD THIS: Password for signup */}
-                  <div className="mt-3">
-                    <label className="block text-sm font-medium text-gray-600">
-                      Password
-                    </label>
-                    <InputWithIcon
-                      name="password"
-                      autoComplete="new-password"
-                      icon={<LockClosedIcon className="h-5 w-5" />}
-                      type="password"
-                      placeholder="Create a strong password"
-                      value={password}
-                      onChange={(e: any) => setPassword(e.target.value)}
-                    />
-                  </div>
-                </>
-              )}
-
-              {mode === "signin" && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-600">
-                    Password
-                  </label>
-                  <InputWithIcon
-                    name="password"
-                    autoComplete="current-password"
-                    icon={<LockClosedIcon className="h-5 w-5" />}
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e: any) => setPassword(e.target.value)}
-                  />
-                </div>
-              )}
-
-              {mode === "otp" && (
+              {mode === "otp" ? (
                 <div>
                   <label className="block text-sm font-medium text-gray-600 pb-1">
                     Enter OTP
@@ -433,15 +442,30 @@ export default function LoginPage() {
                       type="text"
                       placeholder="123456"
                       value={otp}
-                      onChange={(e) => setOtp(e.target.value)}
+                      onChange={handleOtpChange}
                       className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-400 outline-none text-sm sm:text-base"
                     />
                   </div>
                 </div>
+              ) : (
+                <div>
+                  <label className="block text-sm font-medium text-gray-600">
+                    Password
+                  </label>
+                  <InputWithIcon
+                    name="password"
+                    autoComplete="current-password"
+                    icon={<LockClosedIcon className="h-5 w-5" />}
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={handlePasswordChange}
+                  />
+                </div>
               )}
 
-              {/* Forgot password only for password sign-in */}
-              {mode === "signin" && (
+              {/* Forgot password link (only shows for password sign-in like original) */}
+              {mode !== "otp" && (
                 <div className="text-right">
                   <a
                     href="/forgot-password"
@@ -452,32 +476,54 @@ export default function LoginPage() {
                 </div>
               )}
 
-              {/* Primary action button - modern, sleek style */}
+              {/* Inline error message */}
+              {errorMessage && (
+                <div
+                  className="text-sm text-red-600 mt-1"
+                  role="alert"
+                  aria-live="assertive"
+                >
+                  {errorMessage}
+                </div>
+              )}
+
+              {/* Primary action(s) */}
               {mode === "otp" ? (
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     className="col-span-1 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white font-semibold py-3 rounded-xl shadow-md hover:-translate-y-0.5 transform transition text-sm sm:text-base"
                     onClick={handleSendOtp}
-                    disabled={sendOtpForLoginLoader}
+                    type="button"
                   >
-                    {sendOtpForLoginLoader ? "Sending..." : "Send OTP"}
+                    Send OTP
                   </button>
 
                   <button
                     className="col-span-1 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white font-semibold py-3 rounded-xl shadow-md hover:-translate-y-0.5 transform transition text-sm sm:text-base"
                     onClick={handleVerifyOtp}
+                    type="button"
                   >
                     Verify OTP
                   </button>
                 </div>
+              ) : mode === "signup" ? (
+                <button
+                  type="button"
+                  className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white font-semibold py-3 rounded-xl shadow-md hover:-translate-y-0.5 transform transition text-sm sm:text-base"
+                  onClick={handleRegister}
+                >
+                  <ArrowRightOnRectangleIcon className="h-5 w-5" />
+                  Sign Up
+                </button>
               ) : (
                 <button
                   type="button"
                   className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white font-semibold py-3 rounded-xl shadow-md hover:-translate-y-0.5 transform transition text-sm sm:text-base"
                   onClick={handleSignIn}
+                  disabled={loginLoader}
                 >
                   <ArrowRightOnRectangleIcon className="h-5 w-5" />
-                  {mode === "signup" ? "Sign Up" : "Sign In"}
+                  Sign In
                 </button>
               )}
             </div>
@@ -489,7 +535,7 @@ export default function LoginPage() {
               <hr className="flex-grow border-gray-300" />
             </div>
 
-            {/* Single Google button kept here for discoverability */}
+            {/* Google button (kept) */}
             <button
               type="button"
               className="w-full flex items-center justify-center gap-2 border border-gray-300 py-3 rounded-lg hover:bg-gray-50 transition text-sm sm:text-base"
@@ -522,19 +568,6 @@ export default function LoginPage() {
                 Continue with Google
               </span>
             </button>
-
-            {/* Switch Auth Mode */}
-            <p className="text-center text-sm text-gray-600 mt-6">
-              {mode === "signup"
-                ? "Already have an account?"
-                : "Don’t have an account?"}{" "}
-              <button
-                onClick={() => setMode(mode === "signup" ? "signin" : "signup")}
-                className="text-yellow-600 font-medium hover:underline"
-              >
-                {mode === "signup" ? "Sign In" : "Sign Up"}
-              </button>
-            </p>
           </div>
         </div>
       </div>

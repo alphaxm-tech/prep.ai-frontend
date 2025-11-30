@@ -14,9 +14,8 @@ export function useModifyDescription() {
     setError(null);
 
     try {
-      const apiKey =
-        "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"; // ⚠️ demo key
-      const model = "openai/gpt-3.5-turbo";
+      const apiKey = process.env.OPENAI_API_KEY;
+      const model = "openai/gpt-4o-mini";
 
       const prompt = `Rewrite this: ${description}
 Include: ${keywords.join(", ")}
