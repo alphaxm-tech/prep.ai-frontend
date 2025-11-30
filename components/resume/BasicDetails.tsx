@@ -255,7 +255,7 @@ export default function BasicDetails({
 
       {/* Keywords input (comma separated) */}
       <div className="mt-2">
-        <label className="block text-sm font-medium text-gray-700">
+        {/* <label className="block text-sm font-medium text-gray-700">
           Keywords (comma separated)
         </label>
         <input
@@ -263,7 +263,7 @@ export default function BasicDetails({
           onChange={(e) => setKeywords(e.target.value)}
           className={`${inputBase} ${inputNormal} mt-1`}
           placeholder="e.g. React, TypeScript, Golang"
-        />
+        /> */}
       </div>
 
       {/* Portfolio + Github */}

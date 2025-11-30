@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { resumeService } from "@/utils/services/resume.service";
 import {
@@ -395,6 +395,234 @@ export default function ResumeBuilderPage() {
   );
   const canSaveNow = !hasAnyErrors(currentValidation);
 
+  // ---------------------- Download logic additions (iframe print) ----------------------
+  const modalRef = useRef<HTMLDivElement | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  /**
+   * Frontend-only print -> PDF via hidden iframe.
+   * This function:
+   *  - clones the modal preview
+   *  - inlines conservative styles
+   *  - removes sticky/fixed positioning and transforms that break print
+   *  - forces a pdf-root width equal to A4 width in px (794px @96dpi)
+   *  - writes to a hidden iframe and triggers print()
+   */
+  const onDownloadPrint = async () => {
+    if (!modalRef.current) return;
+    setIsDownloading(true);
+
+    try {
+      // Wait for fonts to be ready to get stable layout
+      if ((document as any).fonts && (document as any).fonts.ready) {
+        await (document as any).fonts.ready;
+      }
+
+      const orig = modalRef.current;
+
+      // 1) Clone node
+      const cloneRoot = orig.cloneNode(true) as HTMLElement;
+
+      // 2) Sanitize + inline computed styles. We also neutralize problematic properties:
+      //    - remove position: sticky/fixed/absolute -> set static
+      //    - remove transform
+      //    - remove large box-shadow & extreme border-radius for print (keep layout)
+      // We inline a conservative set of properties to preserve typography and spacing.
+      const sanitizeRecursively = (origEl: Element, cloneEl: Element) => {
+        try {
+          const cs = window.getComputedStyle(origEl as Element);
+
+          // Conservative properties to inline
+          const propsToInline = [
+            "display",
+            "position",
+            "top",
+            "left",
+            "right",
+            "bottom",
+            "width",
+            "height",
+            "max-width",
+            "min-width",
+            "padding",
+            "padding-top",
+            "padding-right",
+            "padding-bottom",
+            "padding-left",
+            "margin",
+            "margin-top",
+            "margin-right",
+            "margin-bottom",
+            "margin-left",
+            "font-size",
+            "font-family",
+            "font-weight",
+            "line-height",
+            "letter-spacing",
+            "color",
+            "text-align",
+            "background-color",
+            "border",
+            "border-radius",
+            "box-shadow",
+            "overflow",
+            "white-space",
+          ];
+
+          let inlineStyle = "";
+          for (const p of propsToInline) {
+            try {
+              const v = (cs as any).getPropertyValue
+                ? cs.getPropertyValue(p)
+                : (cs as any)[p];
+              if (v && v !== "initial" && v !== "none") {
+                inlineStyle += `${p}: ${v}; `;
+              }
+            } catch {
+              // ignore property read errors
+            }
+          }
+
+          // If element uses sticky/fixed/absolute, force static for print layout
+          const pos = cs.getPropertyValue("position");
+          if (pos === "sticky" || pos === "fixed" || pos === "absolute") {
+            inlineStyle +=
+              "position: static !important; top: auto !important; left: auto !important; right: auto !important; bottom: auto !important; ";
+          }
+
+          // Remove transforms which often misplace elements in print
+          inlineStyle +=
+            "transform: none !important; -webkit-transform: none !important; ";
+
+          // Remove background-images / gradients for print fallback but preserve background-color
+          inlineStyle += "background-image: none !important; ";
+
+          // Remove filter/backdrop-filter and mask images
+          inlineStyle +=
+            "filter: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; mask-image: none !important;";
+
+          // Remove heavy shadows and large radii that cause overflow artifacts on print
+          inlineStyle +=
+            "box-shadow: none !important; border-radius: 6px !important;";
+
+          // Bind inline style
+          (cloneEl as HTMLElement).setAttribute("style", inlineStyle);
+        } catch {
+          // ignore
+        }
+
+        // Recurse children pairs (assume same order)
+        const origChildren = Array.from(origEl.children);
+        const cloneChildren = Array.from(cloneEl.children);
+        for (let i = 0; i < cloneChildren.length; i++) {
+          if (origChildren[i] && cloneChildren[i]) {
+            sanitizeRecursively(origChildren[i], cloneChildren[i]);
+          }
+        }
+      };
+
+      sanitizeRecursively(orig, cloneRoot);
+
+      // 3) Build print CSS tuned to A4 and to fit content width to A4 width (794px @96dpi).
+      //    We center the content and allow page breaks.
+      const printCss = `
+        @page { size: A4; margin: 12mm; }
+        html, body { height: 100%; margin: 0; padding: 0; background: #ffffff; -webkit-print-color-adjust: exact; }
+        .pdf-root { width: 794px; margin: 0 auto; box-sizing: border-box; background: #ffffff; }
+        /* Remove shadows and strong rounded corners in print to avoid artifacts */
+        .pdf-root * { box-shadow: none !important; }
+        /* Helpful page-break helpers — you can mark large cards with 'avoid-break' */
+        .avoid-break { page-break-inside: avoid; -webkit-region-break-inside: avoid; }
+        .page-break { display: block; page-break-after: always; }
+        /* Ensure fonts render crisply */
+        body { -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; }
+      `;
+
+      // 4) Wrap clone in pdf-root container
+      const wrappedHtml = `<div class="pdf-root">${cloneRoot.outerHTML}</div>`;
+
+      // 5) Create hidden iframe
+      const iframe = document.createElement("iframe");
+      iframe.style.position = "fixed";
+      iframe.style.right = "0";
+      iframe.style.bottom = "0";
+      iframe.style.width = "0";
+      iframe.style.height = "0";
+      iframe.style.border = "0";
+      iframe.style.overflow = "hidden";
+      iframe.style.opacity = "0";
+      iframe.setAttribute("aria-hidden", "true");
+      document.body.appendChild(iframe);
+
+      // 6) Write content into iframe
+      const filenameSafe = (assembledData.fullName || "resume")
+        .replace(/\s+/g, "_")
+        .replace(/[^a-zA-Z0-9_\-\.]/g, "");
+      const doc =
+        iframe.contentDocument ||
+        (iframe.contentWindow && iframe.contentWindow.document);
+      if (!doc) throw new Error("Cannot access iframe document");
+
+      doc.open();
+      doc.write(`<!doctype html>
+        <html>
+          <head>
+            <meta charset="utf-8" />
+            <meta name="viewport" content="width=794" />
+            <title>${filenameSafe}</title>
+            <style>${printCss}</style>
+          </head>
+          <body>
+            ${wrappedHtml}
+          </body>
+        </html>`);
+      doc.close();
+
+      // 7) Wait for fonts/images inside iframe to be ready
+      const waitForIframeReady = () =>
+        new Promise<void>((resolve) => {
+          const win = iframe.contentWindow!;
+          if (!win) return resolve();
+          const tryResolve = () => setTimeout(resolve, 200); // small delay to settle
+          if (
+            (win as any).document &&
+            (win as any).document.fonts &&
+            (win as any).document.fonts.ready
+          ) {
+            (win as any).document.fonts.ready
+              .then(tryResolve)
+              .catch(tryResolve);
+          } else {
+            setTimeout(tryResolve, 200);
+          }
+        });
+
+      await waitForIframeReady();
+
+      // 8) Trigger print on iframe
+      const printWin = iframe.contentWindow!;
+      printWin.focus();
+      printWin.print();
+
+      // 9) Cleanup iframe after a delay (give print dialog time to open)
+      setTimeout(() => {
+        try {
+          document.body.removeChild(iframe);
+        } catch {
+          /* ignore */
+        }
+      }, 2000);
+    } catch (err) {
+      console.error("Print / front-end PDF generation failed:", err);
+      alert(
+        "Failed to print resume. Try allowing print/popups in your browser or use the server-side PDF route for perfect fidelity."
+      );
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+  // ---------------------------------------------------------------------
+
   return (
     <div className="min-h-screen bg-white py-8">
       <main className="w-full">
@@ -580,27 +808,60 @@ export default function ResumeBuilderPage() {
                     {/* Buttons grouped on the right */}
                     <div className="flex items-center gap-2">
                       <button
-                        // onClick={handleDownload}
+                        onClick={onDownloadPrint}
+                        disabled={isDownloading}
                         aria-label="Download resume"
                         title="Download resume"
-                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-white text-sm font-semibold shadow-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-blue-300 bg-blue-500 hover:bg-blue-600 focus:bg-blue-700"
+                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-white text-sm font-semibold shadow-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-blue-300 ${
+                          isDownloading
+                            ? "bg-blue-300 cursor-not-allowed"
+                            : "bg-blue-500 hover:bg-blue-600 focus:bg-blue-700"
+                        }`}
                       >
-                        <svg
-                          className="w-4 h-4"
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          aria-hidden="true"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"
-                          />
-                        </svg>
-                        Download
+                        {isDownloading ? (
+                          <>
+                            <svg
+                              className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                            >
+                              <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                              ></circle>
+                              <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="M4 12a8 8 0 018-8v8z"
+                              ></path>
+                            </svg>
+                            Preparing PDF...
+                          </>
+                        ) : (
+                          <>
+                            <svg
+                              className="w-4 h-4"
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke="currentColor"
+                              aria-hidden="true"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"
+                              />
+                            </svg>
+                            Download
+                          </>
+                        )}
                       </button>
 
                       <button
@@ -643,7 +904,10 @@ export default function ResumeBuilderPage() {
                     </div>
                   </div>
 
-                  <div className="p-6">{renderSelectedTemplate(false)}</div>
+                  {/* IMPORTANT: wrap the actual preview with modalRef for capture */}
+                  <div className="p-6">
+                    <div ref={modalRef}>{renderSelectedTemplate(false)}</div>
+                  </div>
                 </div>
               </div>
             )}
