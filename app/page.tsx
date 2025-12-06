@@ -47,7 +47,7 @@ const InputWithIcon = memo(function InputWithIcon({
  * Demo-only Login Page
  *
  * UI: uses the original tab/buttons layout (Email | OTP | Sign Up | Enter)
- * Auth: demo-only client-side check for ALLOWED_EMAIL / ALLOWED_PASSWORD
+ * Auth: demo-only client-side check for allowed users
  *
  * Security reminder: credentials are visible in the client bundle. Use only for testing/demo.
  */
@@ -72,8 +72,16 @@ export default function LoginPage() {
   // -----------------------------
   // Allowed demo credentials (client-side)
   // -----------------------------
-  const ALLOWED_EMAIL = "vm.prepai@gmail.com";
-  const ALLOWED_PASSWORD = "prepai@1993";
+  const ALLOWED_USERS = [
+    {
+      email: "vm.prepai@gmail.com",
+      password: "prepai@1993",
+    },
+    {
+      email: "sanjanaaddepalli2005@gmail.com",
+      password: "xOQDhT3cpWRut4kW",
+    },
+  ];
 
   // clear inline error on input change
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -89,17 +97,20 @@ export default function LoginPage() {
     if (errorMessage) setErrorMessage(null);
   };
 
-  // Primary action: kept identical to simplified demo logic:
-  // validate the single allowed credential pair client-side and route to /home on success.
+  // Primary action:
+  // validate against the allowed users list and route to /home on success.
   const handleSignIn = useCallback(() => {
     setLoginLoader(true);
     setErrorMessage(null);
 
-    // Demo-only sign-in check
-    if (
-      email.trim().toLowerCase() === ALLOWED_EMAIL.toLowerCase() &&
-      password === ALLOWED_PASSWORD
-    ) {
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const matchedUser = ALLOWED_USERS.find(
+      (u) =>
+        u.email.toLowerCase() === normalizedEmail && u.password === password
+    );
+
+    if (matchedUser) {
       success?.("Logged in (demo). Redirecting…");
       setTimeout(() => {
         setLoginLoader(false);
@@ -115,29 +126,23 @@ export default function LoginPage() {
     showError?.(msg);
   }, [email, password, router, success, showError]);
 
-  // OTP / Signup actions simply reuse the same demo sign-in behavior (keeps functionality identical).
+  // OTP / Signup actions simply reuse the same demo-only behavior.
   const handleSendOtp = useCallback(() => {
-    // visually behave like the original: you'd send an OTP here.
-    // For demo mode, we show an inline message and do nothing else.
     setErrorMessage(null);
     showError?.("OTP flow not active in demo. Use demo credentials.");
   }, [showError]);
 
   const handleVerifyOtp = useCallback(() => {
-    // in demo, verify just checks the same allowed credentials (or rejects).
     setErrorMessage(null);
-    // we won't actually verify OTP — keep behavior consistent with demo-only auth
     showError?.("OTP verification not active in demo. Use demo credentials.");
   }, [showError]);
 
   const handleRegister = useCallback(() => {
-    // registration is not available in demo — show toast/in-line message
     setErrorMessage(null);
     showError?.("Sign up not active in demo. Use demo credentials to sign in.");
   }, [showError]);
 
   const handleGoogleLogin = () => {
-    // keep the existing behavior — may redirect to your OAuth endpoint if configured
     window.location.href = "/api/auth/google";
   };
 
@@ -464,7 +469,6 @@ export default function LoginPage() {
                 </div>
               )}
 
-              {/* Forgot password link (only shows for password sign-in like original) */}
               {mode !== "otp" && (
                 <div className="text-right">
                   <a
@@ -476,7 +480,6 @@ export default function LoginPage() {
                 </div>
               )}
 
-              {/* Inline error message */}
               {errorMessage && (
                 <div
                   className="text-sm text-red-600 mt-1"
@@ -487,7 +490,6 @@ export default function LoginPage() {
                 </div>
               )}
 
-              {/* Primary action(s) */}
               {mode === "otp" ? (
                 <div className="grid grid-cols-2 gap-3">
                   <button
@@ -528,14 +530,12 @@ export default function LoginPage() {
               )}
             </div>
 
-            {/* OR Divider */}
             <div className="my-4 flex items-center">
               <hr className="flex-grow border-gray-300" />
               <span className="mx-2 text-gray-500 text-sm">OR</span>
               <hr className="flex-grow border-gray-300" />
             </div>
 
-            {/* Google button (kept) */}
             <button
               type="button"
               className="w-full flex items-center justify-center gap-2 border border-gray-300 py-3 rounded-lg hover:bg-gray-50 transition text-sm sm:text-base"

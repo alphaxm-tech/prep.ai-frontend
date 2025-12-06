@@ -2,12 +2,10 @@
 
 import { useState } from "react";
 import { PlayIcon, CheckCircleIcon } from "@heroicons/react/24/solid";
-
-import QuestionCard from "@/components/QuestionCard";
-import InterviewRecorder from "@/components/InterviewRecorder";
 import { useRouter } from "next/navigation";
 
 type InterviewType = {
+  id: string; // NEW: stable identifier
   company: string;
   title: string;
   description: string;
@@ -19,6 +17,7 @@ type InterviewType = {
 
 type PastInterview = {
   id: string;
+  interviewId?: string; // NEW: to be able to replay with same question set
   company: string;
   title: string;
   date: string; // ISO or display-friendly
@@ -27,6 +26,7 @@ type PastInterview = {
   notes?: string;
 };
 
+// (optional) old demo questions – can be removed if not needed
 const questions = [
   { id: 1, text: "Tell me about yourself." },
   { id: 2, text: "What was the most challenging project you worked on?" },
@@ -35,20 +35,16 @@ const questions = [
 
 export default function AIInterviewPage() {
   const router = useRouter();
-  const [company, setCompany] = useState("");
-  const [role, setRole] = useState("");
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [started, setStarted] = useState(false);
 
-  // NEW: selected interview
   const [selected, setSelected] = useState<InterviewType | null>(null);
 
   // Sample past interviews (dummy data) — replace with real data from your backend
   const [pastInterviews] = useState<PastInterview[]>([
     {
       id: "p1",
-      company: "Google",
-      title: "Google Coding Round",
+      interviewId: "interview-1",
+      company: "AI Prep Buddy",
+      title: "Interview 1",
       date: "2025-11-20",
       duration: "42m",
       scorePct: 82,
@@ -56,8 +52,9 @@ export default function AIInterviewPage() {
     },
     {
       id: "p2",
-      company: "Amazon",
-      title: "Amazon Leadership + Coding Round",
+      interviewId: "interview-2",
+      company: "AI Prep Buddy",
+      title: "Interview 2",
       date: "2025-11-15",
       duration: "58m",
       scorePct: 74,
@@ -65,78 +62,91 @@ export default function AIInterviewPage() {
     },
     {
       id: "p3",
-      company: "Meta",
-      title: "Meta System Design Round",
+      interviewId: "interview-3",
+      company: "AI Prep Buddy",
+      title: "Interview 3",
       date: "2025-10-30",
       duration: "65m",
       scorePct: 90,
       notes: "Excellent tradeoffs and scalability reasoning",
     },
-  ] as PastInterview[]);
-
-  const currentQuestion = questions[currentIndex];
-
-  const nextQuestion = () => {
-    if (currentIndex < questions.length - 1) {
-      setCurrentIndex(currentIndex + 1);
-    }
-  };
-
-  const companies = ["Google", "Microsoft", "Amazon", "Meta", "Apple"];
-  const roles = [
-    "Frontend Developer",
-    "Backend Developer",
-    "Full Stack Developer",
-    "Blockchain Developer",
-  ];
+  ]);
 
   const interviewTypes: InterviewType[] = [
+    // 🔴 Interview 1 -> 7 questions from Excel (set 1)
     {
-      company: "Google",
-      title: "Google Coding Round",
+      id: "interview-1",
+      company: "AI Prep Buddy",
+      title: "Interview 1",
       description: "Data structures, algorithms, and problem-solving.",
       time: "45 min",
       difficulty: "Hard",
       difficultyColor: "bg-red-100 text-red-800",
       iconColor: "bg-yellow-100 text-yellow-600",
     },
+    // 🟡 Interview 2 -> 7 questions from Excel (set 2)
     {
-      company: "Amazon",
-      title: "Amazon Leadership + Coding Round",
+      id: "interview-2",
+      company: "AI Prep Buddy",
+      title: "Interview 2",
       description: "Coding + Amazon LP-focused behavioral questions.",
       time: "60 min",
       difficulty: "Medium",
       difficultyColor: "bg-yellow-100 text-yellow-800",
       iconColor: "bg-orange-100 text-orange-600",
     },
+    // 🟣 Interview 3 -> 7 questions from Excel (set 3)
     {
-      company: "Meta",
-      title: "Meta System Design Round",
+      id: "interview-3",
+      company: "AI Prep Buddy",
+      title: "Interview 3",
       description: "High-level architecture + scalability problems.",
       time: "60–75 min",
       difficulty: "Hard",
       difficultyColor: "bg-purple-100 text-purple-800",
       iconColor: "bg-purple-50 text-purple-600",
     },
-    {
-      company: "Microsoft",
-      title: "Microsoft Technical + Problem Solving",
-      description: "Conceptual problem-solving + coding questions.",
-      time: "45–60 min",
-      difficulty: "Medium",
-      difficultyColor: "bg-blue-100 text-blue-800",
-      iconColor: "bg-blue-50 text-blue-600",
-    },
-    {
-      company: "Apple",
-      title: "Apple Behavioral & Culture Fit",
-      description: "Deep behavioral + team fit evaluation.",
-      time: "30–45 min",
-      difficulty: "Easy",
-      difficultyColor: "bg-green-100 text-green-800",
-      iconColor: "bg-green-50 text-green-600",
-    },
+    // You can still have other company presets below if you like
+    // {
+    //   id: "microsoft-tech",
+    //   company: "Microsoft",
+    //   title: "Microsoft Technical + Problem Solving",
+    //   description: "Conceptual problem-solving + coding questions.",
+    //   time: "45–60 min",
+    //   difficulty: "Medium",
+    //   difficultyColor: "bg-blue-100 text-blue-800",
+    //   iconColor: "bg-blue-50 text-blue-600",
+    // },
+    // {
+    //   id: "apple-behavioral",
+    //   company: "Apple",
+    //   title: "Apple Behavioral & Culture Fit",
+    //   description: "Deep behavioral + team fit evaluation.",
+    //   time: "30–45 min",
+    //   difficulty: "Easy",
+    //   difficultyColor: "bg-green-100 text-green-800",
+    //   iconColor: "bg-green-50 text-green-600",
+    // },
   ];
+
+  const handleStart = () => {
+    if (!selected) return;
+    const qs = `?interviewId=${encodeURIComponent(
+      selected.id
+    )}&company=${encodeURIComponent(
+      selected.company
+    )}&title=${encodeURIComponent(selected.title)}`;
+    router.push(`/ai-interview/interview${qs}`);
+  };
+
+  const handleReplay = (p: PastInterview) => {
+    const qs = `?interviewId=${encodeURIComponent(
+      p.interviewId ?? ""
+    )}&company=${encodeURIComponent(p.company)}&title=${encodeURIComponent(
+      p.title
+    )}`;
+    router.push(`/ai-interview/interview${qs}`);
+  };
 
   return (
     <div className="min-h-screen bg-white px-12 py-8">
@@ -154,6 +164,7 @@ export default function AIInterviewPage() {
         {/* Start Interview Section */}
         <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
           <h2 className="text-xl font-semibold mb-4">Start New Interview</h2>
+
           <div className="flex flex-col md:flex-row gap-4 mb-6 items-center">
             {/* Left hint */}
             <span className="text-gray-700 font-medium">
@@ -164,7 +175,7 @@ export default function AIInterviewPage() {
             <div className="ml-auto">
               {selected ? (
                 <div className="text-sm text-gray-600">
-                  Selected:{" "}
+                  Selected:&nbsp;
                   <span className="font-semibold text-gray-800">
                     {selected.company} — {selected.title}
                   </span>
@@ -181,12 +192,11 @@ export default function AIInterviewPage() {
           <div className="overflow-x-auto -mx-2 px-2 mb-6">
             <div className="flex gap-4 snap-x snap-mandatory pb-2">
               {interviewTypes.map((type) => {
-                const isSelected =
-                  selected?.company === type.company &&
-                  selected?.title === type.title;
+                const isSelected = selected?.id === type.id;
+
                 return (
                   <div
-                    key={`${type.company}-${type.title}`}
+                    key={type.id}
                     role="button"
                     tabIndex={0}
                     onClick={() => setSelected(type)}
@@ -197,13 +207,11 @@ export default function AIInterviewPage() {
                       }
                     }}
                     aria-pressed={isSelected}
-                    className={`relative min-w-[260px] snap-start bg-white rounded-xl p-5 border transition cursor-pointer
-                      ${
-                        isSelected
-                          ? "border-yellow-300 shadow-xl ring-2 ring-yellow-200"
-                          : "border-gray-100 shadow-sm hover:shadow-lg"
-                      }
-                    `}
+                    className={`relative min-w-[260px] snap-start bg-white rounded-xl p-5 border transition cursor-pointer ${
+                      isSelected
+                        ? "border-yellow-300 shadow-xl ring-2 ring-yellow-200"
+                        : "border-gray-100 shadow-sm hover:shadow-lg"
+                    }`}
                   >
                     {/* Selected check badge */}
                     {isSelected && (
@@ -251,25 +259,16 @@ export default function AIInterviewPage() {
 
           {/* Start Interview Button */}
           <button
-            onClick={() => {
-              if (!selected) return;
-              // navigate with selected info in query params
-              const qs = `?company=${encodeURIComponent(
-                selected.company
-              )}&title=${encodeURIComponent(selected.title)}`;
-              router.push(`/ai-interview/interview${qs}`);
-            }}
+            onClick={handleStart}
             disabled={!selected}
             aria-disabled={!selected}
-            className={`w-full transition text-white py-3 rounded-lg font-medium flex items-center justify-center gap-2
-              ${
-                selected
-                  ? "bg-yellow-400 hover:bg-yellow-500"
-                  : "bg-gray-100 text-gray-400 cursor-not-allowed"
-              }
-            `}
+            className={`w-full transition text-white py-3 rounded-lg font-medium flex items-center justify-center gap-2 ${
+              selected
+                ? "bg-yellow-400 hover:bg-yellow-500"
+                : "bg-gray-100 text-gray-400 cursor-not-allowed"
+            }`}
           >
-            <PlayIcon className={`w-5 h-5 ${selected ? "" : "opacity-60"}`} />{" "}
+            <PlayIcon className={`w-5 h-5 ${selected ? "" : "opacity-60"}`} />
             {selected ? "Start Interview" : "Select an interview to start"}
           </button>
         </div>
@@ -300,8 +299,6 @@ export default function AIInterviewPage() {
 
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
             <h3 className="font-semibold mb-4">Interview Tips</h3>
-
-            {/* Scrollable tips list */}
             <div className="space-y-3 text-sm h-48 overflow-y-auto pr-2">
               <div className="bg-blue-50 p-3 rounded-lg">
                 Practice the STAR method for behavioral questions
@@ -329,8 +326,6 @@ export default function AIInterviewPage() {
       {/* Recent Interviews */}
       <div className="mt-8 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 max-w-screen-xl mx-auto">
         <h2 className="text-xl font-semibold mb-4">Recent Interviews</h2>
-
-        {/* If you have no backend yet, show the sample items */}
         <div className="space-y-3">
           {pastInterviews.map((p) => (
             <div
@@ -343,7 +338,6 @@ export default function AIInterviewPage() {
                     {p.company[0]}
                   </span>
                 </div>
-
                 <div>
                   <div className="text-sm font-medium text-gray-800">
                     {p.company} — {p.title}
@@ -362,19 +356,13 @@ export default function AIInterviewPage() {
                   <div className="text-sm font-semibold">{p.scorePct}%</div>
                   <div className="text-xs text-gray-500">Score</div>
                 </div>
-
                 <div>
                   <button
-                    onClick={() => {
-                      // replay the same interview (navigate to interview page with company + title)
-                      const qs = `?company=${encodeURIComponent(
-                        p.company
-                      )}&title=${encodeURIComponent(p.title)}`;
-                      router.push(`/ai-interview/interview${qs}`);
-                    }}
+                    onClick={() => handleReplay(p)}
                     className="inline-flex items-center gap-2 px-3 py-1.5 bg-yellow-400 hover:bg-yellow-500 text-white rounded-md text-sm"
                   >
-                    <PlayIcon className="w-4 h-4" /> Replay
+                    <PlayIcon className="w-4 h-4" />
+                    Replay
                   </button>
                 </div>
               </div>
