@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useCallback,
+} from "react";
 import { PlayIcon, CheckCircleIcon } from "@heroicons/react/24/solid";
 
 /**
@@ -28,21 +34,13 @@ type EvaluationAnswer = {
  */
 
 const INTERVIEW_1_QUESTIONS: Q[] = [
-  {
-    id: 1,
-    text: "What is data abstraction",
-    suggestedTimeSec: 60,
-  },
+  { id: 1, text: "What is data abstraction", suggestedTimeSec: 60 },
   {
     id: 2,
     text: "What are the three levels of data abstraction with Example",
     suggestedTimeSec: 60,
   },
-  {
-    id: 3,
-    text: "What is command line argument)",
-    suggestedTimeSec: 60,
-  },
+  { id: 3, text: "What is command line argument)", suggestedTimeSec: 60 },
   {
     id: 4,
     text: "Advantages of a macro over a function",
@@ -53,11 +51,7 @@ const INTERVIEW_1_QUESTIONS: Q[] = [
     text: "What are the different storage classes in C",
     suggestedTimeSec: 60,
   },
-  {
-    id: 6,
-    text: "Why do you want to join TCS",
-    suggestedTimeSec: 60,
-  },
+  { id: 6, text: "Why do you want to join TCS", suggestedTimeSec: 60 },
   {
     id: 7,
     text: "What are your strengths and weaknesses",
@@ -66,41 +60,13 @@ const INTERVIEW_1_QUESTIONS: Q[] = [
 ];
 
 const INTERVIEW_2_QUESTIONS: Q[] = [
-  {
-    id: 1,
-    text: "What is trigger",
-    suggestedTimeSec: 60,
-  },
-  {
-    id: 2,
-    text: "What do you mean by joins in SQL",
-    suggestedTimeSec: 60,
-  },
-  {
-    id: 3,
-    text: "How can VoLTE work in a 4G mobile",
-    suggestedTimeSec: 60,
-  },
-  {
-    id: 4,
-    text: "What is an IP address",
-    suggestedTimeSec: 60,
-  },
-  {
-    id: 5,
-    text: "What is Cloud Computing",
-    suggestedTimeSec: 60,
-  },
-  {
-    id: 6,
-    text: "Tell me about yourself",
-    suggestedTimeSec: 60,
-  },
-  {
-    id: 7,
-    text: "How you handle the pressure",
-    suggestedTimeSec: 60,
-  },
+  { id: 1, text: "What is trigger", suggestedTimeSec: 60 },
+  { id: 2, text: "What do you mean by joins in SQL", suggestedTimeSec: 60 },
+  { id: 3, text: "How can VoLTE work in a 4G mobile", suggestedTimeSec: 60 },
+  { id: 4, text: "What is an IP address", suggestedTimeSec: 60 },
+  { id: 5, text: "What is Cloud Computing", suggestedTimeSec: 60 },
+  { id: 6, text: "Tell me about yourself", suggestedTimeSec: 60 },
+  { id: 7, text: "How you handle the pressure", suggestedTimeSec: 60 },
 ];
 
 const INTERVIEW_3_QUESTIONS: Q[] = [
@@ -109,26 +75,10 @@ const INTERVIEW_3_QUESTIONS: Q[] = [
     text: "What do you know about the garbage collector",
     suggestedTimeSec: 60,
   },
-  {
-    id: 2,
-    text: "Write a Binary Search program",
-    suggestedTimeSec: 60,
-  },
-  {
-    id: 3,
-    text: "What are enumerations",
-    suggestedTimeSec: 60,
-  },
-  {
-    id: 4,
-    text: "What is a static identifier",
-    suggestedTimeSec: 60,
-  },
-  {
-    id: 5,
-    text: "What is Cryptography",
-    suggestedTimeSec: 60,
-  },
+  { id: 2, text: "Write a Binary Search program", suggestedTimeSec: 60 },
+  { id: 3, text: "What are enumerations", suggestedTimeSec: 60 },
+  { id: 4, text: "What is a static identifier", suggestedTimeSec: 60 },
+  { id: 5, text: "What is Cryptography", suggestedTimeSec: 60 },
   {
     id: 6,
     text: "How to connect nine dots using three straight lines",
@@ -141,30 +91,17 @@ const INTERVIEW_3_QUESTIONS: Q[] = [
   },
 ];
 
-/**
- * Optional company-based sets if you still want them
- */
-const GOOGLE_QUESTIONS: Q[] = [
-  {
-    id: 1,
-    text: "Tell me about yourself (30 seconds).",
-    suggestedTimeSec: 120,
-  },
-];
-
 const DEFAULT_QUESTIONS: Q[] = [
   { id: 1, text: "Tell me about yourself.", suggestedTimeSec: 60 },
 ];
 
 /**
  * Map of question sets.
- * Keys must match `interviewId` you send from the hub page, plus any company keys you want.
  */
 const QUESTION_SETS: Record<string, Q[]> = {
   "interview-1": INTERVIEW_1_QUESTIONS,
   "interview-2": INTERVIEW_2_QUESTIONS,
   "interview-3": INTERVIEW_3_QUESTIONS,
-  Google: GOOGLE_QUESTIONS, // keep if you use company-based
 };
 
 /**
@@ -179,27 +116,33 @@ function parseQueryParams(search: string) {
       title: sp.get("title") ?? "",
     };
   } catch {
-    return {
-      interviewId: "",
-      company: "",
-      title: "",
-    };
+    return { interviewId: "", company: "", title: "" };
   }
 }
 
 /* ---------------------- Recorder ---------------------- */
 
+type RecorderOnCompletePayload = {
+  blob: Blob;
+  url: string;
+  durationSec: number;
+  questionId: number;
+};
+
 type RecorderProps = {
   questionId: number;
   maxSeconds?: number;
   startTrigger?: number | null;
-  onComplete: (data: { blob: Blob; url: string; durationSec: number }) => void;
+  /** signal from parent to force-stop and finalize recording */
+  forceStopTrigger?: number | null;
+  onComplete: (data: RecorderOnCompletePayload) => void;
 };
 
 export function InterviewRecorder({
   questionId,
   maxSeconds = 45,
   startTrigger = null,
+  forceStopTrigger = null,
   onComplete,
 }: RecorderProps) {
   const [recording, setRecording] = useState(false);
@@ -212,34 +155,10 @@ export function InterviewRecorder({
   const stopTimeoutRef = useRef<number | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  useEffect(() => {
-    if (startTrigger == null) return;
-    (async () => {
-      try {
-        await startRecording();
-      } catch (err: any) {
-        setMediaError(String(err?.message ?? err));
-      }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [startTrigger]);
-
-  useEffect(() => {
-    return () => {
-      clearTick();
-      clearStopTimeout();
-      try {
-        if (
-          mediaRecorderRef.current &&
-          mediaRecorderRef.current.state !== "inactive"
-        )
-          mediaRecorderRef.current.stop();
-      } catch {}
-      try {
-        streamRef.current?.getTracks().forEach((t) => t.stop());
-      } catch {}
-    };
-  }, []);
+  // Prevent duplicate starts (React Strict Mode / double effects)
+  const startingRef = useRef(false);
+  // Ensure we call onComplete only once per recording
+  const completedRef = useRef(false);
 
   function clearTick() {
     if (tickRef.current) {
@@ -255,19 +174,37 @@ export function InterviewRecorder({
     }
   }
 
+  function internalStopRecorder() {
+    clearTick();
+    clearStopTimeout();
+
+    const mr = mediaRecorderRef.current;
+    if (!mr) {
+      setRecording(false);
+      return;
+    }
+
+    try {
+      if (mr.state !== "inactive") {
+        mr.stop();
+      }
+    } catch (e) {
+      console.warn("stop error", e);
+    }
+    setRecording(false);
+  }
+
   async function startRecording() {
-    if (recording) return;
+    if (recording || startingRef.current) return;
+    startingRef.current = true;
+    completedRef.current = false;
     setMediaError(null);
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: true,
-      });
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
 
-      const mr = new MediaRecorder(stream, {
-        mimeType: "audio/webm",
-      });
+      const mr = new MediaRecorder(stream, { mimeType: "audio/webm" });
       mediaRecorderRef.current = mr;
       chunksRef.current = [];
 
@@ -276,15 +213,21 @@ export function InterviewRecorder({
       };
 
       mr.onstop = () => {
-        const blob = new Blob(chunksRef.current, {
-          type: "audio/webm",
-        });
+        if (completedRef.current) return;
+        completedRef.current = true;
+
+        const blob = new Blob(chunksRef.current, { type: "audio/webm" });
         const url = URL.createObjectURL(blob);
         const duration = elapsedSec;
-        onComplete({ blob, url, durationSec: duration });
+
+        onComplete({ blob, url, durationSec: duration, questionId });
 
         try {
           stream.getTracks().forEach((t) => t.stop());
+        } catch {}
+        try {
+          mediaRecorderRef.current = null;
+          chunksRef.current = [];
         } catch {}
       };
 
@@ -297,29 +240,66 @@ export function InterviewRecorder({
       }, 1000);
 
       stopTimeoutRef.current = window.setTimeout(() => {
-        stopRecording();
+        internalStopRecorder();
       }, maxSeconds * 1000);
     } catch (err: any) {
       setMediaError(err?.message ?? "Microphone access denied");
       throw err;
+    } finally {
+      startingRef.current = false;
     }
   }
 
-  function stopRecording() {
+  useEffect(() => {
+    if (startTrigger == null) return;
+    (async () => {
+      try {
+        await startRecording();
+      } catch (err: any) {
+        setMediaError(String(err?.message ?? err));
+      }
+    })();
+  }, [startTrigger]);
+
+  useEffect(() => {
+    if (forceStopTrigger == null) return;
+    if (recording && mediaRecorderRef.current) {
+      internalStopRecorder();
+    }
+  }, [forceStopTrigger]);
+
+  useEffect(() => {
     clearTick();
     clearStopTimeout();
-    if (!mediaRecorderRef.current) {
-      setRecording(false);
-      return;
-    }
-    try {
-      if (mediaRecorderRef.current.state !== "inactive")
+    if (
+      mediaRecorderRef.current &&
+      mediaRecorderRef.current.state !== "inactive"
+    ) {
+      try {
         mediaRecorderRef.current.stop();
-    } catch (e) {
-      console.warn("stop error", e);
+      } catch {}
     }
     setRecording(false);
-  }
+    setElapsedSec(0);
+  }, [questionId]);
+
+  useEffect(() => {
+    return () => {
+      clearTick();
+      clearStopTimeout();
+      try {
+        if (
+          mediaRecorderRef.current &&
+          mediaRecorderRef.current.state !== "inactive"
+        ) {
+          mediaRecorderRef.current.stop();
+        }
+      } catch {}
+      try {
+        streamRef.current?.getTracks().forEach((t) => t.stop());
+      } catch {}
+    };
+  }, []);
 
   const remaining = Math.max(0, maxSeconds - elapsedSec);
 
@@ -330,7 +310,6 @@ export function InterviewRecorder({
           recording ? "bg-red-50 border-red-200" : "bg-gray-50 border-gray-200"
         }`}
       >
-        {/* recording dot + text */}
         <div className="flex items-center gap-2">
           <div
             className={`h-2.5 w-2.5 rounded-full ${
@@ -364,8 +343,8 @@ export default function InterviewClient() {
   const [titleParam, setTitleParam] = useState<string>("");
   const [interviewIdParam, setInterviewIdParam] = useState<string>("");
 
-  // which question index
   const [currentIndex, setCurrentIndex] = useState(0);
+  const currentIndexRef = useRef(0);
 
   const [interviewStarted, setInterviewStarted] = useState(false);
   const [bigCountdown, setBigCountdown] = useState<number | null>(null);
@@ -373,6 +352,10 @@ export default function InterviewClient() {
   const [recorderStartTrigger, setRecorderStartTrigger] = useState<
     number | null
   >(null);
+  const [recorderForceStopTrigger, setRecorderForceStopTrigger] = useState<
+    number | null
+  >(null);
+  const [processingAnswer, setProcessingAnswer] = useState(false); // 🔧 NEW: Prevent race conditions
 
   const [mute, setMute] = useState(false);
   const [rate, setRate] = useState(1);
@@ -399,6 +382,15 @@ export default function InterviewClient() {
   const synthRef = useRef<SpeechSynthesis | null>(null);
   const utterRef = useRef<SpeechSynthesisUtterance | null>(null);
 
+  // Stable questions ref
+  const interviewQuestionsRef = useRef<Q[]>([]);
+  const totalRef = useRef(0);
+
+  // Update refs
+  useEffect(() => {
+    currentIndexRef.current = currentIndex;
+  }, [currentIndex]);
+
   // init speech synth
   useEffect(() => {
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
@@ -417,10 +409,11 @@ export default function InterviewClient() {
     setTitleParam(title);
   }, []);
 
-  // determine which key to use for questions
   const questionKey = useMemo(() => {
-    if (interviewIdParam && QUESTION_SETS[interviewIdParam]) {
-      return interviewIdParam;
+    if (interviewIdParam) {
+      if (QUESTION_SETS[interviewIdParam]) return interviewIdParam;
+      const numericMatch = `interview-${interviewIdParam}`;
+      if (QUESTION_SETS[numericMatch]) return numericMatch;
     }
     if (companyParam) {
       const k = Object.keys(QUESTION_SETS).find(
@@ -432,24 +425,47 @@ export default function InterviewClient() {
   }, [interviewIdParam, companyParam]);
 
   const interviewQuestions: Q[] = useMemo(() => {
-    if (questionKey && QUESTION_SETS[questionKey]) {
+    if (questionKey && QUESTION_SETS[questionKey])
       return QUESTION_SETS[questionKey];
-    }
     return DEFAULT_QUESTIONS;
   }, [questionKey]);
 
-  const total = interviewQuestions.length;
-  const currentQuestion =
-    interviewQuestions[currentIndex] ?? DEFAULT_QUESTIONS[0];
+  useEffect(() => {
+    interviewQuestionsRef.current = interviewQuestions;
+    totalRef.current = interviewQuestions.length;
+  }, [interviewQuestions]);
 
-  // auto-start interview on mount
+  const total = totalRef.current;
+  const currentQuestion =
+    interviewQuestionsRef.current[currentIndex] ?? DEFAULT_QUESTIONS[0];
+
+  // Debug logging
+  useEffect(() => {
+    console.log({
+      interviewIdParam,
+      companyParam,
+      questionKey,
+      totalQuestions: total,
+      currentIndex,
+      currentQuestionId: currentQuestion.id,
+      answersLength: answers.length,
+      processingAnswer,
+    });
+  }, [
+    currentIndex,
+    total,
+    currentQuestion.id,
+    answers.length,
+    processingAnswer,
+  ]);
+
+  // auto-start interview
   useEffect(() => {
     setInterviewStarted(true);
     setBigCountdown(3);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // start camera when interview starts
+  // start camera
   useEffect(() => {
     if (!interviewStarted) return;
     (async () => {
@@ -467,7 +483,6 @@ export default function InterviewClient() {
     })();
   }, [interviewStarted]);
 
-  // cleanup camera on unmount
   useEffect(() => {
     return () => {
       try {
@@ -497,16 +512,10 @@ export default function InterviewClient() {
     utterRef.current = null;
   };
 
-  const onPressStartInterview = () => {
-    setInterviewStarted(true);
-    setBigCountdown(3);
-  };
-
-  // big countdown effect
+  // big countdown
   useEffect(() => {
     if (bigCountdown == null) return;
     let sec = bigCountdown;
-
     const iv = window.setInterval(() => {
       sec -= 1;
       setBigCountdown((prev) =>
@@ -517,18 +526,12 @@ export default function InterviewClient() {
         setTimeout(() => setBigCountdown(null), 250);
       }
     }, 1000);
-
     return () => clearInterval(iv);
   }, [bigCountdown]);
 
-  const progress = Math.round(
-    ((currentIndex + (interviewStarted ? 1 : 0)) / Math.max(total, 1)) * 100
-  );
-
-  // read question + small countdown before recording
+  // read question + small countdown
   useEffect(() => {
-    if (!interviewStarted) return;
-    if (bigCountdown !== null) return;
+    if (!interviewStarted || bigCountdown !== null || processingAnswer) return;
 
     const t = setTimeout(() => {
       if (!mute) speakText(currentQuestion.text);
@@ -539,14 +542,12 @@ export default function InterviewClient() {
       clearTimeout(t);
       stopSpeaking();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [interviewStarted, bigCountdown, currentIndex, mute, rate, total]);
+  }, [interviewStarted, bigCountdown, currentIndex, mute, processingAnswer]);
 
-  // small countdown effect
+  // small countdown
   useEffect(() => {
     if (smallCountdown == null) return;
     let seconds = smallCountdown;
-
     const iv = window.setInterval(() => {
       seconds -= 1;
       setSmallCountdown((prev) =>
@@ -557,23 +558,21 @@ export default function InterviewClient() {
         setTimeout(() => setSmallCountdown(null), 150);
       }
     }, 1000);
-
     return () => clearInterval(iv);
   }, [smallCountdown]);
 
-  // when smallCountdown becomes null, start recorder
+  // start recorder when smallCountdown ends
   useEffect(() => {
-    if (smallCountdown !== null) return;
-    if (!interviewStarted) return;
+    if (smallCountdown !== null || !interviewStarted || processingAnswer)
+      return;
 
     const t = setTimeout(() => {
       setRecorderStartTrigger(Date.now());
     }, 150);
 
     return () => clearTimeout(t);
-  }, [smallCountdown, interviewStarted]);
+  }, [smallCountdown, interviewStarted, processingAnswer]);
 
-  // upload helper (returns transcript)
   async function uploadForTranscription(blob: Blob): Promise<string> {
     setTranscribing(true);
     setTranscribeError(null);
@@ -607,7 +606,6 @@ export default function InterviewClient() {
     }
   }
 
-  // evaluation
   async function evaluateInterview(answersPayload: EvaluationAnswer[]) {
     setEvaluating(true);
     setEvaluateError(null);
@@ -616,9 +614,7 @@ export default function InterviewClient() {
     try {
       const res = await fetch("/api/evaluate", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           interviewId: interviewIdParam,
           company: companyParam,
@@ -634,85 +630,114 @@ export default function InterviewClient() {
 
       const json = await res.json();
       setEvaluation(json);
-      setShowResultsModal(true);
     } catch (err: any) {
       console.error("evaluate error", err);
       setEvaluateError(err?.message ?? String(err));
-      setShowResultsModal(true);
     } finally {
       setEvaluating(false);
+      setShowResultsModal(true);
     }
   }
 
-  const handleRecordingComplete = async ({
-    blob,
-    url,
-    durationSec,
-  }: {
-    blob: Blob;
-    url: string;
-    durationSec: number;
-  }) => {
-    console.log("Recording finished", {
-      questionId: currentQuestion.id,
-      durationSec,
-      blob,
-      url,
-    });
-    stopSpeaking();
+  /**
+   * 🔧 FIXED: Single source of truth with processingAnswer lock
+   */
+  const handleRecordingComplete = useCallback(
+    async (payload: RecorderOnCompletePayload) => {
+      console.log("🔴 RECORDING COMPLETE:", {
+        payloadQuestionId: payload.questionId,
+        currentIndex: currentIndexRef.current,
+        expectedQuestionId:
+          interviewQuestionsRef.current[currentIndexRef.current]?.id,
+        processingAnswer,
+        answersLength: answers.length,
+      });
 
-    let text = "";
-    try {
-      text = await uploadForTranscription(blob);
-    } catch (e) {
-      // already handled
-    }
+      // 🔧 CRITICAL: Ignore if already processing or wrong question
+      if (processingAnswer) {
+        console.log("⏳ Already processing answer, ignoring");
+        return;
+      }
 
-    const newAnswer: EvaluationAnswer = {
-      questionId: currentQuestion.id,
-      questionText: currentQuestion.text,
-      transcript: text,
-      durationSec,
-      suggestedTimeSec: currentQuestion.suggestedTimeSec ?? 45,
-    };
+      const expectedQ = interviewQuestionsRef.current[currentIndexRef.current];
+      if (!expectedQ || payload.questionId !== expectedQ.id) {
+        console.log(
+          "❌ Question ID mismatch, ignoring:",
+          payload.questionId,
+          "≠",
+          expectedQ?.id
+        );
+        return;
+      }
 
-    setAnswers((prev) => [...prev, newAnswer]);
+      // 🔧 LOCK: Prevent multiple processing
+      setProcessingAnswer(true);
+      stopSpeaking();
+      setRecorderForceStopTrigger(null);
 
-    setTimeout(async () => {
-      if (currentIndex < total - 1) {
-        setCurrentIndex((s) => s + 1);
-        setSmallCountdown(null);
-        setRecorderStartTrigger(null);
-        setTranscript(null);
-        setTranscribeError(null);
-      } else {
-        console.log("Interview complete");
-        setInterviewStarted(false);
-        setRecorderStartTrigger(null);
-        setShowResultsModal(true);
-
+      let text = "";
+      if (payload.blob.size > 0) {
         try {
-          const answersForEval = [...answers, newAnswer];
-          await evaluateInterview(answersForEval);
+          text = await uploadForTranscription(payload.blob);
         } catch (e) {
-          console.error("evaluation failed", e);
-          setShowResultsModal(true);
+          console.error("Transcription failed:", e);
         }
       }
-    }, 350);
-  };
+
+      const newAnswer: EvaluationAnswer = {
+        questionId: expectedQ.id,
+        questionText: expectedQ.text,
+        transcript: text,
+        durationSec: payload.durationSec,
+        suggestedTimeSec: expectedQ.suggestedTimeSec ?? 45,
+      };
+
+      setAnswers((prev) => {
+        if (prev.some((a) => a.questionId === newAnswer.questionId)) {
+          console.log("🔄 Duplicate answer ignored:", newAnswer.questionId);
+          setProcessingAnswer(false);
+          return prev;
+        }
+
+        const updated = [...prev, newAnswer];
+        const answerCount = updated.length;
+        const totalQuestions = totalRef.current;
+
+        console.log("✅ Added answer", answerCount, "/", totalQuestions);
+
+        if (answerCount === totalQuestions) {
+          console.log("🎉 ALL QUESTIONS COMPLETE!");
+          setInterviewStarted(false);
+          setRecorderStartTrigger(null);
+          evaluateInterview(updated);
+        } else {
+          // 🔧 Move to next question AFTER state update
+          setTimeout(() => {
+            const nextIndex = Math.min(
+              currentIndexRef.current + 1,
+              totalQuestions - 1
+            );
+            console.log("➡️ Moving to question index:", nextIndex);
+            setCurrentIndex(nextIndex);
+            setSmallCountdown(null);
+            setRecorderStartTrigger(null);
+            setTranscript(null);
+            setTranscribeError(null);
+            setProcessingAnswer(false);
+          }, 500);
+        }
+
+        return updated;
+      });
+    },
+    []
+  );
 
   const handleManualNext = () => {
+    if (processingAnswer) return;
     stopSpeaking();
     setSmallCountdown(null);
-    setRecorderStartTrigger(null);
-
-    if (currentIndex < total - 1) {
-      setCurrentIndex((s) => s + 1);
-    } else {
-      setInterviewStarted(false);
-      setShowResultsModal(true);
-    }
+    setRecorderForceStopTrigger(Date.now());
   };
 
   useEffect(() => {
@@ -730,9 +755,7 @@ export default function InterviewClient() {
     }
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-      });
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
       setCameraStream(stream);
       setCameraOn(true);
       setCameraError(null);
@@ -742,27 +765,20 @@ export default function InterviewClient() {
     }
   };
 
-  // Ensure camera stream is attached to <video>
   useEffect(() => {
     if (!videoRef.current) return;
-    if (cameraStream) {
-      (videoRef.current as any).srcObject = cameraStream;
-    } else {
-      (videoRef.current as any).srcObject = null;
-    }
+    if (cameraStream) (videoRef.current as any).srcObject = cameraStream;
+    else (videoRef.current as any).srcObject = null;
   }, [cameraStream]);
 
   return (
     <div className="h-screen w-full bg-white text-gray-900 overflow-hidden flex font-sans selection:bg-amber-500/30">
-      {/* ============================================================
-       * 1. MODALS & OVERLAYS
-       * ============================================================ */}
+      {/* Results Modal */}
       {showResultsModal && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center px-4">
           <div className="absolute inset-0 bg-white/80 backdrop-blur-md" />
           <div className="relative w-full max-w-4xl mx-auto max-h-[90vh] flex flex-col animate-in fade-in zoom-in-95 duration-300">
             <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden ring-1 ring-gray-900/5 flex flex-col max-h-full">
-              {/* Header */}
               <div className="flex items-center justify-between gap-4 p-6 bg-white border-b border-gray-200">
                 <div className="flex items-center gap-4">
                   <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-amber-500 text-white shadow-md">
@@ -778,19 +794,18 @@ export default function InterviewClient() {
                   </div>
                 </div>
                 <button
-                  onClick={() => {
-                    window.location.href = "http://localhost:3000/ai-interview";
-                  }}
+                  onClick={() =>
+                    (window.location.href =
+                      "http://localhost:3000/ai-interview")
+                  }
                   className="px-5 py-2.5 rounded-lg bg-gray-900 text-white text-sm font-bold hover:bg-gray-700 transition shadow-lg"
                 >
                   Back to Hub
                 </button>
               </div>
 
-              {/* Body */}
               <div className="p-6 overflow-y-auto bg-gray-50">
                 <div className="grid grid-cols-1 gap-6">
-                  {/* Status Card */}
                   <div className="w-full bg-white p-5 rounded-xl border border-gray-200 shadow-sm">
                     <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
                       <div className="md:col-span-2">
@@ -822,13 +837,12 @@ export default function InterviewClient() {
                           {evaluation?.overallFeedback ??
                             (evaluateError
                               ? "Error generating feedback."
-                              : "Your responses have been recorded. See detailed breakdown below.")}
+                              : "Your responses have been recorded.")}
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  {/* Question Cards */}
                   <div className="space-y-4">
                     {evaluation && evaluation.perQuestion?.length > 0 ? (
                       evaluation.perQuestion.map((pq: any) => (
@@ -901,13 +915,10 @@ export default function InterviewClient() {
         </div>
       )}
 
-      {/* ============================================================
-       * 2. LEFT SIDE: Question & Recorder
-       * ============================================================ */}
+      {/* LEFT SIDE: Question & Recorder */}
       <div className="w-[35%] h-full flex flex-col bg-neutral-50 border-r border-gray-200 p-8 relative">
         <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-white/70 to-transparent pointer-events-none" />
 
-        {/* Header */}
         <div className="relative z-10 flex-shrink-0 mb-6">
           <div
             className={`inline-flex px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase border mb-4 ${
@@ -926,7 +937,6 @@ export default function InterviewClient() {
           </p>
         </div>
 
-        {/* Question */}
         <div className="relative z-10 flex-1 flex flex-col justify-center min-h-0">
           <div className="flex items-center gap-4 mb-4">
             <span className="text-amber-600 text-xs font-bold uppercase tracking-widest">
@@ -953,14 +963,15 @@ export default function InterviewClient() {
           </div>
         </div>
 
-        {/* Bottom controls */}
         <div className="h-[20%] bg-white px-8 flex flex-col justify-center relative z-20 border-t border-gray-200 shadow-lg">
           <div className="w-full flex items-center gap-6">
             <div className="flex-1 h-14 bg-gray-50 rounded-xl border border-gray-300 relative overflow-hidden flex items-center px-2 shadow-inner">
               <InterviewRecorder
+                key={`recorder-${currentQuestion.id}`} // 🔧 Force remount on question change
                 questionId={currentQuestion.id}
                 maxSeconds={currentQuestion.suggestedTimeSec ?? 45}
                 startTrigger={recorderStartTrigger}
+                forceStopTrigger={recorderForceStopTrigger}
                 onComplete={handleRecordingComplete}
               />
             </div>
@@ -968,9 +979,14 @@ export default function InterviewClient() {
             <div className="flex items-center gap-3">
               <button
                 onClick={handleManualNext}
-                className="h-14 px-8 rounded-xl bg-amber-500 hover:bg-amber-400 text-gray-900 font-bold text-sm uppercase tracking-wide transition-all hover:translate-y-[-1px] shadow-lg shadow-amber-500/30 flex items-center gap-2"
+                disabled={processingAnswer}
+                className={`h-14 px-8 rounded-xl font-bold text-sm uppercase tracking-wide transition-all hover:translate-y-[-1px] shadow-lg flex items-center gap-2 ${
+                  processingAnswer
+                    ? "bg-gray-300 text-gray-500 cursor-not-allowed shadow-none"
+                    : "bg-amber-500 hover:bg-amber-400 text-gray-900 shadow-amber-500/30"
+                }`}
               >
-                Next
+                {processingAnswer ? "Processing..." : "Next"}
                 <svg
                   className="w-4 h-4"
                   fill="none"
@@ -1003,9 +1019,7 @@ export default function InterviewClient() {
         </div>
       </div>
 
-      {/* ============================================================
-       * 3. RIGHT SIDE: Camera
-       * ============================================================ */}
+      {/* RIGHT SIDE: Camera */}
       <div className="w-[65%] h-full flex flex-col bg-neutral-100 relative">
         <div className="h-[80%] relative w-full overflow-hidden flex items-center justify-center p-4">
           <div className="relative w-full h-full bg-gray-900 rounded-2xl overflow-hidden border border-gray-300 shadow-xl">
@@ -1046,7 +1060,6 @@ export default function InterviewClient() {
               </div>
             )}
 
-            {/* Overlays */}
             <div className="absolute top-6 right-6 z-20">
               {smallCountdown !== null && (
                 <div className="text-5xl font-bold text-white drop-shadow-md font-mono">
