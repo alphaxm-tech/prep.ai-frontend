@@ -106,6 +106,8 @@ export default function ResumeBuilderPage() {
   const [resumeFormat, setResumeFormat] = useState<TemplateKey>("creative");
   const [showPreviewModal, setShowPreviewModal] = useState<boolean>(false);
 
+  const RESULT_PDF_URL = "/pdfs/Resume.pdf";
+
   const { data: apiData } = useQuery({
     queryKey: ["resume", "format"],
     queryFn: async () => {
@@ -623,6 +625,15 @@ export default function ResumeBuilderPage() {
   };
   // ---------------------------------------------------------------------
 
+  const handleDownloadPdf = () => {
+    const link = document.createElement("a");
+    link.href = RESULT_PDF_URL;
+    link.download = "Interview-Results.pdf"; // filename user sees
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="min-h-screen bg-white py-8">
       <main className="w-full">
@@ -808,7 +819,8 @@ export default function ResumeBuilderPage() {
                     {/* Buttons grouped on the right */}
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={onDownloadPrint}
+                        // onClick={onDownloadPrint}
+                        onClick={handleDownloadPdf}
                         disabled={isDownloading}
                         aria-label="Download resume"
                         title="Download resume"

@@ -8,6 +8,7 @@ import React, {
   useCallback,
 } from "react";
 import { PlayIcon, CheckCircleIcon } from "@heroicons/react/24/solid";
+import { useRouter } from "next/navigation";
 
 /**
  * Types
@@ -339,6 +340,7 @@ export function InterviewRecorder({
 /* ---------------------- InterviewClient ---------------------- */
 
 export default function InterviewClient() {
+  const router = useRouter();
   const [companyParam, setCompanyParam] = useState<string>("");
   const [titleParam, setTitleParam] = useState<string>("");
   const [interviewIdParam, setInterviewIdParam] = useState<string>("");
@@ -794,10 +796,7 @@ export default function InterviewClient() {
                   </div>
                 </div>
                 <button
-                  onClick={() =>
-                    (window.location.href =
-                      "http://localhost:3000/ai-interview")
-                  }
+                  onClick={() => router.push("/ai-interview")}
                   className="px-5 py-2.5 rounded-lg bg-gray-900 text-white text-sm font-bold hover:bg-gray-700 transition shadow-lg"
                 >
                   Back to Hub
