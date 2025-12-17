@@ -331,7 +331,17 @@ export default function LoginPage() {
           <div className="p-6 sm:p-8">
             <div className="text-center mb-4">
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
-                AI prep <span className="text-yellow-500">buddy</span>
+                <div className="flex items-center justify-center font-extrabold tracking-tight">
+                  <span className="text-black text-3xl leading-none">Prep</span>
+
+                  <span className="text-yellow-500 text-3xl leading-none">
+                    Buddy
+                  </span>
+
+                  <span className="ml-1 text-yellow-500 text-xs font-semibold relative -top-2">
+                    AI
+                  </span>
+                </div>
               </h1>
               <p className="text-gray-500 mt-2 text-sm sm:text-base">
                 {mode === "signup"
