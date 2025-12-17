@@ -43,7 +43,7 @@ export default function AIInterviewPage() {
     {
       id: "p1",
       interviewId: "interview-1",
-      company: "AI Prep Buddy",
+      company: "Prep Buddy AI",
       title: "Interview 1",
       date: "2025-11-20",
       duration: "42m",
@@ -53,7 +53,7 @@ export default function AIInterviewPage() {
     {
       id: "p2",
       interviewId: "interview-2",
-      company: "AI Prep Buddy",
+      company: "Prep Buddy AI",
       title: "Interview 2",
       date: "2025-11-15",
       duration: "58m",
@@ -63,7 +63,7 @@ export default function AIInterviewPage() {
     {
       id: "p3",
       interviewId: "interview-3",
-      company: "AI Prep Buddy",
+      company: "Prep Buddy AI",
       title: "Interview 3",
       date: "2025-10-30",
       duration: "65m",
@@ -76,7 +76,7 @@ export default function AIInterviewPage() {
     // 🔴 Interview 1 -> 7 questions from Excel (set 1)
     {
       id: "interview-1",
-      company: "AI Prep Buddy",
+      company: "Prep Buddy AI",
       title: "Interview 1",
       description: "Data structures, algorithms, and problem-solving.",
       time: "45 min",
@@ -87,7 +87,7 @@ export default function AIInterviewPage() {
     // 🟡 Interview 2 -> 7 questions from Excel (set 2)
     {
       id: "interview-2",
-      company: "AI Prep Buddy",
+      company: "Prep Buddy AI",
       title: "Interview 2",
       description: "Coding + Amazon LP-focused behavioral questions.",
       time: "60 min",
@@ -98,7 +98,7 @@ export default function AIInterviewPage() {
     // 🟣 Interview 3 -> 7 questions from Excel (set 3)
     {
       id: "interview-3",
-      company: "AI Prep Buddy",
+      company: "Prep Buddy AI",
       title: "Interview 3",
       description: "High-level architecture + scalability problems.",
       time: "60–75 min",

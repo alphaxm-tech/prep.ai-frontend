@@ -23,7 +23,18 @@ export function Header() {
     <>
       {/* Main Header */}
       <header className="bg-yellow-200 py-3 px-6 shadow-sm flex justify-between items-center md:relative">
-        <h1 className="text-xl font-bold text-gray-900">AI prep buddy</h1>
+        <h1 className="text-xl font-bold text-gray-900">
+          {" "}
+          <div className="flex items-center justify-center font-extrabold tracking-tight">
+            <span className="text-black text-3xl leading-none">Prep</span>
+
+            <span className="text-yellow-500 text-3xl leading-none">Buddy</span>
+
+            <span className="ml-1 text-yellow-500 text-xs font-semibold relative -top-2">
+              AI
+            </span>
+          </div>
+        </h1>
 
         {/* Desktop Admin Text */}
         <button
