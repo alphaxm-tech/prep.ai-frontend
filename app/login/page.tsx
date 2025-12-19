@@ -10,8 +10,6 @@ import { useToast } from "@/components/ToastProvider";
 /**
  * InputWithIcon must be declared at module top-level to keep identity stable.
  */
-
-//test
 const InputWithIcon = memo(function InputWithIcon({
   icon,
   type = "text",
@@ -46,19 +44,28 @@ const InputWithIcon = memo(function InputWithIcon({
 });
 
 /**
- * Demo-only Login Page
+ * Multi-screen Login Page (email -> choose -> otp/password flows)
  *
- * UI: uses the original tab/buttons layout (Email | OTP | Sign Up | Enter)
- * Auth: demo-only client-side check for allowed users
+ * - Screen 1: only email input + Verify Email button
+ * - Screen 2: after verification -> Login with OTP | Login with Password
+ * - Screen 3a: OTP entry only
+ * - Screen 3b: Password entry OR Set password (based on hasPassword)
  *
- * Security reminder: credentials are visible in the client bundle. Use only for testing/demo.
+ * Backend endpoints expected (adjust if needed):
+ * - POST /api/auth/verifyUserEmail  { email } -> { exists, hasPassword }
+ * - POST /api/auth/send-otp         { email } -> { success }
+ * - POST /api/auth/verify-otp       { email, otp } -> { success }  (sets cookies)
+ * - POST /api/auth/login            { email, password } -> { success } (sets cookies)
+ * - POST /api/auth/setPasswordAndLogin { email, password } -> { success } (sets cookies)
  */
 export default function LoginPage() {
   const router = useRouter();
   const { success, error: showError } = useToast();
 
-  // keep tabs like original UI (so user can click OTP / signup) but auth remains demo-only
-  const [mode, setMode] = useState<"signin" | "signup" | "otp">("signin");
+  // screens: "email" -> "choose" -> "otp" -> "password" | "setPassword"
+  const [step, setStep] = useState<
+    "email" | "choose" | "otp" | "password" | "setPassword"
+  >("email");
 
   // form state
   const [email, setEmail] = useState("");
@@ -67,25 +74,25 @@ export default function LoginPage() {
   const [fullname, setFullname] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
 
+  // server-driven flags
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [hasPassword, setHasPassword] = useState(false);
+
   // loaders / inline error
-  const [loginLoader, setLoginLoader] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // -----------------------------
-  // Allowed demo credentials (client-side)
+  // Demo credentials still present but this flow prefers server APIs
   // -----------------------------
   const ALLOWED_USERS = [
-    {
-      email: "vm.prepai@gmail.com",
-      password: "prepai@1993",
-    },
-    {
-      email: "sanjanaaddepalli2005@gmail.com",
-      password: "xOQDhT3cpWRut4kW",
-    },
+    { email: "vm.prepai@gmail.com", password: "prepai@1993" },
+    { email: "sanjanaaddepalli2005@gmail.com", password: "xOQDhT3cpWRut4kW" },
   ];
 
-  // clear inline error on input change
+  // input handlers
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEmail(e.target.value);
     if (errorMessage) setErrorMessage(null);
@@ -99,14 +106,192 @@ export default function LoginPage() {
     if (errorMessage) setErrorMessage(null);
   };
 
-  // Primary action:
-  // validate against the allowed users list and route to /home on success.
-  const handleSignIn = useCallback(() => {
-    setLoginLoader(true);
+  // -----------------------------
+  // Screen 1 -> verify user email
+  // -----------------------------
+  const verifyUserEmail = useCallback(async () => {
+    setErrorMessage(null);
+
+    const trimmed = email.trim().toLowerCase();
+    if (!trimmed || !trimmed.includes("@")) {
+      showError?.("Enter a valid email.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/verifyUserEmail", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: trimmed }),
+      });
+
+      const data = await res.json();
+      setLoading(false);
+
+      if (!res.ok) {
+        showError?.(data?.message || "Unable to verify email.");
+        return;
+      }
+
+      if (!data.exists) {
+        showError?.("No account found with this email.");
+        setEmailVerified(false);
+        return;
+      }
+
+      // email exists -> move to choose screen
+      setEmailVerified(true);
+      setHasPassword(Boolean(data.hasPassword));
+      success?.("Email verified. Choose a login method.");
+      setStep("choose");
+    } catch (err) {
+      setLoading(false);
+      showError?.("Server error verifying email.");
+    }
+  }, [email, success, showError]);
+
+  // -----------------------------
+  // Screen 2 -> send OTP then go to otp screen
+  // -----------------------------
+  const sendOtpAndGo = useCallback(async () => {
+    if (!emailVerified) {
+      showError?.("Verify email first.");
+      return;
+    }
+
+    setOtpLoading(true);
+    try {
+      const res = await fetch("/api/auth/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+      });
+
+      const data = await res.json();
+      setOtpLoading(false);
+
+      if (!res.ok || !data.success) {
+        showError?.(data?.message || "Unable to send OTP.");
+        return;
+      }
+
+      setOtpSent(true);
+      success?.("OTP sent to your email.");
+      setStep("otp");
+    } catch (err) {
+      setOtpLoading(false);
+      showError?.("Server error sending OTP.");
+    }
+  }, [email, emailVerified, success, showError]);
+
+  // -----------------------------
+  // Screen 3a -> verify OTP
+  // -----------------------------
+  const verifyOtpAndLogin = useCallback(async () => {
+    if (!otp || otp.trim().length === 0) {
+      showError?.("Enter the OTP.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: email.trim().toLowerCase(),
+          otp: otp.trim(),
+        }),
+      });
+
+      const data = await res.json();
+      setLoading(false);
+
+      if (!res.ok || !data.success) {
+        showError?.(data?.message || "Invalid or expired OTP.");
+        return;
+      }
+
+      success?.("OTP verified. Logging in…");
+      // assume server sets cookies
+      router.push("/home");
+    } catch (err) {
+      setLoading(false);
+      showError?.("Server error verifying OTP.");
+    }
+  }, [email, otp, router, success, showError]);
+
+  // -----------------------------
+  // Screen 3b -> password login
+  // -----------------------------
+  const passwordLogin = useCallback(async () => {
+    if (!password || password.length < 6) {
+      showError?.("Enter a valid password (min 6 chars).");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
+      });
+
+      const data = await res.json();
+      setLoading(false);
+
+      if (!res.ok || !data.success) {
+        showError?.(data?.message || "Invalid credentials.");
+        return;
+      }
+
+      success?.("Logged in. Redirecting…");
+      router.push("/home");
+    } catch (err) {
+      setLoading(false);
+      showError?.("Server error logging in.");
+    }
+  }, [email, password, router, success, showError]);
+
+  // set password & login
+  const setPasswordAndLogin = useCallback(async () => {
+    if (!password || password.length < 6) {
+      showError?.("Password should be at least 6 characters.");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch("/api/auth/setPasswordAndLogin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
+      });
+
+      const data = await res.json();
+      setLoading(false);
+
+      if (!res.ok || !data.success) {
+        showError?.(data?.message || "Unable to set password.");
+        return;
+      }
+
+      success?.("Password set. Logging in…");
+      router.push("/home");
+    } catch (err) {
+      setLoading(false);
+      showError?.("Server error setting password.");
+    }
+  }, [email, password, router, success, showError]);
+
+  // fallback demo signin (keeps your original demo behavior if you click Sign In without using flow)
+  const demoSignIn = useCallback(() => {
+    setLoading(true);
     setErrorMessage(null);
 
     const normalizedEmail = email.trim().toLowerCase();
-
     const matchedUser = ALLOWED_USERS.find(
       (u) =>
         u.email.toLowerCase() === normalizedEmail && u.password === password
@@ -115,42 +300,26 @@ export default function LoginPage() {
     if (matchedUser) {
       success?.("Logged in (demo). Redirecting…");
       setTimeout(() => {
-        setLoginLoader(false);
+        setLoading(false);
         router.push("/home");
       }, 400);
       return;
     }
 
-    // failure
-    setLoginLoader(false);
+    setLoading(false);
     const msg = "Invalid credentials.";
     setErrorMessage(msg);
     showError?.(msg);
   }, [email, password, router, success, showError]);
 
-  // OTP / Signup actions simply reuse the same demo-only behavior.
-  const handleSendOtp = useCallback(() => {
-    setErrorMessage(null);
-    showError?.("OTP flow not active in demo. Use demo credentials.");
-  }, [showError]);
-
-  const handleVerifyOtp = useCallback(() => {
-    setErrorMessage(null);
-    showError?.("OTP verification not active in demo. Use demo credentials.");
-  }, [showError]);
-
-  const handleRegister = useCallback(() => {
-    setErrorMessage(null);
-    showError?.("Sign up not active in demo. Use demo credentials to sign in.");
-  }, [showError]);
-
   const handleGoogleLogin = () => {
     window.location.href = "/api/auth/google";
   };
 
+  // UI rendering by step
   return (
     <>
-      <Loader show={loginLoader} message="Signing you in..." />
+      <Loader show={loading || otpLoading} message="Working..." />
 
       <div className="min-h-screen flex items-start justify-center bg-yellow-50/40 px-4 py-8 sm:py-12">
         <div className="bg-white rounded-2xl shadow-lg w-full max-w-4xl overflow-hidden grid grid-cols-1 md:grid-cols-2">
@@ -329,125 +498,94 @@ export default function LoginPage() {
             </div>
           </div>
 
-          {/* Right: Form card (uses original tab/buttons layout) */}
+          {/* Right: Form card */}
           <div className="p-6 sm:p-8">
             <div className="text-center mb-4">
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
-                <div className="flex items-center justify-center font-extrabold tracking-tight">
-                  <span className="text-black text-3xl leading-none">Prep</span>
-
-                  <span className="text-yellow-500 text-3xl leading-none">
-                    Buddy
-                  </span>
-
-                  <span className="ml-1 text-yellow-500 text-xs font-semibold relative -top-2">
-                    AI
-                  </span>
-                </div>
+                AI prep <span className="text-yellow-500">buddy</span>
               </h1>
               <p className="text-gray-500 mt-2 text-sm sm:text-base">
-                {mode === "signup"
-                  ? "Create your account"
-                  : mode === "otp"
-                  ? "Sign in with OTP"
-                  : "Welcome back! Please log in."}
+                {step === "email" && "Enter your email to continue."}
+                {step === "choose" && "Choose a login method."}
+                {step === "otp" && "Enter the OTP sent to your email."}
+                {step === "password" && "Enter your password to login."}
+                {step === "setPassword" && "Create a new password."}
               </p>
             </div>
 
-            {/* Tabs (original) */}
-            <div className="flex flex-wrap gap-2 mb-6 justify-center">
-              <button
-                className={`px-3 py-2 rounded-full text-sm font-medium focus:outline-none focus:ring-2 focus:ring-yellow-300 ${
-                  mode === "signin"
-                    ? "bg-yellow-400 text-white"
-                    : "bg-yellow-50 text-yellow-600"
-                }`}
-                onClick={() => setMode("signin")}
-                aria-pressed={mode === "signin"}
-                type="button"
-              >
-                Email
-              </button>
-
-              <button
-                className={`px-3 py-2 rounded-full text-sm font-medium focus:outline-none focus:ring-2 focus:ring-yellow-300 ${
-                  mode === "otp"
-                    ? "bg-yellow-400 text-white"
-                    : "bg-yellow-50 text-yellow-600"
-                }`}
-                onClick={() => setMode("otp")}
-                aria-pressed={mode === "otp"}
-                type="button"
-              >
-                OTP
-              </button>
-
-              <button
-                className={`px-3 py-2 rounded-full text-sm font-medium focus:outline-none focus:ring-2 focus:ring-yellow-300 ${
-                  mode === "signup"
-                    ? "bg-yellow-400 text-white"
-                    : "bg-yellow-50 text-yellow-600"
-                }`}
-                onClick={() => setMode("signup")}
-                aria-pressed={mode === "signup"}
-                type="button"
-              >
-                Sign Up
-              </button>
-            </div>
-
-            {/* Form area */}
             <div className="space-y-4 min-h-[320px] transition-all duration-200">
-              {mode === "signup" && (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-600">
-                      Full Name
-                    </label>
-                    <InputWithIcon
-                      name="fullname"
-                      autoComplete="name"
-                      icon={<></>}
-                      type="text"
-                      placeholder="John Doe"
-                      value={fullname}
-                      onChange={(e: any) => setFullname(e.target.value)}
-                    />
-                  </div>
+              {/* Screen 1: only email + verify button */}
+              {step === "email" && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-600">
+                    Email
+                  </label>
+                  <InputWithIcon
+                    name="email"
+                    autoComplete="email"
+                    icon={<EnvelopeIcon className="h-5 w-5" />}
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={handleEmailChange}
+                  />
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-600">
-                      Phone number
-                    </label>
-                    <InputWithIcon
-                      name="phone"
-                      autoComplete="tel"
-                      icon={<EnvelopeIcon className="h-5 w-5" />}
-                      type="tel"
-                      placeholder="9130859725"
-                      value={phoneNumber}
-                      onChange={(e: any) => setPhoneNumber(e.target.value)}
-                    />
-                  </div>
-                </>
+                  <button
+                    type="button"
+                    onClick={verifyUserEmail}
+                    className="w-full mt-4 bg-yellow-500 text-white font-semibold py-3 rounded-xl"
+                    disabled={loading}
+                  >
+                    Verify Email
+                  </button>
+
+                  {/* keep demo fallback Sign In hidden on this screen to match req */}
+                </div>
               )}
 
-              <div>
-                <label className="block text-sm font-medium text-gray-600">
-                  Email
-                </label>
-                <InputWithIcon
-                  name="email"
-                  autoComplete="email"
-                  icon={<EnvelopeIcon className="h-5 w-5" />}
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={handleEmailChange}
-                />
-              </div>
+              {/* Screen 2: choose method */}
+              {step === "choose" && (
+                <div>
+                  <div className="text-sm text-gray-600 mb-3">
+                    Email verified:{" "}
+                    <span className="font-medium text-gray-800">{email}</span>
+                  </div>
 
-              {mode === "otp" ? (
+                  <button
+                    type="button"
+                    onClick={sendOtpAndGo}
+                    className="w-full mb-3 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white py-3 rounded-xl font-semibold"
+                    disabled={otpLoading}
+                  >
+                    Login with OTP
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (hasPassword) {
+                        setStep("password");
+                      } else {
+                        setStep("setPassword");
+                      }
+                    }}
+                    className="w-full mb-3 bg-yellow-100 text-yellow-700 py-3 rounded-xl font-semibold"
+                  >
+                    Login with Password
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => router.push("/reset-password")}
+                    className="w-full text-sm text-gray-500 underline mt-2"
+                  >
+                    Reset Password
+                  </button>
+                </div>
+              )}
+
+              {/* Screen 3a: OTP entry only */}
+              {step === "otp" && (
                 <div>
                   <label className="block text-sm font-medium text-gray-600 pb-1">
                     Enter OTP
@@ -463,35 +601,86 @@ export default function LoginPage() {
                       className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-400 outline-none text-sm sm:text-base"
                     />
                   </div>
+
+                  <div className="mt-3 grid grid-cols-2 gap-3">
+                    <button
+                      className="col-span-1 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white font-semibold py-3 rounded-xl shadow-md transform transition text-sm sm:text-base"
+                      onClick={sendOtpAndGo}
+                      type="button"
+                      disabled={otpLoading}
+                    >
+                      {otpSent ? "Resend OTP" : "Send OTP"}
+                    </button>
+
+                    <button
+                      className="col-span-1 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white font-semibold py-3 rounded-xl shadow-md transform transition text-sm sm:text-base"
+                      onClick={verifyOtpAndLogin}
+                      type="button"
+                      disabled={loading}
+                    >
+                      Login
+                    </button>
+                  </div>
                 </div>
-              ) : (
+              )}
+
+              {/* Screen 3b: Password entry or Set password */}
+              {(step === "password" || step === "setPassword") && (
                 <div>
                   <label className="block text-sm font-medium text-gray-600">
-                    Password
+                    {step === "password" ? "Password" : "Set New Password"}
                   </label>
                   <InputWithIcon
                     name="password"
-                    autoComplete="current-password"
+                    autoComplete={
+                      step === "password" ? "current-password" : "new-password"
+                    }
                     icon={<LockClosedIcon className="h-5 w-5" />}
                     type="password"
-                    placeholder="••••••••"
+                    placeholder={
+                      step === "password"
+                        ? "Enter your password"
+                        : "Create a password"
+                    }
                     value={password}
                     onChange={handlePasswordChange}
                   />
-                </div>
-              )}
 
-              {mode !== "otp" && (
-                <div className="text-right">
-                  <a
-                    href="/forgot-password"
-                    className="text-sm text-yellow-600 hover:underline"
+                  <button
+                    type="button"
+                    onClick={
+                      step === "password" ? passwordLogin : setPasswordAndLogin
+                    }
+                    className="w-full mt-4 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white font-semibold py-3 rounded-xl"
+                    disabled={loading}
                   >
-                    Forgot password?
-                  </a>
+                    {step === "password" ? "Login" : "Save & Login"}
+                  </button>
                 </div>
               )}
 
+              {/* Keep a tiny link to go back to email screen (helpful navigation) */}
+              {step !== "email" && (
+                <div className="text-center mt-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      // if user goes back to email, reset flow
+                      setStep("email");
+                      setEmailVerified(false);
+                      setHasPassword(false);
+                      setOtp("");
+                      setPassword("");
+                      setOtpSent(false);
+                    }}
+                    className="text-sm text-gray-500 hover:underline"
+                  >
+                    Back to Email
+                  </button>
+                </div>
+              )}
+
+              {/* Inline error */}
               {errorMessage && (
                 <div
                   className="text-sm text-red-600 mt-1"
@@ -502,43 +691,11 @@ export default function LoginPage() {
                 </div>
               )}
 
-              {mode === "otp" ? (
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    className="col-span-1 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white font-semibold py-3 rounded-xl shadow-md hover:-translate-y-0.5 transform transition text-sm sm:text-base"
-                    onClick={handleSendOtp}
-                    type="button"
-                  >
-                    Send OTP
-                  </button>
-
-                  <button
-                    className="col-span-1 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white font-semibold py-3 rounded-xl shadow-md hover:-translate-y-0.5 transform transition text-sm sm:text-base"
-                    onClick={handleVerifyOtp}
-                    type="button"
-                  >
-                    Verify OTP
-                  </button>
+              {/* Keep original demo Sign In hidden except user explicitly wants; but keep a small fallback to preserve behavior */}
+              {step === "email" && (
+                <div className="mt-4">
+                  {/* Hidden by default per your requirement — no Sign In button on first screen other than Verify Email */}
                 </div>
-              ) : mode === "signup" ? (
-                <button
-                  type="button"
-                  className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white font-semibold py-3 rounded-xl shadow-md hover:-translate-y-0.5 transform transition text-sm sm:text-base"
-                  onClick={handleRegister}
-                >
-                  <ArrowRightOnRectangleIcon className="h-5 w-5" />
-                  Sign Up
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white font-semibold py-3 rounded-xl shadow-md hover:-translate-y-0.5 transform transition text-sm sm:text-base"
-                  onClick={handleSignIn}
-                  disabled={loginLoader}
-                >
-                  <ArrowRightOnRectangleIcon className="h-5 w-5" />
-                  Sign In
-                </button>
               )}
             </div>
 
