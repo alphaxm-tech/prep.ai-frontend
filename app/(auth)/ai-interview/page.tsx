@@ -1,70 +1,152 @@
 "use client";
 
 import { useState } from "react";
-import { PlayIcon } from "@heroicons/react/24/solid";
+import { PlayIcon, CheckCircleIcon } from "@heroicons/react/24/solid";
+import { useRouter } from "next/navigation";
+
+type InterviewType = {
+  id: string; // NEW: stable identifier
+  company: string;
+  title: string;
+  description: string;
+  time: string;
+  difficulty: string;
+  difficultyColor: string;
+  iconColor: string;
+};
+
+type PastInterview = {
+  id: string;
+  interviewId?: string; // NEW: to be able to replay with same question set
+  company: string;
+  title: string;
+  date: string; // ISO or display-friendly
+  duration: string; // e.g. "35m"
+  scorePct: number; // 0-100
+  notes?: string;
+};
+
+// (optional) old demo questions – can be removed if not needed
+const questions = [
+  { id: 1, text: "Tell me about yourself." },
+  { id: 2, text: "What was the most challenging project you worked on?" },
+  { id: 3, text: "Explain a system design of URL Shortener." },
+];
 
 export default function AIInterviewPage() {
-  const [company, setCompany] = useState("");
-  const [role, setRole] = useState("");
+  const router = useRouter();
 
-  const companies = ["Google", "Microsoft", "Amazon", "Meta", "Apple"];
-  const roles = [
-    "Frontend Developer",
-    "Backend Developer",
-    "Full Stack Developer",
-    "Blockchain Developer",
-  ];
+  const [selected, setSelected] = useState<InterviewType | null>(null);
 
-  const interviewTypes = [
+  // Sample past interviews (dummy data) — replace with real data from your backend
+  const [pastInterviews] = useState<PastInterview[]>([
     {
-      title: "Technical Interview",
-      description: "Coding problems and system design questions",
-      time: "45-60 min",
-      difficulty: "Medium",
-      difficultyColor: "bg-yellow-100 text-yellow-800",
-      iconColor: "bg-blue-100 text-blue-600",
+      id: "p1",
+      interviewId: "interview-1",
+      company: "Prep Buddy AI",
+      title: "Interview 1",
+      date: "2025-11-20",
+      duration: "42m",
+      scorePct: 82,
+      notes: "Good algorithmic reasoning; improve edge case handling",
     },
     {
-      title: "Behavioral Interview",
-      description: "Situational and behavioral questions",
-      time: "30-45 min",
-      difficulty: "Easy",
-      difficultyColor: "bg-green-100 text-green-800",
-      iconColor: "bg-green-100 text-green-600",
+      id: "p2",
+      interviewId: "interview-2",
+      company: "Prep Buddy AI",
+      title: "Interview 2",
+      date: "2025-11-15",
+      duration: "58m",
+      scorePct: 74,
+      notes: "Strong behavioral answers; optimize runtime on Q2",
     },
     {
-      title: "System Design",
-      description: "Architecture and scalability discussions",
-      time: "60-90 min",
+      id: "p3",
+      interviewId: "interview-3",
+      company: "Prep Buddy AI",
+      title: "Interview 3",
+      date: "2025-10-30",
+      duration: "65m",
+      scorePct: 90,
+      notes: "Excellent tradeoffs and scalability reasoning",
+    },
+  ]);
+
+  const interviewTypes: InterviewType[] = [
+    // 🔴 Interview 1 -> 7 questions from Excel (set 1)
+    {
+      id: "interview-1",
+      company: "Prep Buddy AI",
+      title: "Interview 1",
+      description: "Data structures, algorithms, and problem-solving.",
+      time: "45 min",
       difficulty: "Hard",
       difficultyColor: "bg-red-100 text-red-800",
-      iconColor: "bg-red-100 text-red-600",
+      iconColor: "bg-yellow-100 text-yellow-600",
     },
+    // 🟡 Interview 2 -> 7 questions from Excel (set 2)
     {
-      title: "Technical Interview",
-      description: "Coding problems and system design questions",
-      time: "45-60 min",
+      id: "interview-2",
+      company: "Prep Buddy AI",
+      title: "Interview 2",
+      description: "Coding + Amazon LP-focused behavioral questions.",
+      time: "60 min",
       difficulty: "Medium",
       difficultyColor: "bg-yellow-100 text-yellow-800",
-      iconColor: "bg-blue-100 text-blue-600",
+      iconColor: "bg-orange-100 text-orange-600",
     },
+    // 🟣 Interview 3 -> 7 questions from Excel (set 3)
     {
-      title: "Behavioral Interview",
-      description: "Situational and behavioral questions",
-      time: "30-45 min",
-      difficulty: "Easy",
-      difficultyColor: "bg-green-100 text-green-800",
-      iconColor: "bg-green-100 text-green-600",
-    },
-    {
-      title: "System Design",
-      description: "Architecture and scalability discussions",
-      time: "60-90 min",
+      id: "interview-3",
+      company: "Prep Buddy AI",
+      title: "Interview 3",
+      description: "High-level architecture + scalability problems.",
+      time: "60–75 min",
       difficulty: "Hard",
-      difficultyColor: "bg-red-100 text-red-800",
-      iconColor: "bg-red-100 text-red-600",
+      difficultyColor: "bg-purple-100 text-purple-800",
+      iconColor: "bg-purple-50 text-purple-600",
     },
+    // You can still have other company presets below if you like
+    // {
+    //   id: "microsoft-tech",
+    //   company: "Microsoft",
+    //   title: "Microsoft Technical + Problem Solving",
+    //   description: "Conceptual problem-solving + coding questions.",
+    //   time: "45–60 min",
+    //   difficulty: "Medium",
+    //   difficultyColor: "bg-blue-100 text-blue-800",
+    //   iconColor: "bg-blue-50 text-blue-600",
+    // },
+    // {
+    //   id: "apple-behavioral",
+    //   company: "Apple",
+    //   title: "Apple Behavioral & Culture Fit",
+    //   description: "Deep behavioral + team fit evaluation.",
+    //   time: "30–45 min",
+    //   difficulty: "Easy",
+    //   difficultyColor: "bg-green-100 text-green-800",
+    //   iconColor: "bg-green-50 text-green-600",
+    // },
   ];
+
+  const handleStart = () => {
+    if (!selected) return;
+    const qs = `?interviewId=${encodeURIComponent(
+      selected.id
+    )}&company=${encodeURIComponent(
+      selected.company
+    )}&title=${encodeURIComponent(selected.title)}`;
+    router.push(`/ai-interview/interview${qs}`);
+  };
+
+  const handleReplay = (p: PastInterview) => {
+    const qs = `?interviewId=${encodeURIComponent(
+      p.interviewId ?? ""
+    )}&company=${encodeURIComponent(p.company)}&title=${encodeURIComponent(
+      p.title
+    )}`;
+    router.push(`/ai-interview/interview${qs}`);
+  };
 
   return (
     <div className="min-h-screen bg-white px-12 py-8">
@@ -82,101 +164,112 @@ export default function AIInterviewPage() {
         {/* Start Interview Section */}
         <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
           <h2 className="text-xl font-semibold mb-4">Start New Interview</h2>
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
-            {/* Company Dropdown */}
-            <div className="relative inline-block w-full md:w-1/2">
-              <select
-                value={company}
-                onChange={(e) => setCompany(e.target.value)}
-                className="appearance-none px-4 py-2 pr-10 rounded-lg border border-gray-200 bg-white shadow-sm text-gray-700 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:border-yellow-300 transition-all cursor-pointer hover:shadow-md w-full"
-              >
-                <option value="">Select Company</option>
-                {companies.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-              <svg
-                className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
-            </div>
 
-            {/* Role Dropdown */}
-            <div className="relative inline-block w-full md:w-1/2">
-              <select
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                className="appearance-none px-4 py-2 pr-10 rounded-lg border border-gray-200 bg-white shadow-sm text-gray-700 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:border-yellow-300 transition-all cursor-pointer hover:shadow-md w-full"
-              >
-                <option value="">Select Role</option>
-                {roles.map((r) => (
-                  <option key={r} value={r}>
-                    {r}
-                  </option>
-                ))}
-              </select>
-              <svg
-                className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 pointer-events-none"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
+          <div className="flex flex-col md:flex-row gap-4 mb-6 items-center">
+            {/* Left hint */}
+            <span className="text-gray-700 font-medium">
+              Start by choosing an interview from your assigned sessions.
+            </span>
+
+            {/* Show selected label (if any) */}
+            <div className="ml-auto">
+              {selected ? (
+                <div className="text-sm text-gray-600">
+                  Selected:&nbsp;
+                  <span className="font-semibold text-gray-800">
+                    {selected.company} — {selected.title}
+                  </span>
+                </div>
+              ) : (
+                <div className="text-sm text-gray-400">
+                  No interview selected
+                </div>
+              )}
             </div>
           </div>
 
           {/* Interview Types */}
           <div className="overflow-x-auto -mx-2 px-2 mb-6">
             <div className="flex gap-4 snap-x snap-mandatory pb-2">
-              {interviewTypes.map((type) => (
-                <div
-                  key={type.title}
-                  className="min-w-[250px] snap-start bg-white rounded-xl p-5 border border-gray-100 shadow-sm hover:shadow-md transition-transform hover:-translate-y-1 cursor-pointer"
-                >
+              {interviewTypes.map((type) => {
+                const isSelected = selected?.id === type.id;
+
+                return (
                   <div
-                    className={`w-10 h-10 rounded-full flex items-center justify-center mb-3 ${type.iconColor}`}
+                    key={type.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setSelected(type)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setSelected(type);
+                      }
+                    }}
+                    aria-pressed={isSelected}
+                    className={`relative min-w-[260px] snap-start bg-white rounded-xl p-5 border transition cursor-pointer ${
+                      isSelected
+                        ? "border-yellow-300 shadow-xl ring-2 ring-yellow-200"
+                        : "border-gray-100 shadow-sm hover:shadow-lg"
+                    }`}
                   >
-                    <PlayIcon className="w-5 h-5" />
-                  </div>
-                  <h3 className="font-semibold text-gray-800">{type.title}</h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    {type.description}
-                  </p>
-                  <div className="flex items-center justify-between mt-4">
-                    <span className="text-xs text-gray-500">{type.time}</span>
-                    <span
-                      className={`text-xs font-medium px-2 py-0.5 rounded-full ${type.difficultyColor}`}
+                    {/* Selected check badge */}
+                    {isSelected && (
+                      <div className="absolute top-3 right-3 bg-white rounded-full p-1 shadow">
+                        <CheckCircleIcon className="w-5 h-5 text-yellow-500" />
+                      </div>
+                    )}
+
+                    {/* Company Logo Bubble */}
+                    <div
+                      className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${type.iconColor}`}
                     >
-                      {type.difficulty}
+                      <PlayIcon className="w-6 h-6" />
+                    </div>
+
+                    {/* Company Name */}
+                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                      {type.company}
                     </span>
+
+                    {/* Title */}
+                    <h3 className="font-semibold text-gray-800 mt-1">
+                      {type.title}
+                    </h3>
+
+                    {/* Description */}
+                    <p className="text-sm text-gray-600 mt-1">
+                      {type.description}
+                    </p>
+
+                    {/* Footer: Time + Difficulty */}
+                    <div className="flex items-center justify-between mt-4">
+                      <span className="text-xs text-gray-500">{type.time}</span>
+                      <span
+                        className={`text-xs font-medium px-2 py-0.5 rounded-full ${type.difficultyColor}`}
+                      >
+                        {type.difficulty}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
           {/* Start Interview Button */}
-          <button className="w-full bg-yellow-400 hover:bg-yellow-500 transition text-white py-3 rounded-lg font-medium flex items-center justify-center gap-2">
-            <PlayIcon className="w-5 h-5" /> Start Interview
+          <button
+            onClick={handleStart}
+            disabled={!selected}
+            aria-disabled={!selected}
+            className={`w-full transition text-white py-3 rounded-lg font-medium flex items-center justify-center gap-2 ${
+              selected
+                ? "bg-yellow-400 hover:bg-yellow-500"
+                : "bg-gray-100 text-gray-400 cursor-not-allowed"
+            }`}
+          >
+            <PlayIcon className={`w-5 h-5 ${selected ? "" : "opacity-60"}`} />
+            {selected ? "Start Interview" : "Select an interview to start"}
           </button>
         </div>
 
@@ -206,8 +299,6 @@ export default function AIInterviewPage() {
 
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
             <h3 className="font-semibold mb-4">Interview Tips</h3>
-
-            {/* Scrollable tips list */}
             <div className="space-y-3 text-sm h-48 overflow-y-auto pr-2">
               <div className="bg-blue-50 p-3 rounded-lg">
                 Practice the STAR method for behavioral questions
@@ -233,9 +324,57 @@ export default function AIInterviewPage() {
       </div>
 
       {/* Recent Interviews */}
-      <div className="mt-8 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+      <div className="mt-8 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 max-w-screen-xl mx-auto">
         <h2 className="text-xl font-semibold mb-4">Recent Interviews</h2>
-        <p className="text-gray-500 text-sm">No recent interviews found.</p>
+        <div className="space-y-3">
+          {pastInterviews.map((p) => (
+            <div
+              key={p.id}
+              className="flex items-center justify-between gap-4 bg-white border border-gray-100 rounded-lg p-3 shadow-sm"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-md bg-gray-50 flex items-center justify-center border border-gray-100">
+                  <span className="text-xs font-semibold text-gray-600 uppercase">
+                    {p.company[0]}
+                  </span>
+                </div>
+                <div>
+                  <div className="text-sm font-medium text-gray-800">
+                    {p.company} — {p.title}
+                  </div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {new Date(p.date).toLocaleDateString()} • {p.duration}
+                  </div>
+                  {p.notes && (
+                    <div className="text-xs text-gray-600 mt-1">{p.notes}</div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <div className="text-right">
+                  <div className="text-sm font-semibold">{p.scorePct}%</div>
+                  <div className="text-xs text-gray-500">Score</div>
+                </div>
+                <div>
+                  <button
+                    onClick={() => handleReplay(p)}
+                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-yellow-400 hover:bg-yellow-500 text-white rounded-md text-sm"
+                  >
+                    <PlayIcon className="w-4 h-4" />
+                    Replay
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {pastInterviews.length === 0 && (
+            <div className="text-gray-500 text-sm">
+              No recent interviews found.
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

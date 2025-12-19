@@ -1,5 +1,8 @@
+"use client";
+
 import React from "react";
 import { StatCard } from "../../../components/StatCard";
+import { useRouter } from "next/navigation";
 
 const userStats = {
   quizzesTaken: 24,
@@ -69,6 +72,10 @@ const quizzes: Quiz[] = [
 ];
 
 export default function Quiz() {
+  const router = useRouter();
+  const handleStartQuiz = () => {
+    router.push("/quiz/test");
+  };
   return (
     <div className="min-h-screen bg-white px-4 md:px-8 py-8 font-sans">
       {/* Header */}
@@ -231,7 +238,10 @@ export default function Quiz() {
                     </span>
                   </p>
                 </div>
-                <button className="bg-yellow-400 hover:bg-yellow-300 transition px-8 py-3 text-yellow-900 font-semibold rounded-lg shadow-lg text-lg mt-4 md:mt-0">
+                <button
+                  className="bg-yellow-400 hover:bg-yellow-300 transition px-8 py-3 text-yellow-900 font-semibold rounded-lg shadow-lg text-lg mt-4 md:mt-0"
+                  onClick={handleStartQuiz}
+                >
                   Start Quiz
                 </button>
               </div>
