@@ -2,10 +2,10 @@
 
 import React, { useState, useCallback, memo } from "react";
 import { EnvelopeIcon, LockClosedIcon } from "@heroicons/react/24/outline";
-import { ArrowRightOnRectangleIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/navigation";
 import Loader from "@/components/Loader";
-import { useToast } from "@/components/ToastProvider";
+import { useVerifyUserEmail } from "@/utils/mutations/auth.mutations";
+import { useToast } from "@/components/toast/ToastContext";
 
 /**
  * InputWithIcon must be declared at module top-level to keep identity stable.
@@ -60,7 +60,7 @@ const InputWithIcon = memo(function InputWithIcon({
  */
 export default function LoginPage() {
   const router = useRouter();
-  const { success, error: showError } = useToast();
+  // const { success, error: showError } = useToast();
 
   // screens: "email" -> "choose" -> "otp" -> "password" | "setPassword"
   const [step, setStep] = useState<
@@ -80,6 +80,7 @@ export default function LoginPage() {
 
   // loaders / inline error
   const [loading, setLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState<string>("Loading");
   const [otpLoading, setOtpLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -109,54 +110,65 @@ export default function LoginPage() {
   // -----------------------------
   // Screen 1 -> verify user email
   // -----------------------------
-  const verifyUserEmail = useCallback(async () => {
+
+  const { showToast } = useToast();
+
+  // showToast("error", "Invalid OTP");
+  // showToast("info", "Sending OTP...");
+
+  const verifyEmailMutation = useVerifyUserEmail();
+
+  const verifyUserEmail = useCallback(() => {
+    if (!email) {
+      showToast("error", "Please add an email ID");
+      return;
+    }
+    setLoading(true);
     setErrorMessage(null);
+    setLoadingMessage("Verifying your email id");
 
     const trimmed = email.trim().toLowerCase();
     if (!trimmed || !trimmed.includes("@")) {
-      showError?.("Enter a valid email.");
+      // showError?.("Enter a valid email.");
       return;
     }
 
-    setLoading(true);
-    try {
-      const res = await fetch("/api/auth/verifyUserEmail", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: trimmed }),
-      });
+    verifyEmailMutation.mutate(
+      { email: trimmed },
+      {
+        onSuccess: (data) => {
+          console.log("Verification successful", data);
+          setLoading(false);
+          if (data?.canLogin) {
+            setStep("choose");
+            showToast("success", "Email verified successfully!");
+          } else {
+            showToast("error", data?.reason);
+          }
+        },
+        onError: (err: any) => {
+          const status = err?.response?.status;
+          const data = err?.response?.data;
+          console.log(status);
 
-      const data = await res.json();
-      setLoading(false);
+          if (status === 403) {
+            handleForbidden(data);
+            return;
+          }
 
-      if (!res.ok) {
-        showError?.(data?.message || "Unable to verify email.");
-        return;
+          showToast("error", "Something went wrong. Please try again.");
+          setLoading(false);
+        },
       }
-
-      if (!data.exists) {
-        showError?.("No account found with this email.");
-        setEmailVerified(false);
-        return;
-      }
-
-      // email exists -> move to choose screen
-      setEmailVerified(true);
-      setHasPassword(Boolean(data.hasPassword));
-      success?.("Email verified. Choose a login method.");
-      setStep("choose");
-    } catch (err) {
-      setLoading(false);
-      showError?.("Server error verifying email.");
-    }
-  }, [email, success, showError]);
+    );
+  }, [email]);
 
   // -----------------------------
   // Screen 2 -> send OTP then go to otp screen
   // -----------------------------
   const sendOtpAndGo = useCallback(async () => {
     if (!emailVerified) {
-      showError?.("Verify email first.");
+      // showError?.("Verify email first.");
       return;
     }
 
@@ -172,25 +184,25 @@ export default function LoginPage() {
       setOtpLoading(false);
 
       if (!res.ok || !data.success) {
-        showError?.(data?.message || "Unable to send OTP.");
+        // showError?.(data?.message || "Unable to send OTP.");
         return;
       }
 
       setOtpSent(true);
-      success?.("OTP sent to your email.");
+      // success?.("OTP sent to your email.");
       setStep("otp");
     } catch (err) {
       setOtpLoading(false);
-      showError?.("Server error sending OTP.");
+      // showError?.("Server error sending OTP.");
     }
-  }, [email, emailVerified, success, showError]);
+  }, [email, emailVerified]);
 
   // -----------------------------
   // Screen 3a -> verify OTP
   // -----------------------------
   const verifyOtpAndLogin = useCallback(async () => {
     if (!otp || otp.trim().length === 0) {
-      showError?.("Enter the OTP.");
+      // showError?.("Enter the OTP.");
       return;
     }
 
@@ -209,25 +221,25 @@ export default function LoginPage() {
       setLoading(false);
 
       if (!res.ok || !data.success) {
-        showError?.(data?.message || "Invalid or expired OTP.");
+        // showError?.(data?.message || "Invalid or expired OTP.");
         return;
       }
 
-      success?.("OTP verified. Logging in…");
+      // success?.("OTP verified. Logging in…");
       // assume server sets cookies
       router.push("/home");
     } catch (err) {
       setLoading(false);
-      showError?.("Server error verifying OTP.");
+      // showError?.("Server error verifying OTP.");
     }
-  }, [email, otp, router, success, showError]);
+  }, [email, otp, router]);
 
   // -----------------------------
   // Screen 3b -> password login
   // -----------------------------
   const passwordLogin = useCallback(async () => {
     if (!password || password.length < 6) {
-      showError?.("Enter a valid password (min 6 chars).");
+      // showError?.("Enter a valid password (min 6 chars).");
       return;
     }
 
@@ -243,22 +255,22 @@ export default function LoginPage() {
       setLoading(false);
 
       if (!res.ok || !data.success) {
-        showError?.(data?.message || "Invalid credentials.");
+        // showError?.(data?.message || "Invalid credentials.");
         return;
       }
 
-      success?.("Logged in. Redirecting…");
+      // success?.("Logged in. Redirecting…");
       router.push("/home");
     } catch (err) {
       setLoading(false);
-      showError?.("Server error logging in.");
+      // showError?.("Server error logging in.");
     }
-  }, [email, password, router, success, showError]);
+  }, [email, password, router]);
 
   // set password & login
   const setPasswordAndLogin = useCallback(async () => {
     if (!password || password.length < 6) {
-      showError?.("Password should be at least 6 characters.");
+      // showError?.("Password should be at least 6 characters.");
       return;
     }
 
@@ -274,17 +286,17 @@ export default function LoginPage() {
       setLoading(false);
 
       if (!res.ok || !data.success) {
-        showError?.(data?.message || "Unable to set password.");
+        // showError?.(data?.message || "Unable to set password.");
         return;
       }
 
-      success?.("Password set. Logging in…");
+      // success?.("Password set. Logging in…");
       router.push("/home");
     } catch (err) {
       setLoading(false);
-      showError?.("Server error setting password.");
+      // showError?.("Server error setting password.");
     }
-  }, [email, password, router, success, showError]);
+  }, [email, password, router]);
 
   // fallback demo signin (keeps your original demo behavior if you click Sign In without using flow)
   const demoSignIn = useCallback(() => {
@@ -298,7 +310,7 @@ export default function LoginPage() {
     );
 
     if (matchedUser) {
-      success?.("Logged in (demo). Redirecting…");
+      // success?.("Logged in (demo). Redirecting…");
       setTimeout(() => {
         setLoading(false);
         router.push("/home");
@@ -309,17 +321,50 @@ export default function LoginPage() {
     setLoading(false);
     const msg = "Invalid credentials.";
     setErrorMessage(msg);
-    showError?.(msg);
-  }, [email, password, router, success, showError]);
+    // showError?.(msg);
+  }, [email, password, router]);
 
   const handleGoogleLogin = () => {
     window.location.href = "/api/auth/google";
   };
 
+  const handleForbidden = (data: any) => {
+    switch (data?.reason) {
+      case "PASSWORD_NOT_SET":
+        showToast("error", "Your account exists but no password is set.");
+        setStep("setPassword");
+        break;
+
+      case "EMAIL_NOT_VERIFIED":
+        showToast("error", "Please verify your email first.");
+        setStep("otp");
+        break;
+
+      case "ACCOUNT_SUSPENDED":
+        setLoading(false);
+        showToast(
+          "error",
+          "Your account is temporarily suspended. Contact support."
+        );
+        break;
+
+      case "USER_INACTIVE":
+        setLoading(false);
+        showToast(
+          "error",
+          "Your account is temporarily not active. Contact support."
+        );
+        break;
+
+      default:
+        showToast("error", "You’re not allowed to login at the moment.");
+    }
+  };
+
   // UI rendering by step
   return (
     <>
-      <Loader show={loading || otpLoading} message="Working..." />
+      <Loader show={loading || otpLoading} message={loadingMessage} />
 
       <div className="min-h-screen flex items-start justify-center bg-yellow-50/40 px-4 py-8 sm:py-12">
         <div className="bg-white rounded-2xl shadow-lg w-full max-w-4xl overflow-hidden grid grid-cols-1 md:grid-cols-2">

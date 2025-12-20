@@ -6,53 +6,55 @@ import {
   LOGIN_WITH_PASSWORD,
   REGISTER,
   VERIFY_LOGIN_OTP,
-} from "../CONSTANTS";
+  VERIFY_USER_EMAIL,
+} from "@/utils/api/endpoints";
 
-interface RegisterData {
-  email: string;
-  fullname: string;
-  password: string;
-  phoneNumber?: string; // optional if not required
-}
-
-interface LoginData {
-  email: string;
-  password: string;
-}
-
-interface LoginWithOtpData {
-  email: string;
-}
-
-interface VerifyOtpForLogin {
-  email: string;
-  otp: string;
-}
+import {
+  VerifyUserEmailInput,
+  LoginData,
+  RegisterData,
+  LoginWithOtpData,
+  VerifyOtpForLogin,
+  VerifyUserEmailResponse,
+} from "@/utils/api/types/auth.types";
 
 export const authService = {
+  verifyUserEmail: async (
+    data: VerifyUserEmailInput
+  ): Promise<VerifyUserEmailResponse> => {
+    const response = await api.get(
+      `${BASE_API_URL}/${AUTH}/${VERIFY_USER_EMAIL}`,
+      {
+        params: { Email: data?.email },
+      }
+    );
+
+    return response.data;
+  },
+
   loginWithPassword: async (data: LoginData) => {
     const response = await api.post(
-      `${BASE_API_URL()}/${AUTH()}/${LOGIN_WITH_PASSWORD()}`,
+      `${BASE_API_URL}/${AUTH}/${LOGIN_WITH_PASSWORD}`,
       data
     );
     return response.data;
   },
 
   registerWithPassword: async (data: RegisterData) => {
-    const response = await api.post(`${BASE_API_URL()}${REGISTER()}`, data);
+    const response = await api.post(`${BASE_API_URL}${REGISTER}`, data);
     return response.data;
   },
 
   sendOtpForLogin: async (data: LoginWithOtpData) => {
     const response = await api.post(
-      `${BASE_API_URL()}${LOGIN_WITH_OTP()}?email=${data?.email}`
+      `${BASE_API_URL}${LOGIN_WITH_OTP}?email=${data?.email}`
     );
     return response.data;
   },
 
   verifyOtpForLogin: async (data: VerifyOtpForLogin) => {
     const response = await api.patch(
-      `${BASE_API_URL()}${VERIFY_LOGIN_OTP()}`,
+      `${BASE_API_URL}${VERIFY_LOGIN_OTP}`,
       data
     );
     return response.data;
