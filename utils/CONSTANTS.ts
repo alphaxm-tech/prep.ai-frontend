@@ -1,6 +1,7 @@
 export const BASE_API_URL = () => `http://localhost:8080/api/v1`;
 
 export const RESUME = () => `resume`;
+export const AIINTERVIEW = () => `ai-interview`;
 export const AUTH = () => `auth`;
 export const HOME = () => `home`;
 
