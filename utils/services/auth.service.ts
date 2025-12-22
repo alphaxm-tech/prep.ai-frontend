@@ -1,5 +1,6 @@
 import api from "@/lib/axios";
 import {
+  ADD_USER_DETAILS,
   AUTH,
   BASE_API_URL,
   LOGIN_WITH_OTP,
@@ -16,6 +17,8 @@ import {
   LoginWithOtpData,
   VerifyOtpForLogin,
   VerifyUserEmailResponse,
+  AddUserDetailsRequest,
+  User,
 } from "@/utils/api/types/auth.types";
 
 export const authService = {
@@ -27,6 +30,15 @@ export const authService = {
       {
         params: { Email: data?.email },
       }
+    );
+
+    return response.data;
+  },
+
+  addUserDetails: async (data: AddUserDetailsRequest): Promise<User> => {
+    const response = await api.post(
+      `${BASE_API_URL}/${AUTH}/${ADD_USER_DETAILS}`,
+      data
     );
 
     return response.data;

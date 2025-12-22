@@ -7,3 +7,15 @@ export const useVerifyUserEmail = () => {
     mutationFn: authService.verifyUserEmail,
   });
 };
+
+export const addUserDetails = () => {
+  return useMutation({
+    mutationFn: authService.addUserDetails,
+  });
+};
+
+export const loginWithPassword = () => {
+  return useMutation({
+    mutationFn: authService.loginWithPassword,
+  });
+};

@@ -1,587 +1,459 @@
-// "use client";
+// app/page.tsx
 
-// import React, { useState, useCallback, memo } from "react";
-// import { EnvelopeIcon, LockClosedIcon } from "@heroicons/react/24/outline";
-// import { ArrowRightOnRectangleIcon } from "@heroicons/react/24/solid";
-// import { useRouter } from "next/navigation";
-// import Loader from "@/components/Loader";
+import Image from "next/image";
 
-// /**
-//  * InputWithIcon must be declared at module top-level to keep identity stable.
-//  */
+export default function HomePage() {
+  return (
+    <main className="bg-white text-black">
+      {/* ================= HERO SECTION ================= */}
+      <section id="home" className="bg-white">
+        <div className="max-w-7xl mx-auto px-6 pt-24 pb-32">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            {/* LEFT: TEXT CONTENT */}
+            <div>
+              {/* Badge */}
+              <span className="inline-block mb-6 px-4 py-2 text-sm font-semibold bg-yellow-100 text-yellow-700 rounded-full">
+                Your College’s 24/7 Placement Success Partner
+              </span>
 
-// //test
-// const InputWithIcon = memo(function InputWithIcon({
-//   icon,
-//   type = "text",
-//   placeholder = "",
-//   value,
-//   onChange,
-//   name,
-//   autoComplete,
-//   ...rest
-// }: any) {
-//   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-//     onChange && onChange(e);
-//   };
+              {/* Heading */}
+              <h1 className="text-5xl md:text-6xl font-extrabold leading-tight mb-6">
+                One platform. <br />
+                Complete placement success.
+              </h1>
 
-//   return (
-//     <div className="relative mt-1">
-//       <div className="absolute left-3 top-2.5 h-5 w-5 text-gray-400 pointer-events-none">
-//         {icon}
-//       </div>
-//       <input
-//         name={name}
-//         autoComplete={autoComplete}
-//         type={type}
-//         value={value}
-//         placeholder={placeholder}
-//         onChange={handleChange}
-//         className="w-full px-4 py-3 pl-10 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-400 outline-none text-sm sm:text-base"
-//         {...rest}
-//       />
-//     </div>
-//   );
-// });
+              {/* Subtext */}
+              <p className="text-lg text-gray-700 max-w-xl mb-10">
+                <span className="font-semibold text-black">
+                  AI doesn’t just prepare you. It studies you.
+                </span>{" "}
+                PrepBuddy AI combines interviews, quizzes, and guided learning
+                to turn preparation into performance.
+              </p>
 
-// /**
-//  * Demo-only Login Page
-//  *
-//  * UI: uses the original tab/buttons layout (Email | OTP | Sign Up | Enter)
-//  * Auth: demo-only client-side check for allowed users
-//  *
-//  * Security reminder: credentials are visible in the client bundle. Use only for testing/demo.
-//  */
-// export default function LoginPage() {
-//   const router = useRouter();
-//   // const { success, error: showError } = useToast();
+              {/* CTA */}
+              <div className="flex flex-wrap gap-4">
+                <button className="px-8 py-4 bg-yellow-500 text-black font-semibold rounded-full hover:bg-yellow-400 transition">
+                  Get Started
+                </button>
 
-//   // keep tabs like original UI (so user can click OTP / signup) but auth remains demo-only
-//   const [mode, setMode] = useState<"signin" | "signup" | "otp">("signin");
+                <button className="px-8 py-4 border border-gray-400 rounded-full font-semibold hover:border-black transition">
+                  Request Demo
+                </button>
+              </div>
 
-//   // form state
-//   const [email, setEmail] = useState("");
-//   const [password, setPassword] = useState("");
-//   const [otp, setOtp] = useState("");
-//   const [fullname, setFullname] = useState("");
-//   const [phoneNumber, setPhoneNumber] = useState("");
+              {/* Trust indicators */}
+              <div className="mt-12 flex items-center gap-6 text-sm text-gray-500">
+                <span>Trusted by colleges & students</span>
+                <span>•</span>
+                <span>AI + Mentor Driven</span>
+              </div>
+            </div>
 
-//   // loaders / inline error
-//   const [loginLoader, setLoginLoader] = useState(false);
-//   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+            {/* RIGHT: VISUAL */}
+            <div className="relative">
+              {/* Background accent */}
+              <div className="absolute -top-8 -right-8 w-full h-full bg-yellow-100 rounded-3xl z-0" />
 
-//   // -----------------------------
-//   // Allowed demo credentials (client-side)
-//   // -----------------------------
-//   const ALLOWED_USERS = [
-//     {
-//       email: "vm.prepai@gmail.com",
-//       password: "prepai@1993",
-//     },
-//     {
-//       email: "sanjanaaddepalli2005@gmail.com",
-//       password: "xOQDhT3cpWRut4kW",
-//     },
-//   ];
+              {/* Image / Mockup container */}
+              <div className="relative z-10 bg-white rounded-3xl shadow-xl border border-gray-200 p-4">
+                <div className="relative aspect-[4/3] rounded-2xl overflow-hidden object-cover transition-transform duration-300 hover:scale-[1.02]">
+                  <Image
+                    src="/images/landingPageImage.jpg"
+                    alt="PrepBuddy AI dashboard preview"
+                    fill
+                    className="object-cover"
+                    priority
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-//   // clear inline error on input change
-//   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-//     setEmail(e.target.value);
-//     if (errorMessage) setErrorMessage(null);
-//   };
-//   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-//     setPassword(e.target.value);
-//     if (errorMessage) setErrorMessage(null);
-//   };
-//   const handleOtpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-//     setOtp(e.target.value);
-//     if (errorMessage) setErrorMessage(null);
-//   };
+      {/* ================= WHY PREPBUDDY AI ================= */}
+      <section
+        id="why-us"
+        className="relative px-6 py-28 overflow-hidden bg-gradient-to-r from-gray-50 via-yellow-50/40 to-white"
+      >
+        {/* Background accent */}
+        <div className="absolute -top-24 -left-24 w-[320px] h-[320px] bg-yellow-200/30 rounded-full blur-3xl" />
 
-//   // Primary action:
-//   // validate against the allowed users list and route to /home on success.
-//   const handleSignIn = useCallback(() => {
-//     setLoginLoader(true);
-//     setErrorMessage(null);
+        <div className="relative max-w-6xl mx-auto grid md:grid-cols-2 gap-16 items-center">
+          {/* LEFT CONTENT */}
+          <div>
+            <span
+              className="inline-block mb-4 px-4 py-1.5 text-sm font-semibold 
+        bg-yellow-400 text-black rounded-full shadow-sm"
+            >
+              Why institutions choose PrepBuddy AI
+            </span>
 
-//     const normalizedEmail = email.trim().toLowerCase();
+            <h2 className="text-4xl font-extrabold mb-6 leading-tight">
+              Because placements <br />
+              <span className="text-yellow-500">shouldn’t rely on chance.</span>
+            </h2>
 
-//     const matchedUser = ALLOWED_USERS.find(
-//       (u) =>
-//         u.email.toLowerCase() === normalizedEmail && u.password === password
-//     );
+            <p className="text-gray-700 text-lg max-w-xl">
+              Traditional placement training is fragmented, manual, and
+              impossible to personalize at scale. PrepBuddy AI replaces
+              guesswork with an intelligence-driven system that prepares every
+              student — consistently, continuously, and measurably.
+            </p>
+          </div>
 
-//     if (matchedUser) {
-//       success?.("Logged in (demo). Redirecting…");
-//       setTimeout(() => {
-//         setLoginLoader(false);
-//         router.push("/home");
-//       }, 400);
-//       return;
-//     }
+          {/* RIGHT CARD */}
+          <div className="relative">
+            {/* Glow */}
+            <div className="absolute -inset-1 bg-gradient-to-br from-yellow-300 to-yellow-100 rounded-3xl blur opacity-70" />
 
-//     // failure
-//     setLoginLoader(false);
-//     const msg = "Invalid credentials.";
-//     setErrorMessage(msg);
-//     // showError?.(msg);
-//   }, [email, password, router, success, showError]);
+            {/* Card */}
+            <div className="relative bg-white rounded-3xl p-8 shadow-xl border border-yellow-100">
+              <ul className="space-y-7">
+                {[
+                  {
+                    title: "Always-On Preparation",
+                    desc: "Students practice interviews, quizzes, and resumes anytime, without scheduling constraints.",
+                  },
+                  {
+                    title: "AI That Actually Evaluates",
+                    desc: "Real-time feedback on answers, confidence, communication, and delivery, instantly.",
+                  },
+                  {
+                    title: "Personalization at Scale",
+                    desc: "Every student gets a unique learning path powered by Gen AI and behavioral insights.",
+                  },
+                  {
+                    title: "Built for Institutions",
+                    desc: "10× more cost-effective and infinitely more scalable than traditional coaching models.",
+                  },
+                ].map((item) => (
+                  <li key={item.title} className="flex gap-4">
+                    <div className="mt-1 w-3 h-3 bg-yellow-500 rounded-full flex-shrink-0" />
+                    <div>
+                      <p className="font-semibold text-gray-900">
+                        {item.title}
+                      </p>
+                      <p className="text-sm text-gray-600">{item.desc}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
 
-//   // OTP / Signup actions simply reuse the same demo-only behavior.
-//   const handleSendOtp = useCallback(() => {
-//     setErrorMessage(null);
-//     showError?.("OTP flow not active in demo. Use demo credentials.");
-//   }, [showError]);
+      {/* ================= PLATFORM OVERVIEW ================= */}
+      <section
+        id="platform"
+        className="relative px-6 py-28 overflow-hidden bg-gradient-to-b from-white via-yellow-50/40 to-white"
+      >
+        {/* Background accent */}
+        <div className="absolute -top-24 right-0 w-[360px] h-[360px] bg-yellow-200/30 rounded-full blur-3xl" />
 
-//   const handleVerifyOtp = useCallback(() => {
-//     setErrorMessage(null);
-//     showError?.("OTP verification not active in demo. Use demo credentials.");
-//   }, [showError]);
+        <div className="relative max-w-7xl mx-auto">
+          {/* Section label */}
+          <span
+            className="inline-block mb-4 px-4 py-1.5 text-sm font-semibold 
+      bg-yellow-400 text-black rounded-full shadow-sm"
+          >
+            AI-First Platform
+          </span>
 
-//   const handleRegister = useCallback(() => {
-//     setErrorMessage(null);
-//     showError?.("Sign up not active in demo. Use demo credentials to sign in.");
-//   }, [showError]);
+          <h2 className="text-4xl font-extrabold mb-4 leading-tight">
+            A preparation system that <br />
+            <span className="text-yellow-500">adapts to every student</span>
+          </h2>
 
-//   const handleGoogleLogin = () => {
-//     window.location.href = "/api/auth/google";
-//   };
+          <p className="text-gray-700 text-lg max-w-3xl mb-16">
+            PrepBuddy AI is not a collection of tools. It’s an AI-first platform
+            that continuously evaluates, guides, and improves students across
+            interviews, communication, aptitude, and technical readiness — with
+            expert support where it matters most.
+          </p>
 
-//   return (
-//     <>
-//       <Loader show={loginLoader} message="Signing you in..." />
+          {/* Cards */}
+          <div className="grid md:grid-cols-3 gap-10">
+            {[
+              {
+                title: "AI-Led Interview Practice",
+                desc: "Unlimited mock HR and technical interviews that adapt to each student’s performance.",
+              },
+              {
+                title: "Real-Time Evaluation Engine",
+                desc: "Instant feedback on answers, confidence, clarity, voice modulation, and delivery.",
+              },
+              {
+                title: "Adaptive Learning Paths",
+                desc: "Personalized preparation journeys powered by Gen AI and behavioral insights.",
+              },
+              {
+                title: "Smart Quizzes & Study Material",
+                desc: "Topic-wise quizzes and learning resources aligned to placement requirements.",
+              },
+              {
+                title: "Mentor & Expert Assistance",
+                desc: "Human guidance layered on top of AI for interviews, communication, and strategy.",
+              },
+              {
+                title: "Progress & Readiness Dashboard",
+                desc: "Clear visibility into performance, gaps, and placement readiness over time.",
+              },
+            ].map((item) => (
+              <div key={item.title} className="relative group">
+                {/* Glow */}
+                <div
+                  className="absolute -inset-0.5 bg-gradient-to-br 
+            from-yellow-300 to-yellow-100 rounded-3xl opacity-0 
+            group-hover:opacity-100 blur transition"
+                />
 
-//       <div className="min-h-screen flex items-start justify-center bg-yellow-50/40 px-4 py-8 sm:py-12">
-//         <div className="bg-white rounded-2xl shadow-lg w-full max-w-4xl overflow-hidden grid grid-cols-1 md:grid-cols-2">
-//           {/* Small-screen hero */}
-//           <div className="md:hidden border-b border-gray-100 p-6">
-//             <div className="flex flex-col items-center justify-center gap-4">
-//               <svg
-//                 width="160"
-//                 height="160"
-//                 viewBox="0 0 220 220"
-//                 fill="none"
-//                 xmlns="http://www.w3.org/2000/svg"
-//                 className="drop-shadow-md"
-//                 aria-hidden
-//               >
-//                 <rect
-//                   x="0"
-//                   y="0"
-//                   width="220"
-//                   height="220"
-//                   rx="20"
-//                   fill="url(#gradAIY)"
-//                 />
-//                 <defs>
-//                   <linearGradient id="gradAIY" x1="0" x2="1">
-//                     <stop offset="0%" stopColor="#fff7ed" />
-//                     <stop offset="100%" stopColor="#ffedd5" />
-//                   </linearGradient>
-//                 </defs>
-//                 <g transform="translate(40,40)">
-//                   <circle cx="50" cy="40" r="24" fill="#fff" />
-//                   <rect
-//                     x="10"
-//                     y="80"
-//                     width="80"
-//                     height="10"
-//                     rx="5"
-//                     fill="#fff"
-//                   />
-//                   <rect
-//                     x="10"
-//                     y="100"
-//                     width="60"
-//                     height="8"
-//                     rx="4"
-//                     fill="#fff"
-//                   />
-//                   <rect
-//                     x="10"
-//                     y="114"
-//                     width="40"
-//                     height="8"
-//                     rx="4"
-//                     fill="#fff"
-//                   />
-//                 </g>
-//               </svg>
-//               <div className="text-center">
-//                 <h3 className="text-base font-semibold text-gray-800">
-//                   AI-powered career portal
-//                 </h3>
-//                 <p className="text-xs text-gray-500">
-//                   Resumes curated with AI • Conversational AI interviews • Smart
-//                   job matching
-//                 </p>
-//               </div>
-//             </div>
-//           </div>
+                {/* Card */}
+                <div
+                  className="relative rounded-3xl p-8 bg-white 
+            border border-gray-100 shadow-lg 
+            group-hover:-translate-y-1 transition"
+                >
+                  {/* Accent dot */}
+                  <div
+                    className="mb-4 w-10 h-10 bg-yellow-400/20 
+              rounded-full flex items-center justify-center"
+                  >
+                    <div className="w-3 h-3 bg-yellow-500 rounded-full" />
+                  </div>
 
-//           {/* Left: Illustration & AI selling points for md+ */}
-//           <div className="hidden md:flex flex-col justify-center p-8 border-r border-gray-100">
-//             <div className="flex flex-col items-center justify-center gap-4 p-6">
-//               <svg
-//                 width="160"
-//                 height="160"
-//                 viewBox="0 0 220 220"
-//                 fill="none"
-//                 xmlns="http://www.w3.org/2000/svg"
-//                 className="drop-shadow-md"
-//                 aria-hidden
-//               >
-//                 <rect
-//                   x="0"
-//                   y="0"
-//                   width="220"
-//                   height="220"
-//                   rx="20"
-//                   fill="url(#gradAIY)"
-//                 />
-//                 <defs>
-//                   <linearGradient id="gradAIY" x1="0" x2="1">
-//                     <stop offset="0%" stopColor="#fff7ed" />
-//                     <stop offset="100%" stopColor="#ffedd5" />
-//                   </linearGradient>
-//                 </defs>
-//                 <g transform="translate(40,40)">
-//                   <circle cx="50" cy="40" r="24" fill="#fff" />
-//                   <rect
-//                     x="10"
-//                     y="80"
-//                     width="80"
-//                     height="10"
-//                     rx="5"
-//                     fill="#fff"
-//                   />
-//                   <rect
-//                     x="10"
-//                     y="100"
-//                     width="60"
-//                     height="8"
-//                     rx="4"
-//                     fill="#fff"
-//                   />
-//                   <rect
-//                     x="10"
-//                     y="114"
-//                     width="40"
-//                     height="8"
-//                     rx="4"
-//                     fill="#fff"
-//                   />
-//                 </g>
-//               </svg>
+                  <h3 className="font-semibold text-xl mb-3 text-gray-900">
+                    {item.title}
+                  </h3>
+                  <p className="text-gray-700">{item.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-//               <div className="text-center">
-//                 <h3 className="text-base font-semibold text-gray-800">
-//                   AI-powered career portal
-//                 </h3>
-//                 <p className="text-xs text-gray-500">
-//                   Resumes curated with AI • Conversational AI interviews • Smart
-//                   job matching
-//                 </p>
-//               </div>
+      {/* ================= FEATURES ================= */}
+      <section
+        id="features"
+        className="relative px-6 py-28 bg-black text-white"
+      >
+        {/* Subtle background glow */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black via-black to-yellow-900/10 pointer-events-none" />
 
-//               <div className="flex flex-col gap-3 w-full">
-//                 <div className="flex items-center gap-3 bg-yellow-50 px-3 py-2 rounded-lg">
-//                   <div className="h-8 w-8 rounded-full bg-yellow-200 flex items-center justify-center">
-//                     🤖
-//                   </div>
-//                   <div className="text-sm">
-//                     <div className="text-xs text-gray-500">
-//                       AI Resume Builder
-//                     </div>
-//                     <div className="font-medium text-gray-800">
-//                       Curated, optimized CVs
-//                     </div>
-//                   </div>
-//                 </div>
+        <div className="relative max-w-7xl mx-auto">
+          {/* Section label */}
+          <span
+            className="inline-block mb-4 px-4 py-1.5 text-sm font-semibold 
+      bg-yellow-400 text-black rounded-full"
+          >
+            What students get
+          </span>
 
-//                 <div className="flex items-center gap-3 bg-yellow-50 px-3 py-2 rounded-lg">
-//                   <div className="h-8 w-8 rounded-full bg-yellow-200 flex items-center justify-center">
-//                     🎤
-//                   </div>
-//                   <div className="text-sm">
-//                     <div className="text-xs text-gray-500">
-//                       AI Mock Interviews
-//                     </div>
-//                     <div className="font-medium text-gray-800">
-//                       Practice with AI feedback
-//                     </div>
-//                   </div>
-//                 </div>
+          <h2 className="text-4xl font-extrabold mb-4 leading-tight">
+            One app. <br />
+            <span className="text-yellow-400">
+              Complete placement execution.
+            </span>
+          </h2>
 
-//                 <div className="flex items-center gap-3 bg-yellow-50 px-3 py-2 rounded-lg">
-//                   <div className="h-8 w-8 rounded-full bg-yellow-200 flex items-center justify-center">
-//                     ⚡
-//                   </div>
-//                   <div className="text-sm">
-//                     <div className="text-xs text-gray-500">Smart Insights</div>
-//                     <div className="font-medium text-gray-800">
-//                       Personalized career tips
-//                     </div>
-//                   </div>
-//                 </div>
-//               </div>
-//             </div>
-//           </div>
+          <p className="text-gray-300 text-lg max-w-3xl mb-16">
+            Every tool inside PrepBuddy AI is designed to remove friction from
+            placement preparation, replacing scattered effort with intelligent,
+            structured execution.
+          </p>
 
-//           {/* Right: Form card (uses original tab/buttons layout) */}
-//           <div className="p-6 sm:p-8">
-//             <div className="text-center mb-4">
-//               <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
-//                 <div className="flex items-center justify-center font-extrabold tracking-tight">
-//                   <span className="text-black text-3xl leading-none">Prep</span>
+          {/* Feature Grid */}
+          <div className="grid md:grid-cols-2 gap-8">
+            {[
+              {
+                title: "AI Resume Builder",
+                desc: "Generate ATS-optimized resumes that align with roles, companies, and job descriptions.",
+              },
+              {
+                title: "AI-Led Interview Practice",
+                desc: "Practice HR and technical interviews that adapt to your responses in real time.",
+              },
+              {
+                title: "Smart Quizzes & Study Material",
+                desc: "Targeted quizzes and learning content mapped to placement and role requirements.",
+              },
+              {
+                title: "AI-Powered Code Editor",
+                desc: "Write, run, and debug code in a real interview-like editor with instant feedback, hints, and performance insights.",
+              },
 
-//                   <span className="text-yellow-500 text-3xl leading-none">
-//                     Buddy
-//                   </span>
+              {
+                title: "Personalized Progress Dashboard",
+                desc: "Track readiness, improvement, and gaps with clear performance signals.",
+              },
+              {
+                title: "Mentor-Guided Technical Training",
+                desc: "AI-led learning paths supported by experienced mentors and instructors for role-specific preparation and guidance.",
+              },
+            ].map((item) => (
+              <div
+                key={item.title}
+                className="
+            relative rounded-2xl p-7
+            bg-white/5 border border-white/10
+            hover:bg-white/10 hover:border-yellow-400/30
+            transition-all duration-300
+          "
+              >
+                {/* Accent line */}
+                <div className="absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r from-yellow-400 to-transparent opacity-60 rounded-t-2xl" />
 
-//                   <span className="ml-1 text-yellow-500 text-xs font-semibold relative -top-2">
-//                     AI
-//                   </span>
-//                 </div>
-//               </h1>
-//               <p className="text-gray-500 mt-2 text-sm sm:text-base">
-//                 {mode === "signup"
-//                   ? "Create your account"
-//                   : mode === "otp"
-//                   ? "Sign in with OTP"
-//                   : "Welcome back! Please log in."}
-//               </p>
-//             </div>
+                <h3 className="font-semibold text-lg mb-2 text-yellow-400">
+                  {item.title}
+                </h3>
+                <p className="text-gray-300 leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
 
-//             {/* Tabs (original) */}
-//             <div className="flex flex-wrap gap-2 mb-6 justify-center">
-//               <button
-//                 className={`px-3 py-2 rounded-full text-sm font-medium focus:outline-none focus:ring-2 focus:ring-yellow-300 ${
-//                   mode === "signin"
-//                     ? "bg-yellow-400 text-white"
-//                     : "bg-yellow-50 text-yellow-600"
-//                 }`}
-//                 onClick={() => setMode("signin")}
-//                 aria-pressed={mode === "signin"}
-//                 type="button"
-//               >
-//                 Email
-//               </button>
+      {/* ================= FOUNDER ================= */}
+      <section
+        id="founder"
+        className="relative px-6 py-36 bg-white overflow-hidden"
+      >
+        {/* Side accent with gradient */}
+        <div className="absolute top-0 left-0 h-full w-[140px] bg-gradient-to-b from-yellow-400/20 to-transparent" />
 
-//               <button
-//                 className={`px-3 py-2 rounded-full text-sm font-medium focus:outline-none focus:ring-2 focus:ring-yellow-300 ${
-//                   mode === "otp"
-//                     ? "bg-yellow-400 text-white"
-//                     : "bg-yellow-50 text-yellow-600"
-//                 }`}
-//                 onClick={() => setMode("otp")}
-//                 aria-pressed={mode === "otp"}
-//                 type="button"
-//               >
-//                 OTP
-//               </button>
+        <div className="relative max-w-6xl mx-auto grid md:grid-cols-2 gap-20 items-center">
+          {/* LEFT: Vision */}
+          <div>
+            <span
+              className="inline-block mb-5 px-4 py-1.5 text-sm font-semibold 
+        bg-yellow-400 text-black rounded-full"
+            >
+              Founder & Vision
+            </span>
 
-//               <button
-//                 className={`px-3 py-2 rounded-full text-sm font-medium focus:outline-none focus:ring-2 focus:ring-yellow-300 ${
-//                   mode === "signup"
-//                     ? "bg-yellow-400 text-white"
-//                     : "bg-yellow-50 text-yellow-600"
-//                 }`}
-//                 onClick={() => setMode("signup")}
-//                 aria-pressed={mode === "signup"}
-//                 type="button"
-//               >
-//                 Sign Up
-//               </button>
-//             </div>
+            <h2 className="text-4xl font-extrabold mb-6 leading-tight">
+              Built with intent. <br />
+              Driven by <span className="text-yellow-500">outcomes.</span>
+            </h2>
 
-//             {/* Form area */}
-//             <div className="space-y-4 min-h-[320px] transition-all duration-200">
-//               {mode === "signup" && (
-//                 <>
-//                   <div>
-//                     <label className="block text-sm font-medium text-gray-600">
-//                       Full Name
-//                     </label>
-//                     <InputWithIcon
-//                       name="fullname"
-//                       autoComplete="name"
-//                       icon={<></>}
-//                       type="text"
-//                       placeholder="John Doe"
-//                       value={fullname}
-//                       onChange={(e: any) => setFullname(e.target.value)}
-//                     />
-//                   </div>
+            <p className="text-lg text-gray-700 leading-relaxed max-w-xl">
+              PrepBuddy AI was founded on a simple but often ignored truth,
+              students don’t fail interviews because they lack ability. They
+              fail because preparation is unstructured, feedback is delayed, and
+              confidence is left to chance.
+            </p>
 
-//                   <div>
-//                     <label className="block text-sm font-medium text-gray-600">
-//                       Phone number
-//                     </label>
-//                     <InputWithIcon
-//                       name="phone"
-//                       autoComplete="tel"
-//                       icon={<EnvelopeIcon className="h-5 w-5" />}
-//                       type="tel"
-//                       placeholder="9130859725"
-//                       value={phoneNumber}
-//                       onChange={(e: any) => setPhoneNumber(e.target.value)}
-//                     />
-//                   </div>
-//                 </>
-//               )}
+            <p className="mt-5 text-gray-700 leading-relaxed max-w-xl">
+              The vision was clear: replace fragmented coaching with an
+              intelligent, measurable, and scalable system that prepares
+              students the way hiring actually works.
+            </p>
+          </div>
 
-//               <div>
-//                 <label className="block text-sm font-medium text-gray-600">
-//                   Email
-//                 </label>
-//                 <InputWithIcon
-//                   name="email"
-//                   autoComplete="email"
-//                   icon={<EnvelopeIcon className="h-5 w-5" />}
-//                   type="email"
-//                   placeholder="you@example.com"
-//                   value={email}
-//                   onChange={handleEmailChange}
-//                 />
-//               </div>
+          {/* RIGHT: Founder Card */}
+          <div className="relative group">
+            {/* Offset frame */}
+            <div
+              className="absolute -top-6 -left-6 w-full h-full 
+        border-2 border-yellow-400 rounded-3xl
+        group-hover:-top-4 group-hover:-left-4 transition-all duration-300"
+            />
 
-//               {mode === "otp" ? (
-//                 <div>
-//                   <label className="block text-sm font-medium text-gray-600 pb-1">
-//                     Enter OTP
-//                   </label>
-//                   <div className="flex gap-2">
-//                     <input
-//                       name="otp"
-//                       autoComplete="one-time-code"
-//                       type="text"
-//                       placeholder="123456"
-//                       value={otp}
-//                       onChange={handleOtpChange}
-//                       className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-400 outline-none text-sm sm:text-base"
-//                     />
-//                   </div>
-//                 </div>
-//               ) : (
-//                 <div>
-//                   <label className="block text-sm font-medium text-gray-600">
-//                     Password
-//                   </label>
-//                   <InputWithIcon
-//                     name="password"
-//                     autoComplete="current-password"
-//                     icon={<LockClosedIcon className="h-5 w-5" />}
-//                     type="password"
-//                     placeholder="••••••••"
-//                     value={password}
-//                     onChange={handlePasswordChange}
-//                   />
-//                 </div>
-//               )}
+            {/* Card */}
+            <div
+              className="relative bg-white rounded-3xl p-10 transition-transform duration-300 group-hover:-translate-y-1"
+              style={{
+                boxShadow:
+                  "0 24px 48px rgba(250, 204, 21, 0.25), 0 10px 20px rgba(0, 0, 0, 0.06)",
+              }}
+            >
+              <h3 className="text-2xl font-semibold mb-1">
+                Dr. Vaishnavi Madhuvarsu
+              </h3>
 
-//               {mode !== "otp" && (
-//                 <div className="text-right">
-//                   <a
-//                     href="/forgot-password"
-//                     className="text-sm text-yellow-600 hover:underline"
-//                   >
-//                     Forgot password?
-//                   </a>
-//                 </div>
-//               )}
+              <p className="font-medium text-gray-700 mb-4">
+                PhD (Marketing) • LLB • MBA <br />
+                Founder & CEO – PrepBuddy AI
+              </p>
 
-//               {errorMessage && (
-//                 <div
-//                   className="text-sm text-red-600 mt-1"
-//                   role="alert"
-//                   aria-live="assertive"
-//                 >
-//                   {errorMessage}
-//                 </div>
-//               )}
+              <p className="text-sm text-gray-600 mb-6">
+                Ex–Indian School of Business (ISB) • Wharton • Standard
+                Chartered Bank
+              </p>
 
-//               {mode === "otp" ? (
-//                 <div className="grid grid-cols-2 gap-3">
-//                   <button
-//                     className="col-span-1 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white font-semibold py-3 rounded-xl shadow-md hover:-translate-y-0.5 transform transition text-sm sm:text-base"
-//                     onClick={handleSendOtp}
-//                     type="button"
-//                   >
-//                     Send OTP
-//                   </button>
+              <p className="text-gray-700 leading-relaxed mb-8">
+                A Hyderabad-based educator, marketer, and entrepreneur, Dr.
+                Vaishnavi brings together academic rigor, corporate experience,
+                and a deep understanding of student challenges to build India’s
+                most advanced AI-powered placement and personality development
+                platform.
+              </p>
 
-//                   <button
-//                     className="col-span-1 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white font-semibold py-3 rounded-xl shadow-md hover:-translate-y-0.5 transform transition text-sm sm:text-base"
-//                     onClick={handleVerifyOtp}
-//                     type="button"
-//                   >
-//                     Verify OTP
-//                   </button>
-//                 </div>
-//               ) : mode === "signup" ? (
-//                 <button
-//                   type="button"
-//                   className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white font-semibold py-3 rounded-xl shadow-md hover:-translate-y-0.5 transform transition text-sm sm:text-base"
-//                   onClick={handleRegister}
-//                 >
-//                   <ArrowRightOnRectangleIcon className="h-5 w-5" />
-//                   Sign Up
-//                 </button>
-//               ) : (
-//                 <button
-//                   type="button"
-//                   className="w-full flex items-center justify-center gap-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white font-semibold py-3 rounded-xl shadow-md hover:-translate-y-0.5 transform transition text-sm sm:text-base"
-//                   onClick={handleSignIn}
-//                   disabled={loginLoader}
-//                 >
-//                   <ArrowRightOnRectangleIcon className="h-5 w-5" />
-//                   Sign In
-//                 </button>
-//               )}
-//             </div>
+              {/* Quote */}
+              <div className="pt-6 border-t border-gray-200">
+                <p className="italic text-yellow-600 font-semibold leading-relaxed">
+                  “Aim high — not so the world can see you, but so you can see
+                  the world.”
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-//             <div className="my-4 flex items-center">
-//               <hr className="flex-grow border-gray-300" />
-//               <span className="mx-2 text-gray-500 text-sm">OR</span>
-//               <hr className="flex-grow border-gray-300" />
-//             </div>
+      {/* ================= CTA ================= */}
+      <section
+        id="contact"
+        className="relative px-6 py-32 bg-black text-white overflow-hidden"
+      >
+        {/* Subtle background glow */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black via-black to-yellow-900/20 pointer-events-none" />
 
-//             <button
-//               type="button"
-//               className="w-full flex items-center justify-center gap-2 border border-gray-300 py-3 rounded-lg hover:bg-gray-50 transition text-sm sm:text-base"
-//               onClick={handleGoogleLogin}
-//             >
-//               <svg
-//                 className="w-5 h-5"
-//                 viewBox="0 0 533.5 544.3"
-//                 xmlns="http://www.w3.org/2000/svg"
-//                 aria-hidden
-//               >
-//                 <path
-//                   d="M533.5 278.4c0-17.4-1.5-34-4.3-50.1H272.1v95h146.9c-6.4 34.5-25 63.8-53.4 83.2v68h86.1c50.3-46.3 81.8-114.7 81.8-196.1z"
-//                   fill="#4285f4"
-//                 />
-//                 <path
-//                   d="M272.1 544.3c72.4 0 133.2-23.9 177.6-64.8l-86.1-68c-23.8 16-54.1 25.4-91.5 25.4-70 0-129.3-47.2-150.5-110.4h-89v69.4c44.3 88.3 135.8 148.4 239.5 148.4z"
-//                   fill="#34a853"
-//                 />
-//                 <path
-//                   d="M121.6 326.5c-10.3-30.1-10.3-62.8 0-92.9v-69.4h-89c-37.7 75.3-37.7 164.7 0 240.1l89-69.4z"
-//                   fill="#fbbc04"
-//                 />
-//                 <path
-//                   d="M272.1 107.7c38.9 0 74 13.4 101.7 39.7l76.3-76.3C405.3 24.6 344.5 0 272.1 0 168.4 0 76.9 60.1 32.6 148.4l89 69.4c21.2-63.2 80.5-110.4 150.5-110.4z"
-//                   fill="#ea4335"
-//                 />
-//               </svg>
-//               <span className="text-gray-700 font-medium">
-//                 Continue with Google
-//               </span>
-//             </button>
-//           </div>
-//         </div>
-//       </div>
-//     </>
-//   );
-// }
+        <div className="relative max-w-5xl mx-auto text-center">
+          {/* Section kicker */}
+          <span
+            className="inline-block mb-5 px-4 py-1.5 text-sm font-semibold 
+      bg-yellow-400 text-black rounded-full"
+          >
+            Get started
+          </span>
+
+          <h2 className="text-4xl md:text-5xl font-extrabold mb-6 leading-tight">
+            The future of placements <br />
+            is <span className="text-yellow-400">adaptive.</span>
+          </h2>
+
+          <p className="text-lg text-gray-300 max-w-3xl mx-auto mb-12">
+            Move beyond one-size-fits-all training. Give your students an AI-led
+            preparation system that adapts, guides, and delivers measurable
+            outcomes.
+          </p>
+
+          <button
+            className="
+        px-12 py-4 bg-yellow-400 text-black font-semibold rounded-xl
+        shadow-lg hover:shadow-xl hover:bg-yellow-300
+        transition-all
+      "
+          >
+            Talk to Us
+          </button>
+        </div>
+      </section>
+
+      {/* ================= FOOTER ================= */}
+      <footer className="px-6 py-8 border-t bg-white">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between gap-6">
+          <p className="font-bold">PrepBuddy AI</p>
+          <p className="text-gray-600">Contact: vm.prepbuddy@gmail.com</p>
+          <p className="text-gray-500 text-sm">
+            © {new Date().getFullYear()} PrepBuddy AI. All rights reserved.
+          </p>
+        </div>
+      </footer>
+    </main>
+  );
+}

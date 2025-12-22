@@ -4,7 +4,11 @@ import React, { useState, useCallback, memo } from "react";
 import { EnvelopeIcon, LockClosedIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import Loader from "@/components/Loader";
-import { useVerifyUserEmail } from "@/utils/mutations/auth.mutations";
+import {
+  addUserDetails,
+  loginWithPassword,
+  useVerifyUserEmail,
+} from "@/utils/mutations/auth.mutations";
 import { useToast } from "@/components/toast/ToastContext";
 
 /**
@@ -64,15 +68,18 @@ export default function LoginPage() {
 
   // screens: "email" -> "choose" -> "otp" -> "password" | "setPassword"
   const [step, setStep] = useState<
-    "email" | "choose" | "otp" | "password" | "setPassword"
+    "email" | "profile" | "choose" | "otp" | "password" | "setPassword"
   >("email");
 
   // form state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
-  const [fullname, setFullname] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [location, setLocation] = useState("");
+  const [userID, setUserID] = useState<number | null>();
 
   // server-driven flags
   const [emailVerified, setEmailVerified] = useState(false);
@@ -84,6 +91,12 @@ export default function LoginPage() {
   const [otpLoading, setOtpLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const { showToast } = useToast();
+
+  const verifyEmailMutation = useVerifyUserEmail();
+  const addUserDetailsMutation = addUserDetails();
+  const loginWithPasswordMutation = loginWithPassword();
 
   // -----------------------------
   // Demo credentials still present but this flow prefers server APIs
@@ -110,14 +123,6 @@ export default function LoginPage() {
   // -----------------------------
   // Screen 1 -> verify user email
   // -----------------------------
-
-  const { showToast } = useToast();
-
-  // showToast("error", "Invalid OTP");
-  // showToast("info", "Sending OTP...");
-
-  const verifyEmailMutation = useVerifyUserEmail();
-
   const verifyUserEmail = useCallback(() => {
     if (!email) {
       showToast("error", "Please add an email ID");
@@ -140,8 +145,15 @@ export default function LoginPage() {
           console.log("Verification successful", data);
           setLoading(false);
           if (data?.canLogin) {
-            setStep("choose");
+            if (!data?.userDetails) {
+              setStep("profile");
+            } else {
+              setStep("choose");
+            }
+
+            setHasPassword(data?.passswordExists);
             showToast("success", "Email verified successfully!");
+            setUserID(data?.userID ?? null);
           } else {
             showToast("error", data?.reason);
           }
@@ -162,6 +174,42 @@ export default function LoginPage() {
       }
     );
   }, [email]);
+
+  // -----------------------------
+  // Screen 2 -> add user details -> name, phonenumber, location
+  // -----------------------------
+  const submitProfileDetails = useCallback(async () => {
+    if (!email || !firstName || !lastName || !phoneNumber || !location) {
+      showToast("error", "Please fill all the details");
+      return;
+    }
+
+    setLoading(true);
+    setLoadingMessage("Saving your profile");
+
+    addUserDetailsMutation.mutate(
+      {
+        email: email.trim(),
+        full_name: `${firstName.trim()}, ${lastName.trim()}`,
+        phone_number: phoneNumber.trim(),
+        location: location.trim(),
+      },
+      {
+        onSuccess: (data: any) => {
+          setStep("choose");
+          console.log("Verification successful", data);
+          setLoading(false);
+        },
+        onError: (err: any) => {
+          const status = err?.response?.status;
+          const data = err?.response?.data;
+
+          showToast("error", "Something went wrong. Please try again.");
+          setLoading(false);
+        },
+      }
+    );
+  }, [email, firstName, lastName, phoneNumber, location]);
 
   // -----------------------------
   // Screen 2 -> send OTP then go to otp screen
@@ -238,33 +286,35 @@ export default function LoginPage() {
   // Screen 3b -> password login
   // -----------------------------
   const passwordLogin = useCallback(async () => {
-    if (!password || password.length < 6) {
-      // showError?.("Enter a valid password (min 6 chars).");
+    if (!password || password.length < 8) {
+      showToast("error", "Password must be of miniumun 8 characters");
       return;
     }
 
     setLoading(true);
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
-      });
+    setLoadingMessage("Logging you in....");
+    loginWithPasswordMutation.mutate(
+      {
+        email: email.trim(),
+        password: password.trim(),
+      },
+      {
+        onSuccess: (data: any) => {
+          // setStep("choose");
 
-      const data = await res.json();
-      setLoading(false);
+          router.push("/home");
+          console.log("Login successful", data);
+          setLoading(false);
+        },
+        onError: (err: any) => {
+          const status = err?.response?.status;
+          const data = err?.response?.data;
 
-      if (!res.ok || !data.success) {
-        // showError?.(data?.message || "Invalid credentials.");
-        return;
+          showToast("error", "Something went wrong. Please try again.");
+          setLoading(false);
+        },
       }
-
-      // success?.("Logged in. Redirecting…");
-      router.push("/home");
-    } catch (err) {
-      setLoading(false);
-      // showError?.("Server error logging in.");
-    }
+    );
   }, [email, password, router]);
 
   // set password & login
@@ -691,6 +741,23 @@ export default function LoginPage() {
                     onChange={handlePasswordChange}
                   />
 
+                  {step === "setPassword" && (
+                    <div className="mt-4">
+                      <label className="block text-sm font-medium text-gray-600">
+                        {"Confim password"}
+                      </label>
+                      <InputWithIcon
+                        name="password"
+                        autoComplete={"new-password"}
+                        icon={<LockClosedIcon className="h-5 w-5" />}
+                        type="password"
+                        placeholder={"confirm password"}
+                        value={password}
+                        onChange={handlePasswordChange}
+                      />
+                    </div>
+                  )}
+
                   <button
                     type="button"
                     onClick={
@@ -721,6 +788,73 @@ export default function LoginPage() {
                     className="text-sm text-gray-500 hover:underline"
                   >
                     Back to Email
+                  </button>
+                </div>
+              )}
+
+              {step === "profile" && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600 mb-1">
+                      Full Name
+                    </label>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <InputWithIcon
+                        name="firstName"
+                        placeholder="First name"
+                        value={firstName}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setFirstName(e.target.value)
+                        }
+                        icon={<span className="text-gray-400">👤</span>}
+                      />
+
+                      <InputWithIcon
+                        name="lastName"
+                        placeholder="Last name"
+                        value={lastName}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setLastName(e.target.value)
+                        }
+                        icon={<span className="text-gray-400">👤</span>}
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600">
+                      Phone Number
+                    </label>
+                    <InputWithIcon
+                      name="phone"
+                      placeholder="9876543210"
+                      value={phoneNumber}
+                      onChange={(e: any) => setPhoneNumber(e.target.value)}
+                      icon={<span className="text-gray-400">📞</span>}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600">
+                      Location
+                    </label>
+                    <InputWithIcon
+                      name="location"
+                      placeholder="Mumbai, India"
+                      value={location}
+                      onChange={(e: any) => setLocation(e.target.value)}
+                      icon={<span className="text-gray-400">📍</span>}
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={submitProfileDetails}
+                    className="w-full mt-2 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white py-3 rounded-xl font-semibold"
+                    disabled={loading}
+                  >
+                    Continue
                   </button>
                 </div>
               )}

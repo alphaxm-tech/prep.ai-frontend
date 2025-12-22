@@ -30,4 +30,43 @@ export type VerifyUserEmailResponse = {
   exists: boolean;
   passswordExists: boolean;
   reason: string;
+  userID: number;
+  userDetails: boolean;
 };
+
+export interface AddUserDetailsRequest {
+  email: string;
+  full_name: string;
+  phone_number: string;
+  location: string;
+}
+
+export interface User {
+  // userId: number;
+
+  email: string;
+  phoneNumber: string | null;
+  fullName: string | null;
+  passwordHash?: string | null;
+
+  authProvider: string | null;
+  roleId: number;
+  ccgId: number;
+
+  location: string | null;
+  picture: string | null;
+  portfolioWebsiteUrl: string | null;
+  linkedInUrl: string | null;
+  githubUrl: string | null;
+  objective: string | null;
+
+  emailVerified: boolean;
+  phoneVerified: boolean;
+  isActive: boolean;
+  isSuspended: boolean;
+
+  lastLogin: string | null; // ISO timestamp
+  createdAt: string; // ISO timestamp
+  updatedAt: string; // ISO timestamp
+  deletedAt: string | null;
+}
