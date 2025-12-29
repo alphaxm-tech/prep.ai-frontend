@@ -27,3 +27,4 @@ export const GET_USER_LEARNING_PATH = `get-user-learningpath`;
 /// Super Admin endpoints ///
 export const ADD_COLLEGE = `add-college`;
 export const CREARE_NEW_COURSE = `create-new-course`;
+export const GET_ALL_COURSES = `get-all-courses`;

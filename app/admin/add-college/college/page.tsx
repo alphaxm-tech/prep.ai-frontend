@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { addCollege } from "@/utils/mutations/super-admin.mutations";
 import { AddCollegeRequest } from "@/utils/api/types/super-admin.types";
 import Loader from "@/components/Loader";
+import { useToast } from "@/components/toast/ToastContext";
 
 type CreateCollegePayload = {
   name: string;
@@ -40,6 +41,8 @@ export default function AddCollegePage() {
     type: "error" | "success";
     text: string;
   } | null>(null);
+
+  const { showToast } = useToast();
 
   const isNameInvalid = touched.collegeName && collegeName.trim() === "";
   const isCodeInvalid = touched.collegeCode && collegeCode.trim() === "";
@@ -82,7 +85,24 @@ export default function AddCollegePage() {
       onSuccess: (data) => {
         console.log("college added");
         setLoading(false);
+        setSubmitting(false);
         router.push("/admin/add-college/course");
+      },
+      onError: (err: any) => {
+        console.log(err.response);
+        console.log("Erroring out on add college");
+        // showToast("error", "");
+        setLoading(false);
+        setSubmitting(false);
+
+        const status = err?.response?.status;
+        const message = err?.response?.data?.message;
+
+        if (status === 409) {
+          showToast("error", message ?? "Duplicate value detected");
+        } else {
+          showToast("error", "Something went wrong. Please try again.");
+        }
       },
     });
   };
