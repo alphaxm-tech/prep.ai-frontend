@@ -63,6 +63,8 @@ const InputWithIcon = memo(function InputWithIcon({
  * - POST /api/auth/setPasswordAndLogin { email, password } -> { success } (sets cookies)
  */
 export default function LoginPage() {
+  const DEMO_ADMIN_EMAIL = "admin.prepai@gmail.com";
+  const DEMO_ADMIN_PASSWORD = "Admin@2025";
   const router = useRouter();
   // const { success, error: showError } = useToast();
 
@@ -103,7 +105,7 @@ export default function LoginPage() {
   // -----------------------------
   const ALLOWED_USERS = [
     { email: "vm.prepai@gmail.com", password: "prepai@1993" },
-    { email: "sanjanaaddepalli2005@gmail.com", password: "xOQDhT3cpWRut4kW" },
+    // { email: "sanjanaaddepalli2005@gmail.com", password: "xOQDhT3cpWRut4kW" },
   ];
 
   // input handlers
@@ -123,27 +125,98 @@ export default function LoginPage() {
   // -----------------------------
   // Screen 1 -> verify user email
   // -----------------------------
+  // const verifyUserEmail = useCallback(() => {
+  //   if (!email) {
+  //     showToast("error", "Please add an email ID");
+  //     return;
+  //   }
+  //   setLoading(true);
+  //   setErrorMessage(null);
+  //   setLoadingMessage("Verifying your email id");
+
+  //   const trimmed = email.trim().toLowerCase();
+  //   if (!trimmed || !trimmed.includes("@")) {
+  //     // showError?.("Enter a valid email.");
+  //     return;
+  //   }
+
+  //   verifyEmailMutation.mutate(
+  //     { email: trimmed },
+  //     {
+  //       onSuccess: (data) => {
+  //         console.log("Verification successful", data);
+  //         setLoading(false);
+  //         if (data?.canLogin) {
+  //           if (!data?.userDetails) {
+  //             setStep("profile");
+  //           } else {
+  //             setStep("choose");
+  //           }
+
+  //           setHasPassword(data?.passswordExists);
+  //           showToast("success", "Email verified successfully!");
+  //           setUserID(data?.userID ?? null);
+  //         } else {
+  //           showToast("error", data?.reason);
+  //         }
+  //       },
+  //       onError: (err: any) => {
+  //         const status = err?.response?.status;
+  //         const data = err?.response?.data;
+  //         console.log(status);
+
+  //         if (status === 403) {
+  //           handleForbidden(data);
+  //           return;
+  //         }
+
+  //         showToast("error", "Something went wrong. Please try again.");
+  //         setLoading(false);
+  //       },
+  //     }
+  //   );
+  // }, [email]);
+
   const verifyUserEmail = useCallback(() => {
     if (!email) {
       showToast("error", "Please add an email ID");
       return;
     }
+
+    const trimmed = email.trim().toLowerCase();
+
+    if (!trimmed || !trimmed.includes("@")) {
+      showToast("error", "Enter a valid email address");
+      return;
+    }
+
+    /**
+     * 🔐 DEMO ADMIN SHORT-CIRCUIT (NO BACKEND)
+     */
+    if (trimmed === DEMO_ADMIN_EMAIL) {
+      showToast("success", "Admin email verified");
+
+      // Fake server response locally
+      setStep("password"); // go directly to password login
+      setHasPassword(true); // admin has password
+      setEmailVerified(true);
+      setUserID(-1); // dummy ID (never used)
+      return;
+    }
+
+    /**
+     * 🔁 REAL BACKEND FLOW (UNCHANGED)
+     */
     setLoading(true);
     setErrorMessage(null);
     setLoadingMessage("Verifying your email id");
-
-    const trimmed = email.trim().toLowerCase();
-    if (!trimmed || !trimmed.includes("@")) {
-      // showError?.("Enter a valid email.");
-      return;
-    }
 
     verifyEmailMutation.mutate(
       { email: trimmed },
       {
         onSuccess: (data) => {
-          console.log("Verification successful", data);
           setLoading(false);
+
           if (data?.canLogin) {
             if (!data?.userDetails) {
               setStep("profile");
@@ -152,8 +225,9 @@ export default function LoginPage() {
             }
 
             setHasPassword(data?.passswordExists);
-            showToast("success", "Email verified successfully!");
+            setEmailVerified(true);
             setUserID(data?.userID ?? null);
+            showToast("success", "Email verified successfully!");
           } else {
             showToast("error", data?.reason);
           }
@@ -161,7 +235,6 @@ export default function LoginPage() {
         onError: (err: any) => {
           const status = err?.response?.status;
           const data = err?.response?.data;
-          console.log(status);
 
           if (status === 403) {
             handleForbidden(data);
@@ -285,31 +358,79 @@ export default function LoginPage() {
   // -----------------------------
   // Screen 3b -> password login
   // -----------------------------
+  // const passwordLogin = useCallback(async () => {
+  //   if (!password || password.length < 8) {
+  //     showToast("error", "Password must be of miniumun 8 characters");
+  //     return;
+  //   }
+
+  //   setLoading(true);
+  //   setLoadingMessage("Logging you in....");
+  //   loginWithPasswordMutation.mutate(
+  //     {
+  //       email: email.trim(),
+  //       password: password.trim(),
+  //     },
+  //     {
+  //       onSuccess: (data: any) => {
+  //         // setStep("choose");
+
+  //         router.push("/home");
+  //         console.log("Login successful", data);
+  //         setLoading(false);
+  //       },
+  //       onError: (err: any) => {
+  //         const status = err?.response?.status;
+  //         const data = err?.response?.data;
+
+  //         showToast("error", "Something went wrong. Please try again.");
+  //         setLoading(false);
+  //       },
+  //     }
+  //   );
+  // }, [email, password, router]);
+
+  // -----------------------------
+  // Screen 3b -> password login
+  // -----------------------------
   const passwordLogin = useCallback(async () => {
     if (!password || password.length < 8) {
-      showToast("error", "Password must be of miniumun 8 characters");
+      showToast("error", "Password must be of minimum 8 characters");
       return;
     }
 
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedPassword = password.trim();
+
+    /**
+     * 🔐 UI-only DEMO ADMIN LOGIN (NO API CALL)
+     */
+    if (
+      normalizedEmail === DEMO_ADMIN_EMAIL &&
+      normalizedPassword === DEMO_ADMIN_PASSWORD
+    ) {
+      showToast("success", "Admin login successful");
+      router.push("/home");
+      return;
+    }
+
+    /**
+     * 🔁 REAL BACKEND LOGIN (unchanged)
+     */
     setLoading(true);
     setLoadingMessage("Logging you in....");
+
     loginWithPasswordMutation.mutate(
       {
-        email: email.trim(),
-        password: password.trim(),
+        email: normalizedEmail,
+        password: normalizedPassword,
       },
       {
         onSuccess: (data: any) => {
-          // setStep("choose");
-
           router.push("/home");
-          console.log("Login successful", data);
           setLoading(false);
         },
         onError: (err: any) => {
-          const status = err?.response?.status;
-          const data = err?.response?.data;
-
           showToast("error", "Something went wrong. Please try again.");
           setLoading(false);
         },
