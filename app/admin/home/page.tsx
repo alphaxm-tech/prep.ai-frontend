@@ -45,7 +45,7 @@ export default function AdminLanding() {
   }, [colleges, cityFilter, query]);
 
   function handleAddCollege() {
-    router.push("/admin/add-colleg/college");
+    router.push("/admin/add-college/college");
   }
 
   function handleInviteAdmin() {
