@@ -15,6 +15,7 @@ export function SubHeader() {
     { label: "AI Interviews", route: "/ai-interview" },
     { label: "Quizzes", route: "/quiz" },
     { label: "Study Materials", route: "/study-material" },
+    { label: "Code editor", route: "/code-editor" },
   ];
 
   const handleSubHeaderClick = (route: string) => {

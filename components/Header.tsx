@@ -47,6 +47,9 @@ export function Header() {
             onClick={() => router.push("/")}
             className="cursor-pointer flex items-center gap-0.5 font-extrabold tracking-tight select-none"
           >
+            <span className="text-gray-900 text-3xl leading-none pr-2">
+              Raghu's
+            </span>
             <span className="text-gray-900 text-3xl leading-none">Prep</span>
             <span className="text-yellow-700 text-3xl leading-none">Buddy</span>
             <span className="ml-1 text-yellow-700 text-xs font-semibold relative -top-2">

@@ -341,6 +341,48 @@ export function InterviewRecorder({
 
 export default function InterviewClient() {
   const router = useRouter();
+
+  /* 🔒 TAB SWITCH GUARD */
+  const tabExitHandledRef = useRef(false);
+
+  const forceExitInterview = useCallback(() => {
+    if (tabExitHandledRef.current) return;
+    tabExitHandledRef.current = true;
+
+    console.warn("🚨 Interview terminated: tab/window change detected");
+
+    // Stop everything immediately
+    try {
+      window.speechSynthesis?.cancel();
+    } catch {}
+
+    router.replace("/ai-interview");
+  }, [router]);
+
+  /* 🔥 Detect tab switch / minimize / focus loss */
+  useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        forceExitInterview();
+      }
+    };
+
+    const onWindowBlur = () => {
+      forceExitInterview();
+    };
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    window.addEventListener("blur", onWindowBlur);
+
+    return () => {
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.removeEventListener("blur", onWindowBlur);
+    };
+  }, [forceExitInterview]);
+
+  //////
+
+  // const router = useRouter();
   const [companyParam, setCompanyParam] = useState<string>("");
   const [titleParam, setTitleParam] = useState<string>("");
   const [interviewIdParam, setInterviewIdParam] = useState<string>("");
@@ -775,6 +817,13 @@ export default function InterviewClient() {
 
   return (
     <div className="h-screen w-full bg-white text-gray-900 overflow-hidden flex font-sans selection:bg-amber-500/30">
+      {/* 🔔 TAB SWITCH WARNING NOTE */}
+      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
+        <div className="px-4 py-2 rounded-full bg-amber-100 text-amber-800 text-[11px] font-semibold tracking-wide border border-amber-300 shadow-sm">
+          ⚠️ Leaving this tab will automatically end the interview
+        </div>
+      </div>
+
       {/* Results Modal */}
       {showResultsModal && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center px-4">
