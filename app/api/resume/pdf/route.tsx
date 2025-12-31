@@ -11,7 +11,14 @@ export async function POST(req: Request) {
       <ProfessionalResumePDF data={body} />
     );
 
-    return new NextResponse(pdfBuffer, {
+    // return new NextResponse(pdfBuffer, {
+    //   headers: {
+    //     "Content-Type": "application/pdf",
+    //     "Content-Disposition": 'attachment; filename="resume.pdf"',
+    //   },
+    // });
+
+    return new NextResponse(new Uint8Array(pdfBuffer), {
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": 'attachment; filename="resume.pdf"',
