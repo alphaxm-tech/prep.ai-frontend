@@ -23,7 +23,8 @@ import ModernResumeTemplate from "../../../components/Resume-formats/ModernResum
 import MinimalResumeTemplate from "../../../components/Resume-formats/MinimalResume";
 import StandardResumeTemplate from "../../../components/Resume-formats/StandardResume";
 
-type TemplateKey = "modern" | "classic" | "creative" | "minimal" | "standard";
+// type TemplateKey = "modern" | "classic" | "creative" | "minimal" | "standard";
+type TemplateKey = "standard";
 
 /**
  * Dummy defaults used to populate the inline preview when user hasn't entered data.
@@ -103,7 +104,7 @@ export default function ResumeBuilderPage() {
   const [projects, setProjects] = useState<Project[]>([]);
 
   // other page state
-  const [resumeFormat, setResumeFormat] = useState<TemplateKey>("creative");
+  const [resumeFormat, setResumeFormat] = useState<TemplateKey>("standard");
   const [showPreviewModal, setShowPreviewModal] = useState<boolean>(false);
 
   const RESULT_PDF_URL = "/pdfs/Resume.pdf";
@@ -123,10 +124,10 @@ export default function ResumeBuilderPage() {
   });
 
   const localFormats: { key: TemplateKey; title: string }[] = [
-    { key: "modern", title: "Modern" },
-    { key: "classic", title: "Classic" },
-    { key: "creative", title: "Creative" },
-    { key: "minimal", title: "Minimal" },
+    // { key: "modern", title: "Modern" },
+    // { key: "classic", title: "Classic" },
+    // { key: "creative", title: "Creative" },
+    // { key: "minimal", title: "Minimal" },
     { key: "standard", title: "Standard" },
   ];
 
@@ -257,14 +258,14 @@ export default function ResumeBuilderPage() {
     const props = { data, showPlaceholders };
 
     switch (resumeFormat) {
-      case "creative":
-        return <CreativeResumeTemplate {...props} />;
-      case "classic":
-        return <ProfessionalResumeTemplateVertical {...props} />;
-      case "modern":
-        return <ModernResumeTemplate {...props} />;
-      case "minimal":
-        return <MinimalResumeTemplate {...props} />;
+      // case "creative":
+      //   return <CreativeResumeTemplate {...props} />;
+      // case "classic":
+      //   return <ProfessionalResumeTemplateVertical {...props} />;
+      // case "modern":
+      //   return <ModernResumeTemplate {...props} />;
+      // case "minimal":
+      //   return <MinimalResumeTemplate {...props} />;
       case "standard":
       default:
         return <StandardResumeTemplate {...props} />;
@@ -625,13 +626,31 @@ export default function ResumeBuilderPage() {
   };
   // ---------------------------------------------------------------------
 
-  const handleDownloadPdf = () => {
-    const link = document.createElement("a");
-    link.href = RESULT_PDF_URL;
-    link.download = "Interview-Results.pdf"; // filename user sees
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  // const handleDownloadPdf = () => {
+  //   const link = document.createElement("a");
+  //   link.href = RESULT_PDF_URL;
+  //   link.download = "Interview-Results.pdf"; // filename user sees
+  //   document.body.appendChild(link);
+  //   link.click();
+  //   document.body.removeChild(link);
+  // };
+
+  const handleDownloadPdf = async () => {
+    const res = await fetch("/api/resume/pdf", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(assembledData),
+    });
+
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${assembledData.fullName || "resume"}.pdf`;
+    a.click();
+
+    URL.revokeObjectURL(url);
   };
 
   return (
