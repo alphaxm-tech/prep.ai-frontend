@@ -43,7 +43,7 @@ export function Header() {
       <header className="sticky top-0 z-50 backdrop-blur-md bg-gradient-to-b from-yellow-200/90 to-yellow-100/80 border-b border-black/10">
         <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
           {/* LOGO */}
-          <div
+          {/* <div
             onClick={() => router.push("/")}
             className="cursor-pointer flex items-center gap-0.5 font-extrabold tracking-tight select-none"
           >
@@ -55,6 +55,25 @@ export function Header() {
             <span className="ml-1 text-yellow-700 text-xs font-semibold relative -top-2">
               AI
             </span>
+          </div> */}
+
+          <div
+            onClick={() => router.push("/")}
+            className="cursor-pointer select-none flex flex-col leading-none"
+          >
+            {/* Endorsement line */}
+            <span className="text-[11px] font-semibold tracking-wide text-gray-700 uppercase mb-0.5">
+              Raghu College
+            </span>
+
+            {/* Main Brand */}
+            <div className="flex items-center gap-0.5 font-extrabold tracking-tight">
+              <span className="text-gray-900 text-3xl pr-1">Prep</span>
+              <span className="text-yellow-700 text-3xl">Buddy</span>
+              <span className="ml-1 text-yellow-700 text-xs font-semibold relative -top-2">
+                AI
+              </span>
+            </div>
           </div>
 
           {/* LANDING PAGE NAV */}
