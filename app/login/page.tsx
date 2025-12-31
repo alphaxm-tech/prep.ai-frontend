@@ -65,6 +65,25 @@ const InputWithIcon = memo(function InputWithIcon({
 export default function LoginPage() {
   const DEMO_ADMIN_EMAIL = "admin.prepai@gmail.com";
   const DEMO_ADMIN_PASSWORD = "Admin@2025";
+
+  const DEMO_ADMINS = [
+    {
+      email: "admin.prepai@gmail.com",
+      password: "Admin@2025",
+      role: "admin",
+    },
+    {
+      email: "sanket.naukarkar@gmail.com",
+      password: "Sanket@1998",
+      role: "admin",
+    },
+    {
+      email: "vm.prepai@gmail.com",
+      password: "prepai@1993",
+      role: "admin",
+    },
+  ];
+
   const router = useRouter();
   // const { success, error: showError } = useToast();
 
@@ -405,11 +424,23 @@ export default function LoginPage() {
     /**
      * 🔐 UI-only DEMO ADMIN LOGIN (NO API CALL)
      */
-    if (
-      normalizedEmail === DEMO_ADMIN_EMAIL &&
-      normalizedPassword === DEMO_ADMIN_PASSWORD
-    ) {
-      showToast("success", "Admin login successful");
+    // if (
+    //   normalizedEmail === DEMO_ADMIN_EMAIL &&
+    //   normalizedPassword === DEMO_ADMIN_PASSWORD
+    // ) {
+    //   showToast("success", "Admin login successful");
+    //   router.push("/home");
+    //   return;
+    // }
+
+    const matchedDemoUser = DEMO_ADMINS.find(
+      (u) =>
+        u.email.toLowerCase() === normalizedEmail &&
+        u.password === normalizedPassword
+    );
+
+    if (matchedDemoUser) {
+      showToast("success", `Login successful (${matchedDemoUser.role})`);
       router.push("/home");
       return;
     }

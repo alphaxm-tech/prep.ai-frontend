@@ -83,7 +83,7 @@ const DEFAULT_SAMPLE = {
   ],
 };
 
-const MAX_RESUMES = 5;
+const MAX_RESUMES = 10;
 
 export default function ResumeBuilderPage() {
   // --- MAIN LIFTED STATE (single source of truth for basic details) ---

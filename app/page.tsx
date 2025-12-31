@@ -447,10 +447,21 @@ export default function HomePage() {
       {/* ================= FOOTER ================= */}
       <footer className="px-6 py-8 border-t bg-white">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between gap-6">
-          <p className="font-bold">PrepBuddy AI</p>
+          <p className="font-bold">
+            PrepBuddy
+            <sup className="ml-0.5 text-[0.6em] font-semibold relative -top-1">
+              AI
+            </sup>
+          </p>
+
           <p className="text-gray-600">Contact: vm.prepbuddy@gmail.com</p>
+
           <p className="text-gray-500 text-sm">
-            © {new Date().getFullYear()} PrepBuddy AI. All rights reserved.
+            © {new Date().getFullYear()} PrepBuddy
+            <sup className="ml-0.5 text-[0.6em] font-semibold relative -top-1">
+              AI
+            </sup>
+            . All rights reserved.
           </p>
         </div>
       </footer>
