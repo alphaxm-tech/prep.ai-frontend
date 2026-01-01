@@ -82,6 +82,16 @@ export default function LoginPage() {
       password: "prepai@1993",
       role: "admin",
     },
+    {
+      email: "santhikannuru28@gmail.com",
+      password: "santhikannuru28@prepai",
+      role: "student",
+    },
+    {
+      email: "pavankumarpadala06@gmail.com",
+      password: "pavankumarpadala06@prepai",
+      role: "student",
+    },
   ];
 
   const router = useRouter();
