@@ -206,6 +206,77 @@ export default function LoginPage() {
   //   );
   // }, [email]);
 
+  // const verifyUserEmail = useCallback(() => {
+  //   if (!email) {
+  //     showToast("error", "Please add an email ID");
+  //     return;
+  //   }
+
+  //   const trimmed = email.trim().toLowerCase();
+
+  //   if (!trimmed || !trimmed.includes("@")) {
+  //     showToast("error", "Enter a valid email address");
+  //     return;
+  //   }
+
+  //   /**
+  //    * 🔐 DEMO ADMIN SHORT-CIRCUIT (NO BACKEND)
+  //    */
+  //   if (trimmed === DEMO_ADMIN_EMAIL) {
+  //     showToast("success", "Admin email verified");
+
+  //     // Fake server response locally
+  //     setStep("password"); // go directly to password login
+  //     setHasPassword(true); // admin has password
+  //     setEmailVerified(true);
+  //     setUserID(-1); // dummy ID (never used)
+  //     return;
+  //   }
+
+  //   /**
+  //    * 🔁 REAL BACKEND FLOW (UNCHANGED)
+  //    */
+  //   setLoading(true);
+  //   setErrorMessage(null);
+  //   setLoadingMessage("Verifying your email id");
+
+  //   verifyEmailMutation.mutate(
+  //     { email: trimmed },
+  //     {
+  //       onSuccess: (data) => {
+  //         setLoading(false);
+
+  //         if (data?.canLogin) {
+  //           if (!data?.userDetails) {
+  //             setStep("profile");
+  //           } else {
+  //             setStep("choose");
+  //           }
+
+  //           setHasPassword(data?.passswordExists);
+  //           setEmailVerified(true);
+  //           setUserID(data?.userID ?? null);
+  //           showToast("success", "Email verified successfully!");
+  //         } else {
+  //           showToast("error", data?.reason);
+  //         }
+  //       },
+  //       onError: (err: any) => {
+  //         const status = err?.response?.status;
+  //         const data = err?.response?.data;
+
+  //         if (status === 403) {
+  //           handleForbidden(data);
+  //           return;
+  //         }
+
+  //         showToast("error", "Something went wrong. Please try again.");
+  //         setLoading(false);
+  //       },
+  //     }
+  //   );
+  // }, [email]);
+
   const verifyUserEmail = useCallback(() => {
     if (!email) {
       showToast("error", "Please add an email ID");
@@ -220,16 +291,19 @@ export default function LoginPage() {
     }
 
     /**
-     * 🔐 DEMO ADMIN SHORT-CIRCUIT (NO BACKEND)
+     * 🔐 UI-ONLY DEMO LOGIN (NO BACKEND)
+     * Works for ALL emails in DEMO_ADMINS
      */
-    if (trimmed === DEMO_ADMIN_EMAIL) {
-      showToast("success", "Admin email verified");
+    const demoUser = DEMO_ADMINS.find((u) => u.email.toLowerCase() === trimmed);
 
-      // Fake server response locally
-      setStep("password"); // go directly to password login
-      setHasPassword(true); // admin has password
+    if (demoUser) {
+      showToast("success", "Demo user verified");
+
       setEmailVerified(true);
-      setUserID(-1); // dummy ID (never used)
+      setHasPassword(true); // all demo users have passwords
+      setUserID(-1); // dummy ID
+      setStep("password"); // go directly to password login
+
       return;
     }
 
@@ -256,6 +330,7 @@ export default function LoginPage() {
             setHasPassword(data?.passswordExists);
             setEmailVerified(true);
             setUserID(data?.userID ?? null);
+
             showToast("success", "Email verified successfully!");
           } else {
             showToast("error", data?.reason);
