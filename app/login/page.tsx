@@ -833,8 +833,11 @@ export default function LoginPage() {
           {/* Right: Form card */}
           <div className="p-6 sm:p-8">
             <div className="text-center mb-4">
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
-                AI prep <span className="text-yellow-500">buddy</span>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
+                PrepBuddy
+                <sup className="ml-1 text-sm font-semibold text-yellow-500 align-super">
+                  AI
+                </sup>
               </h1>
               <p className="text-gray-500 mt-2 text-sm sm:text-base">
                 {step === "email" && "Enter your email to continue."}
