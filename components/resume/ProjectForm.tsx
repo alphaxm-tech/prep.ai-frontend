@@ -2,11 +2,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { SparklesIcon } from "@heroicons/react/24/outline";
 import Loader from "../Loader";
-
-export interface Project {
-  title: string;
-  description: string;
-}
+import { Project } from "@/utils/api/types/resume.types";
 
 export default function ProjectsForm({
   projects,
@@ -18,7 +14,7 @@ export default function ProjectsForm({
   validationErrors?: Record<string, boolean>;
 }) {
   const [newProj, setNewProj] = useState<Project>({
-    title: "",
+    name: "",
     description: "",
   });
 
@@ -29,7 +25,7 @@ export default function ProjectsForm({
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const [loading, setLoading] = useState(false);
-  const [keywords, setKeywords] = useState(""); // optional keywords for AI
+  const [keywords, setKeywords] = useState("");
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -49,9 +45,8 @@ export default function ProjectsForm({
   };
 
   const addProject = () => {
-    // allow adding any project
     setProjects([...projects, newProj]);
-    setNewProj({ title: "", description: "" });
+    setNewProj({ name: "", description: "" });
   };
 
   const startEdit = (index: number) => {
@@ -83,7 +78,6 @@ export default function ProjectsForm({
 
   const baseBorder = "border-gray-200";
 
-  // Real AI-enhance integration using server API route
   const handleAIEnhance = async (
     setter: (val: string) => void,
     value: string,
@@ -110,8 +104,6 @@ export default function ProjectsForm({
       });
 
       if (!resp.ok) {
-        const err = await resp.json().catch(() => ({}));
-        console.error("AI enhance server error:", err);
         setter(
           value
             ? `${value} — (AI enhance failed, kept original)`
@@ -121,15 +113,8 @@ export default function ProjectsForm({
       }
 
       const data = await resp.json();
-      const modified = data?.modified ?? "";
-
-      if (!modified) {
-        setter(value ? `${value} — (AI returned empty)` : "AI returned empty.");
-      } else {
-        setter(modified.trim());
-      }
-    } catch (e) {
-      console.error("handleAIEnhance error:", e);
+      setter(data?.modified?.trim() || value);
+    } catch {
       setter(
         value ? `${value} — (AI network error)` : "AI enhance network error"
       );
@@ -144,7 +129,7 @@ export default function ProjectsForm({
 
       {/* --- Add New Project Form --- */}
       <div
-        className={`p-4 bg-white rounded-lg shadow flex flex-col gap-3 mb-6 ${baseBorder}`}
+        className={`p-4 bg-gray-50/40 rounded-xl border shadow-sm flex flex-col gap-3 mb-6 ${baseBorder}`}
       >
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -154,15 +139,13 @@ export default function ProjectsForm({
             <input
               type="text"
               placeholder="Add a title for your project"
-              value={newProj.title}
-              onChange={(e) => handleNewChange("title", e.target.value)}
+              value={newProj.name}
+              onChange={(e) => handleNewChange("name", e.target.value)}
               className={`flex-1 ${inputClasses} ${baseBorder}`}
             />
             <button
               onClick={addProject}
-              aria-label="Add project"
-              title="Add project"
-              className="flex items-center justify-center w-8 h-8 rounded-full bg-yellow-300 text-white text-xl shadow-sm hover:bg-yellow-400 focus:outline-none shrink-0"
+              className="flex items-center justify-center w-10 h-10 rounded-full bg-yellow-300 text-white text-xl shadow-sm hover:bg-yellow-400"
             >
               +
             </button>
@@ -175,81 +158,39 @@ export default function ProjectsForm({
               Project Description
             </label>
 
-            <div className="flex items-center gap-3">
-              {/* <input
-                type="text"
-                value={keywords}
-                onChange={(e) => setKeywords(e.target.value)}
-                placeholder="Keywords (optional): React, Golang"
-                className="px-2 py-1 text-sm border rounded"
-              /> */}
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setShowDropdown((prev) => !prev)}
+                className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium text-gray-800 bg-gradient-to-r from-purple-100 via-pink-100 to-orange-100 shadow-sm hover:shadow-md"
+                type="button"
+              >
+                <SparklesIcon className="w-3 h-3 text-pink-500" /> AI Enhance
+              </button>
 
-              <div className="relative" ref={dropdownRef}>
-                <button
-                  onClick={() => setShowDropdown((prev) => !prev)}
-                  className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium text-gray-800 bg-gradient-to-r from-purple-100 via-pink-100 to-orange-100 shadow-sm hover:shadow-md transition-transform transform hover:-translate-y-0.5 hover:brightness-105"
-                  type="button"
-                >
-                  <SparklesIcon className="w-3 h-3 text-pink-500" /> AI Enhance
-                </button>
-
-                {showDropdown && (
-                  <div className="absolute right-0 mt-1 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+              {showDropdown && (
+                <div className="absolute right-0 mt-1 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                  {[
+                    ["✨ Polish", "polish"],
+                    ["✂️ Make Concise", "concise"],
+                    ["🔧 More Technical", "technical"],
+                    ["🏢 Recruiter-Friendly", "recruiter"],
+                  ].map(([label, type]) => (
                     <button
+                      key={type}
                       onClick={() =>
                         handleAIEnhance(
                           (val) => setNewProj({ ...newProj, description: val }),
                           newProj.description,
-                          "polish"
+                          type as any
                         )
                       }
                       className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50"
-                      type="button"
                     >
-                      ✨ Polish
+                      {label}
                     </button>
-                    <button
-                      onClick={() =>
-                        handleAIEnhance(
-                          (val) => setNewProj({ ...newProj, description: val }),
-                          newProj.description,
-                          "concise"
-                        )
-                      }
-                      className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50"
-                      type="button"
-                    >
-                      ✂️ Make Concise
-                    </button>
-                    <button
-                      onClick={() =>
-                        handleAIEnhance(
-                          (val) => setNewProj({ ...newProj, description: val }),
-                          newProj.description,
-                          "technical"
-                        )
-                      }
-                      className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50"
-                      type="button"
-                    >
-                      🔧 More Technical
-                    </button>
-                    <button
-                      onClick={() =>
-                        handleAIEnhance(
-                          (val) => setNewProj({ ...newProj, description: val }),
-                          newProj.description,
-                          "recruiter"
-                        )
-                      }
-                      className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50"
-                      type="button"
-                    >
-                      🏢 Recruiter-Friendly
-                    </button>
-                  </div>
-                )}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -268,80 +209,31 @@ export default function ProjectsForm({
         {projects.map((proj, index) => (
           <div
             key={index}
-            className="p-4 bg-white rounded-lg shadow hover:shadow-md transition border border-gray-100 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4"
+            className="p-4 bg-gray-50/40 rounded-xl border border-gray-200 shadow-sm flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4"
           >
             {editIndex === index && editProj ? (
               <div className="flex-1 flex flex-col gap-3">
                 <input
                   type="text"
-                  value={editProj.title}
+                  value={editProj.name}
                   onChange={(e) =>
-                    setEditProj({ ...editProj, title: e.target.value })
+                    setEditProj({ ...editProj, name: e.target.value })
                   }
                   className={`w-full ${inputClasses} ${baseBorder}`}
                 />
-                <div className="flex items-start gap-2">
-                  <textarea
-                    value={editProj.description}
-                    onChange={(e) =>
-                      setEditProj({ ...editProj, description: e.target.value })
-                    }
-                    rows={3}
-                    className={`flex-1 ${inputClasses} ${baseBorder}`}
-                  />
-                  <div className="flex flex-col gap-2">
-                    <button
-                      onClick={() =>
-                        handleAIEnhance(
-                          (val) =>
-                            setEditProj((prev) =>
-                              prev ? { ...prev, description: val } : prev
-                            ),
-                          editProj.description,
-                          "polish"
-                        )
-                      }
-                      className="px-2 py-1 text-xs rounded-md bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
-                    >
-                      ✨
-                    </button>
-                    <button
-                      onClick={() =>
-                        handleAIEnhance(
-                          (val) =>
-                            setEditProj((prev) =>
-                              prev ? { ...prev, description: val } : prev
-                            ),
-                          editProj.description,
-                          "concise"
-                        )
-                      }
-                      className="px-2 py-1 text-xs rounded-md bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    >
-                      ✂️
-                    </button>
-                    <button
-                      onClick={() =>
-                        handleAIEnhance(
-                          (val) =>
-                            setEditProj((prev) =>
-                              prev ? { ...prev, description: val } : prev
-                            ),
-                          editProj.description,
-                          "technical"
-                        )
-                      }
-                      className="px-2 py-1 text-xs rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100"
-                    >
-                      🔧
-                    </button>
-                  </div>
-                </div>
+                <textarea
+                  value={editProj.description}
+                  onChange={(e) =>
+                    setEditProj({ ...editProj, description: e.target.value })
+                  }
+                  rows={3}
+                  className={`w-full ${inputClasses} ${baseBorder}`}
+                />
               </div>
             ) : (
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-gray-900">
-                  🚀 {proj.title}
+                  🚀 {proj.name}
                 </h3>
                 <p className="mt-1 text-sm text-gray-600 leading-snug">
                   📄 {proj.description}

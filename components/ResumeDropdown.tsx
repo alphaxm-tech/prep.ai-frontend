@@ -1,18 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
-
-export interface ResumeItem {
-  id: string;
-  title: string;
-  createdAt?: string;
-}
+import { resumes, UsersResumeResponse } from "@/utils/api/types/resume.types";
 
 export default function ResumeDropdown({
   resumes,
   onSelect,
 }: {
-  resumes: ResumeItem[];
-  onSelect?: (r: ResumeItem) => void;
+  resumes: resumes[];
+  onSelect?: (r: resumes) => void;
 }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -72,7 +67,7 @@ export default function ResumeDropdown({
           {resumes.length > 0 ? (
             resumes.map((r) => (
               <button
-                key={r.id}
+                key={r.resume_id}
                 onClick={() => {
                   onSelect?.(r);
                   setOpen(false);
@@ -82,10 +77,10 @@ export default function ResumeDropdown({
                            focus:outline-none focus:bg-yellow-100"
                 role="menuitem"
               >
-                <div className="font-medium">{r.title}</div>
+                <div className="font-medium">{r.Title}</div>
                 <div className="text-xs text-gray-500">
-                  {r.createdAt
-                    ? new Date(r.createdAt).toLocaleDateString()
+                  {r.CreatedAt
+                    ? new Date(r.CreatedAt).toLocaleDateString()
                     : ""}
                 </div>
               </button>

@@ -1,30 +1,40 @@
 // components/resume-formats/ModernResume.tsx
-import { ResumeData } from "@/utils/api/types/education.types";
+import {
+  AddResumeRequest,
+  Education,
+  WorkExperience,
+  Project,
+} from "@/utils/api/types/resume.types";
 
 export default function ModernResumeTemplate({
   data,
   showPlaceholders = true,
+  fullName,
+  email,
 }: {
-  data: ResumeData;
+  data: AddResumeRequest;
   showPlaceholders?: boolean;
+  fullName: string;
+  email: string;
 }) {
-  const name = data.fullName || (showPlaceholders ? "Your Full Name" : "");
-  const title = data.title || (showPlaceholders ? "Your Title / Role" : "");
-  const email = data.email || (showPlaceholders ? "your@email.com" : "");
-  const phone = data.phone || (showPlaceholders ? "+91-0000000000" : "");
-  const location = data.location || (showPlaceholders ? "Your City" : "");
+  const { resume_details, user, softskills, experience, education, projects } =
+    data;
+
+  const ph = (val?: string, fallback = "") =>
+    val && val.trim() ? val : showPlaceholders ? fallback : "";
 
   return (
     <div className="max-w-4xl mx-auto my-10 bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-100">
       {/* Header */}
       <header className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white px-8 py-10">
-        <h1 className="text-3xl md:text-4xl font-bold">{name}</h1>
-        <p className="text-lg font-medium opacity-90 mt-1">{title}</p>
+        <h1 className="text-3xl md:text-4xl font-bold">
+          {ph(fullName, "Resume Title")}
+        </h1>
 
         <div className="flex flex-wrap gap-4 text-sm mt-4 opacity-90">
-          <span>✉️ {email}</span>
-          <span>📞 {phone}</span>
-          <span>📍 {location}</span>
+          <span> 📧 {ph(email, "example@gmail.com")}</span>
+          <span>📞 {ph(user.phone, "+91-0000000000")}</span>
+          <span>📍 {ph(user.location, "Your City")}</span>
         </div>
       </header>
 
@@ -35,10 +45,10 @@ export default function ModernResumeTemplate({
             About Me
           </h2>
           <p className="text-gray-700 leading-relaxed">
-            {data.objective ||
-              (showPlaceholders
-                ? "Write a short professional summary describing your focus, strengths, and recent impact."
-                : "")}
+            {ph(
+              user.objective,
+              "Write a short professional summary describing your focus and strengths."
+            )}
           </p>
         </section>
 
@@ -48,98 +58,67 @@ export default function ModernResumeTemplate({
             Links
           </h2>
           <div className="flex flex-wrap gap-4 text-indigo-700 text-sm font-medium">
-            {data.portfolioLink ? (
-              <a href={data.portfolioLink} target="_blank" rel="noreferrer">
+            {user.portfolio_website_url ? (
+              <a
+                href={user.portfolio_website_url}
+                target="_blank"
+                rel="noreferrer"
+              >
                 🌐 Portfolio
               </a>
-            ) : showPlaceholders ? (
-              <span className="text-sm text-gray-400">Portfolio</span>
-            ) : null}
-            {data.githubLink ? (
-              <a href={data.githubLink} target="_blank" rel="noreferrer">
+            ) : (
+              showPlaceholders && (
+                <span className="text-gray-400">Portfolio</span>
+              )
+            )}
+
+            {user.github_url ? (
+              <a href={user.github_url} target="_blank" rel="noreferrer">
                 🧰 GitHub
               </a>
-            ) : showPlaceholders ? (
-              <span className="text-sm text-gray-400">GitHub</span>
-            ) : null}
-            {data.linkedinLink ? (
-              <a href={data.linkedinLink} target="_blank" rel="noreferrer">
+            ) : (
+              showPlaceholders && <span className="text-gray-400">GitHub</span>
+            )}
+
+            {user.linkedin_url ? (
+              <a href={user.linkedin_url} target="_blank" rel="noreferrer">
                 💼 LinkedIn
               </a>
-            ) : showPlaceholders ? (
-              <span className="text-sm text-gray-400">LinkedIn</span>
-            ) : null}
+            ) : (
+              showPlaceholders && (
+                <span className="text-gray-400">LinkedIn</span>
+              )
+            )}
           </div>
         </section>
 
-        {/* Skills */}
+        {/* Skills (soft only for now) */}
         <section>
           <h2 className="text-xl font-semibold text-gray-900 border-b-2 border-indigo-100 pb-1 mb-3">
             Skills
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h3 className="text-sm font-semibold text-gray-700 uppercase mb-2">
-                Technical
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {data.technicalSkills && data.technicalSkills.length > 0 ? (
-                  data.technicalSkills.map((s, i) => (
-                    <span
-                      key={i}
-                      className="px-3 py-1 text-xs font-medium bg-indigo-50 text-indigo-700 rounded-full"
-                    >
-                      {s}
-                    </span>
-                  ))
-                ) : showPlaceholders ? (
-                  <>
-                    <span className="px-3 py-1 text-xs font-medium bg-indigo-50 text-indigo-700 rounded-full">
-                      React
-                    </span>
-                    <span className="px-3 py-1 text-xs font-medium bg-indigo-50 text-indigo-700 rounded-full">
-                      TypeScript
-                    </span>
-                    <span className="px-3 py-1 text-xs font-medium bg-indigo-50 text-indigo-700 rounded-full">
-                      Go
-                    </span>
-                  </>
-                ) : (
-                  <span className="text-sm text-gray-400">
-                    No technical skills
-                  </span>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <h3 className="text-sm font-semibold text-gray-700 uppercase mb-2">
-                Soft
-              </h3>
-              <div className="flex flex-wrap gap-2">
-                {data.softSkills && data.softSkills.length > 0 ? (
-                  data.softSkills.map((s, i) => (
-                    <span
-                      key={i}
-                      className="px-3 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-full"
-                    >
-                      {s}
-                    </span>
-                  ))
-                ) : showPlaceholders ? (
-                  <>
-                    <span className="px-3 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-full">
-                      Communication
-                    </span>
-                    <span className="px-3 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-full">
-                      Ownership
-                    </span>
-                  </>
-                ) : (
-                  <span className="text-sm text-gray-400">No soft skills</span>
-                )}
-              </div>
-            </div>
+          <div className="flex flex-wrap gap-2">
+            {softskills?.length ? (
+              softskills.map((s, i) => (
+                <span
+                  key={i}
+                  className="px-3 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-full"
+                >
+                  {s}
+                </span>
+              ))
+            ) : showPlaceholders ? (
+              <>
+                <span className="px-3 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-full">
+                  Communication
+                </span>
+                <span className="px-3 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-full">
+                  Ownership
+                </span>
+              </>
+            ) : (
+              <span className="text-sm text-gray-400">No skills added</span>
+            )}
           </div>
         </section>
 
@@ -149,8 +128,8 @@ export default function ModernResumeTemplate({
             Education
           </h2>
           <div className="space-y-4">
-            {data.educations && data.educations.length > 0 ? (
-              data.educations.map((ed, i) => (
+            {education?.length ? (
+              education.map((ed: Education, i: number) => (
                 <div
                   key={i}
                   className="p-4 rounded-lg bg-gray-50 border border-gray-100"
@@ -165,21 +144,21 @@ export default function ModernResumeTemplate({
                       </div>
                     </div>
                     <div className="text-sm text-gray-500">
-                      {" "}
-                      {ed.startYear} • {ed.endYear}
+                      {ed.start_year} – {ed.end_year}
                     </div>
                   </div>
                   <div className="text-xs text-gray-500 mt-1">
-                    {ed.location} • GPA: {ed.grade}
+                    {ed.location}
+                    {ed.grade ? ` • GPA: ${ed.grade}` : ""}
                   </div>
                 </div>
               ))
             ) : showPlaceholders ? (
               <div className="p-4 rounded-lg bg-gray-50 border border-gray-100">
                 <div className="font-semibold text-gray-900">B.Tech</div>
-                <div className="text-sm text-gray-700">IIT Bombay</div>
+                <div className="text-sm text-gray-700">Your University</div>
                 <div className="text-xs text-gray-500 mt-1">
-                  2018–2022 • Mumbai • GPA: 8.5
+                  2019–2023 • City
                 </div>
               </div>
             ) : (
@@ -194,11 +173,11 @@ export default function ModernResumeTemplate({
             Experience
           </h2>
           <div className="space-y-4">
-            {data.experiences && data.experiences.length > 0 ? (
-              data.experiences.map((exp, i) => (
+            {experience?.length ? (
+              experience.map((exp: WorkExperience, i: number) => (
                 <div
                   key={i}
-                  className="p-5 border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition"
+                  className="p-5 border border-gray-100 rounded-xl shadow-sm"
                 >
                   <div className="flex justify-between items-start">
                     <div>
@@ -207,7 +186,9 @@ export default function ModernResumeTemplate({
                       </div>
                       <div className="text-sm text-gray-600">{exp.company}</div>
                     </div>
-                    <div className="text-xs text-gray-500">{exp.duration}</div>
+                    <div className="text-xs text-gray-500">
+                      {exp.start_year} – {exp.end_year}
+                    </div>
                   </div>
                   <p className="mt-2 text-sm text-gray-700 leading-relaxed">
                     {exp.description}
@@ -216,18 +197,12 @@ export default function ModernResumeTemplate({
               ))
             ) : showPlaceholders ? (
               <div className="p-5 border border-gray-100 rounded-xl shadow-sm">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <div className="font-semibold text-gray-900">
-                      Fullstack Developer
-                    </div>
-                    <div className="text-sm text-gray-600">Acme Corp</div>
-                  </div>
-                  <div className="text-xs text-gray-500">2023 - Present</div>
+                <div className="font-semibold text-gray-900">
+                  Software Engineer
                 </div>
+                <div className="text-sm text-gray-600">Company Name</div>
                 <p className="mt-2 text-sm text-gray-700 leading-relaxed">
-                  Built high-throughput services and features; improved
-                  observability and reduced incident MTTR.
+                  Worked on impactful features and scalable systems.
                 </p>
               </div>
             ) : (
@@ -244,13 +219,13 @@ export default function ModernResumeTemplate({
             Projects
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {data.projects && data.projects.length > 0 ? (
-              data.projects.map((p, i) => (
+            {projects?.length ? (
+              projects.map((p: Project, i: number) => (
                 <div
                   key={i}
                   className="p-4 bg-gradient-to-br from-indigo-50 to-white border border-gray-100 rounded-lg"
                 >
-                  <div className="font-medium text-gray-900">🚀 {p.title}</div>
+                  <div className="font-medium text-gray-900">🚀 {p.name}</div>
                   <p className="mt-2 text-sm text-gray-700">{p.description}</p>
                 </div>
               ))
@@ -260,8 +235,7 @@ export default function ModernResumeTemplate({
                   🚀 Example Project
                 </div>
                 <p className="mt-2 text-sm text-gray-700">
-                  A sample project description demonstrating impact and
-                  technical scope.
+                  A sample project description demonstrating impact.
                 </p>
               </div>
             ) : (

@@ -9,6 +9,8 @@ export const SUPER_ADMIN = `super-admin`;
 /// RESUME endpoints ///
 export const GET_RESUME_FORMATS = `get-resume-formats`;
 export const GET_SKILLS_MASTER = `get-skills-master`;
+export const POST_SAVE_RESUME = `save-resume`;
+export const GET_USERS_ALL_RESUMES = `get-users-all-resumes`;
 
 /// AUTH endpoints ///
 export const VERIFY_USER_EMAIL = `verify-user-email`;

@@ -1,5 +1,5 @@
 // components/resume/EducationForm.tsx
-import { Education } from "@/utils/api/types/education.types";
+import { Education } from "@/utils/api/types/resume.types";
 import React, { useState } from "react";
 
 export default function EducationForm({
@@ -15,8 +15,8 @@ export default function EducationForm({
     degree: "",
     institute: "",
     location: "",
-    startYear: "",
-    endYear: "",
+    start_year: "",
+    end_year: "",
     grade: "",
   });
 
@@ -28,13 +28,12 @@ export default function EducationForm({
   };
 
   const addEducation = () => {
-    // prevent adding completely empty record
     if (
       !newEdu.degree &&
       !newEdu.institute &&
       !newEdu.location &&
-      !newEdu.startYear &&
-      !newEdu.endYear &&
+      !newEdu.start_year &&
+      !newEdu.end_year &&
       !newEdu.grade
     ) {
       return;
@@ -44,8 +43,8 @@ export default function EducationForm({
       degree: "",
       institute: "",
       location: "",
-      startYear: "",
-      endYear: "",
+      start_year: "",
+      end_year: "",
       grade: "",
     });
   };
@@ -87,18 +86,16 @@ export default function EducationForm({
     <div>
       {/* --- Add New Education Form --- */}
       <div
-        className={`mb-6 p-4 bg-white rounded-lg shadow space-y-3 ${
+        className={`mb-6 p-4 bg-gray-50/40 rounded-xl border shadow-sm space-y-3 ${
           sectionInvalid ? invalidBorder : baseBorder
         }`}
       >
-        {/* show error message when whole section is required but empty */}
         {sectionInvalid && (
           <div className="text-sm text-red-600 mb-1">
             Please add at least one education.
           </div>
         )}
 
-        {/* First line: Degree + Institute + Location */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -140,9 +137,7 @@ export default function EducationForm({
           </div>
         </div>
 
-        {/* Second line: Start Year + End Year + Add button */}
         <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr_auto] gap-3">
-          {/* Start Year */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Start Year
@@ -150,15 +145,14 @@ export default function EducationForm({
             <input
               type="number"
               placeholder="2018"
-              value={newEdu.startYear}
-              onChange={(e) => handleNewChange("startYear", e.target.value)}
+              value={newEdu.start_year}
+              onChange={(e) => handleNewChange("start_year", e.target.value)}
               className={`w-full ${inputClasses} ${baseBorder}`}
               min={1950}
               max={new Date().getFullYear()}
             />
           </div>
 
-          {/* End Year */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               End Year
@@ -166,15 +160,14 @@ export default function EducationForm({
             <input
               type="number"
               placeholder="2022"
-              value={newEdu.endYear}
-              onChange={(e) => handleNewChange("endYear", e.target.value)}
+              value={newEdu.end_year}
+              onChange={(e) => handleNewChange("end_year", e.target.value)}
               className={`w-full ${inputClasses} ${baseBorder}`}
-              min={newEdu.startYear || 1950}
+              min={newEdu.start_year || 1950}
               max={new Date().getFullYear() + 5}
             />
           </div>
 
-          {/* Grade */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Grade / CGPA
@@ -188,13 +181,10 @@ export default function EducationForm({
             />
           </div>
 
-          {/* Add Button */}
           <div className="flex items-end">
             <button
               onClick={addEducation}
-              aria-label="Add education"
-              title="Add education"
-              className="flex items-center justify-center w-10 h-10 rounded-full bg-yellow-300 text-white text-xl shadow-sm hover:bg-yellow-400 focus:outline-none"
+              className="flex items-center justify-center w-10 h-10 rounded-full bg-yellow-300 text-white text-xl shadow-sm hover:bg-yellow-400"
             >
               +
             </button>
@@ -204,65 +194,33 @@ export default function EducationForm({
 
       {/* --- List of Added Educations --- */}
       <div className="space-y-4">
-        {educations.length === 0 && sectionInvalid ? (
-          <div className="text-sm text-red-600">No education entries yet.</div>
-        ) : null}
-
         {educations.map((edu, index) => (
           <div
             key={index}
-            className="p-4 bg-white rounded-lg shadow flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
+            className="p-4 bg-gray-50/40 rounded-xl border border-gray-200 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
           >
             {editIndex === index && editEdu ? (
               <div className="flex flex-wrap items-center gap-3 flex-1">
-                <input
-                  type="text"
-                  value={editEdu.degree}
-                  onChange={(e) =>
-                    setEditEdu({ ...editEdu, degree: e.target.value })
-                  }
-                  className={`w-full sm:w-1/4 ${inputClasses} ${baseBorder}`}
-                />
-                <input
-                  type="text"
-                  value={editEdu.institute}
-                  onChange={(e) =>
-                    setEditEdu({ ...editEdu, institute: e.target.value })
-                  }
-                  className={`w-full sm:w-1/4 ${inputClasses} ${baseBorder}`}
-                />
-                <input
-                  type="text"
-                  value={editEdu.location}
-                  onChange={(e) =>
-                    setEditEdu({ ...editEdu, location: e.target.value })
-                  }
-                  className={`w-full sm:w-1/6 ${inputClasses} ${baseBorder}`}
-                />
-                <input
-                  type="text"
-                  value={editEdu.startYear}
-                  onChange={(e) =>
-                    setEditEdu({ ...editEdu, startYear: e.target.value })
-                  }
-                  className={`w-full sm:w-1/6 ${inputClasses} ${baseBorder}`}
-                />
-                <input
-                  type="text"
-                  value={editEdu.endYear}
-                  onChange={(e) =>
-                    setEditEdu({ ...editEdu, endYear: e.target.value })
-                  }
-                  className={`w-full sm:w-1/6 ${inputClasses} ${baseBorder}`}
-                />
-                <input
-                  type="text"
-                  value={editEdu.grade}
-                  onChange={(e) =>
-                    setEditEdu({ ...editEdu, grade: e.target.value })
-                  }
-                  className={`w-full sm:w-1/6 ${inputClasses} ${baseBorder}`}
-                />
+                {(
+                  [
+                    "degree",
+                    "institute",
+                    "location",
+                    "start_year",
+                    "end_year",
+                    "grade",
+                  ] as (keyof Education)[]
+                ).map((field) => (
+                  <input
+                    key={field}
+                    type="text"
+                    value={editEdu[field]}
+                    onChange={(e) =>
+                      setEditEdu({ ...editEdu, [field]: e.target.value })
+                    }
+                    className={`w-full sm:w-1/6 ${inputClasses} ${baseBorder}`}
+                  />
+                ))}
               </div>
             ) : (
               <div className="flex-1">
@@ -275,8 +233,8 @@ export default function EducationForm({
 
                 <div className="mt-1 flex flex-wrap gap-4 text-xs text-gray-500">
                   <span>📍 {edu.location || "N/A"}</span>
-                  <span>⏳ {edu.startYear || "N/A"}</span>
-                  <span>⏳ {edu.endYear || "N/A"}</span>
+                  <span>⏳ {edu.start_year || "N/A"}</span>
+                  <span>⏳ {edu.end_year || "N/A"}</span>
                   <span>🎯 {edu.grade || "N/A"}</span>
                 </div>
               </div>
