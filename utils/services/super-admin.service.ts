@@ -6,7 +6,7 @@ import {
   GET_ALL_COURSES,
   SUPER_ADMIN,
 } from "@/utils/api/endpoints";
-import api from "@/lib/axios";
+import api from "@/utils/api/axios";
 import { GetAllCoursesResponse } from "../queries/super-admin.queries";
 
 export const superAdminService = {

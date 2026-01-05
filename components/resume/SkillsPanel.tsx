@@ -56,12 +56,14 @@ function uid(prefix = "id") {
  * - validation?: { skillsMissing?: boolean }  -> when true, highlights skills input area
  */
 export function SkillsPanel({
+  skillsMaster,
   skills,
   setSkills,
   softSkills,
   setSoftSkills,
   validation,
 }: {
+  skillsMaster: any;
   skills: Tag[];
   setSkills: (t: Tag[]) => void;
   softSkills: Tag[];
@@ -74,6 +76,7 @@ export function SkillsPanel({
   const [inputSkillProf, setInputSkillProf] = useState<Tag["proficiency"] | "">(
     "Basic"
   );
+  const [selectedSkill, setSelectedSkill] = useState("");
 
   // editing state
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -159,25 +162,28 @@ export function SkillsPanel({
         addTag(
           skills,
           setSkills,
-          inputSkill,
-          inputSkillProf === "" ? null : inputSkillProf
+          selectedSkill
+          // selectedSkill === "" ? null : selectedSkill
         );
-        setInputSkill("");
-        setInputSkillProf("");
+        setSelectedSkill("");
+        // setInputSkill("");
+        // setInputSkillProf("");
       }
     }
   };
 
   const handleAddSkill = () => {
-    if (!inputSkill.trim()) return;
+    if (!selectedSkill.trim()) return;
     addTag(
       skills,
       setSkills,
-      inputSkill,
-      inputSkillProf === "" ? null : inputSkillProf
+      selectedSkill
+      // inputSkillProf === "" ? null : inputSkillProf
     );
-    setInputSkill("");
-    setInputSkillProf("");
+    setSelectedSkill("");
+
+    // setInputSkill("");
+    // setInputSkillProf("");
   };
 
   const handleAddSoftSkill = () => {
@@ -201,6 +207,8 @@ export function SkillsPanel({
     ? "border-red-300 ring-1 ring-red-200"
     : "border-gray-100";
 
+  console.log(skills);
+
   return (
     <div className="w-full">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -220,7 +228,7 @@ export function SkillsPanel({
 
           <div className="mt-3 flex flex-col gap-2">
             {/* Input on first line */}
-            <input
+            {/* <input
               aria-label="Add technical skill"
               value={inputSkill}
               onChange={(e) => setInputSkill(e.target.value)}
@@ -229,22 +237,26 @@ export function SkillsPanel({
               className={`w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:border-yellow-300 ${
                 validation?.skillsMissing ? "border-red-400" : ""
               }`}
-            />
+            /> */}
 
             {/* Dropdown + button on second line */}
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
                 <select
-                  aria-label="Select proficiency for new skill"
-                  value={inputSkillProf ?? ""}
-                  onChange={(e) =>
-                    setInputSkillProf(e.target.value as Tag["proficiency"] | "")
-                  }
+                  aria-label="Select skill"
+                  value={selectedSkill}
+                  onChange={(e) => setSelectedSkill(e.target.value)}
                   className="appearance-none w-full px-4 py-2 pr-10 rounded-lg border border-gray-300 bg-white text-sm font-medium shadow-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:border-yellow-300 transition-all cursor-pointer hover:shadow-md"
                 >
-                  <option value="Basic">Basic</option>
-                  <option value="Intermediate">Intermediate</option>
-                  <option value="Advanced">Advanced</option>
+                  <option value="" disabled>
+                    Select a skill
+                  </option>
+
+                  {skillsMaster?.skills.map((skill: any) => (
+                    <option key={skill.SkillID} value={skill.SkillKey}>
+                      {skill.DisplayName}
+                    </option>
+                  ))}
                 </select>
 
                 <svg
@@ -262,6 +274,34 @@ export function SkillsPanel({
                     strokeLinejoin="round"
                   />
                 </svg>
+                {/* <select
+                  aria-label="Select proficiency for new skill"
+                  value={inputSkillProf ?? ""}
+                  onChange={(e) =>
+                    setInputSkillProf(e.target.value as Tag["proficiency"] | "")
+                  }
+                  className="appearance-none w-full px-4 py-2 pr-10 rounded-lg border border-gray-300 bg-white text-sm font-medium shadow-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:border-yellow-300 transition-all cursor-pointer hover:shadow-md"
+                >
+                  <option value="Basic">Basic</option>
+                  <option value="Intermediate">Intermediate</option>
+                  <option value="Advanced">Advanced</option>
+                </select> */}
+
+                {/* <svg
+                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-3 w-3 text-gray-500"
+                  viewBox="0 0 20 20"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                  aria-hidden
+                >
+                  <path
+                    d="M6 8l4 4 4-4"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg> */}
               </div>
 
               <button
@@ -344,14 +384,14 @@ export function SkillsPanel({
                       · {t.proficiency}
                     </div>
                   )}
-                  <button
+                  {/* <button
                     onClick={() => startEdit(t)}
                     className="text-xs text-indigo-500 px-2"
                     aria-label={`Edit ${t.text}`}
                     title="Edit"
                   >
                     ✎
-                  </button>
+                  </button> */}
                   <button
                     onClick={() => removeTag(setSkills, skills, t.id)}
                     className="text-xs text-gray-400 px-2"

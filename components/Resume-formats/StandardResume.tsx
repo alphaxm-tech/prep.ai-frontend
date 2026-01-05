@@ -1,42 +1,6 @@
 // components/resume-formats/StandardResume.tsx
+import { ResumeData } from "@/utils/api/types/education.types";
 import React from "react";
-
-type Education = {
-  level: string;
-  institute: string;
-  location: string;
-  duration: string;
-  grade: string;
-};
-
-type WorkExperience = {
-  company: string;
-  role: string;
-  duration: string;
-  description: string;
-};
-
-type Project = {
-  title: string;
-  description: string;
-};
-
-export type ResumeData = {
-  fullName: string;
-  title?: string;
-  location?: string;
-  email?: string;
-  phone?: string;
-  objective?: string;
-  portfolioLink?: string;
-  githubLink?: string;
-  linkedinLink?: string;
-  technicalSkills?: string[];
-  softSkills?: string[];
-  educations?: Education[];
-  experiences?: WorkExperience[];
-  projects?: Project[];
-};
 
 export default function StandardResumeTemplate({
   data,
@@ -137,10 +101,11 @@ export default function StandardResumeTemplate({
             <div className="space-y-3">
               {data.educations.map((ed, idx) => (
                 <div key={idx}>
-                  <div className="font-medium text-gray-900">{ed.level}</div>
+                  <div className="font-medium text-gray-900">{ed.degree}</div>
                   <div className="text-sm text-gray-700">{ed.institute}</div>
                   <div className="text-xs text-gray-500">
-                    {ed.duration} • {ed.location} • GPA: {ed.grade}
+                    {ed.startYear} • {ed.endYear}
+                    {ed.location} • GPA: {ed.grade}
                   </div>
                 </div>
               ))}

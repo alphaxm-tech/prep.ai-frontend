@@ -1,43 +1,5 @@
 // components/resume-formats/ProfessionalResume.tsx
-import React from "react";
-
-type Education = {
-  level: string;
-  institute: string;
-  location: string;
-  duration: string;
-  grade: string;
-};
-
-type WorkExperience = {
-  company: string;
-  role: string;
-  duration: string;
-  description: string;
-  logo?: string;
-};
-
-type Project = {
-  title: string;
-  description: string;
-};
-
-export type ResumeData = {
-  fullName: string;
-  title?: string;
-  location?: string;
-  email?: string;
-  phone?: string;
-  objective?: string;
-  portfolioLink?: string;
-  githubLink?: string;
-  linkedinLink?: string;
-  technicalSkills?: string[];
-  softSkills?: string[];
-  educations?: Education[];
-  experiences?: WorkExperience[];
-  projects?: Project[];
-};
+import { ResumeData } from "@/utils/api/types/education.types";
 
 export default function ProfessionalResumeTemplateVertical({
   data,
@@ -190,13 +152,16 @@ export default function ProfessionalResumeTemplateVertical({
                   <div className="flex items-start justify-between">
                     <div>
                       <div className="font-medium text-slate-900">
-                        {ed.level}
+                        {ed.degree}
                       </div>
                       <div className="text-sm text-slate-700">
                         {ed.institute}
                       </div>
                     </div>
-                    <div className="text-xs text-slate-500">{ed.duration}</div>
+                    <div className="text-xs text-slate-500">
+                      {" "}
+                      {ed.startYear} • {ed.endYear}
+                    </div>
                   </div>
                   <div className="mt-1 text-xs text-slate-500">
                     {ed.location} • GPA: {ed.grade}

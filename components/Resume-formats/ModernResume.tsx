@@ -1,43 +1,5 @@
 // components/resume-formats/ModernResume.tsx
-import React from "react";
-
-type Education = {
-  level: string;
-  institute: string;
-  location: string;
-  duration: string;
-  grade: string;
-};
-
-type WorkExperience = {
-  company: string;
-  role: string;
-  duration: string;
-  description: string;
-  logo?: string;
-};
-
-type Project = {
-  title: string;
-  description: string;
-};
-
-export type ResumeData = {
-  fullName: string;
-  title?: string;
-  location?: string;
-  email?: string;
-  phone?: string;
-  objective?: string;
-  portfolioLink?: string;
-  githubLink?: string;
-  linkedinLink?: string;
-  technicalSkills?: string[];
-  softSkills?: string[];
-  educations?: Education[];
-  experiences?: WorkExperience[];
-  projects?: Project[];
-};
+import { ResumeData } from "@/utils/api/types/education.types";
 
 export default function ModernResumeTemplate({
   data,
@@ -196,13 +158,16 @@ export default function ModernResumeTemplate({
                   <div className="flex justify-between">
                     <div>
                       <div className="font-semibold text-gray-900">
-                        {ed.level}
+                        {ed.degree}
                       </div>
                       <div className="text-sm text-gray-700">
                         {ed.institute}
                       </div>
                     </div>
-                    <div className="text-sm text-gray-500">{ed.duration}</div>
+                    <div className="text-sm text-gray-500">
+                      {" "}
+                      {ed.startYear} • {ed.endYear}
+                    </div>
                   </div>
                   <div className="text-xs text-gray-500 mt-1">
                     {ed.location} • GPA: {ed.grade}

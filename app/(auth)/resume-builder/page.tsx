@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { resumeService } from "@/utils/services/resume.service";
 import {
@@ -8,7 +8,7 @@ import {
   SkillsPanel,
   Tag as SkillTag,
 } from "@/components/resume/SkillsPanel";
-import EducationForm, { Education } from "@/components/resume/EducationForm";
+import EducationForm from "@/components/resume/EducationForm";
 import ResumeDropdown, { ResumeItem } from "@/components/ResumeDropdown";
 import BasicDetails from "@/components/resume/BasicDetails";
 import WorkExperienceForm, {
@@ -22,16 +22,21 @@ import ProfessionalResumeTemplateVertical from "../../../components/Resume-forma
 import ModernResumeTemplate from "../../../components/Resume-formats/ModernResume";
 import MinimalResumeTemplate from "../../../components/Resume-formats/MinimalResume";
 import StandardResumeTemplate from "../../../components/Resume-formats/StandardResume";
+import { useGetUserDetailsAll } from "@/utils/queries/home.queries";
+import {
+  useGetResumeFormats,
+  useGetSkillsMaster,
+} from "@/utils/queries/resume.queries";
+import { AddResumeRequest } from "@/utils/api/types/resume.types";
+import { Education } from "@/utils/api/types/education.types";
 
-// type TemplateKey = "modern" | "classic" | "creative" | "minimal" | "standard";
-type TemplateKey = "standard";
-
+type TemplateKey = "modern" | "classic" | "creative" | "minimal" | "standard";
 /**
  * Dummy defaults used to populate the inline preview when user hasn't entered data.
  */
 const DEFAULT_SAMPLE = {
   fullName: "Your Full Name",
-  title: "Your Job Title (e.g., Fullstack Blockchain Developer)",
+  title: "Your Job Title (e.g., Fullstack Developer)",
   email: "your.email@example.com",
   phone: "0000000000",
   location: "Your City, Country",
@@ -55,10 +60,12 @@ const DEFAULT_SAMPLE = {
 
   educations: [
     {
-      level: "Degree (e.g., B.Tech)",
+      degree: "Degree (e.g., B.Tech)",
       institute: "Your College Name",
       location: "City",
-      duration: "Start–End (e.g., 2019–2023)",
+      // duration: "Start–End (e.g., 2019–2023)",
+      startYear: "2016",
+      endYear: "2020",
       grade: "CGPA/Percentage (e.g., 8.0)",
     },
   ],
@@ -87,16 +94,16 @@ const MAX_RESUMES = 10;
 
 export default function ResumeBuilderPage() {
   // --- MAIN LIFTED STATE (single source of truth for basic details) ---
-  const [fullName, setFullName] = useState<string>("");
-  const [email, setEmail] = useState<string>("");
+  const [resumeTitle, setResumeTitle] = useState("");
   const [phone, setPhone] = useState<string>("");
   const [location, setLocation] = useState<string>("");
   const [summary, setSummary] = useState<string>("");
   const [portfolioLink, setPortfolioLink] = useState<string>("");
   const [githubLink, setGithubLink] = useState<string>("");
   const [linkedinLink, setLinkedinLink] = useState<string>("");
+  const [isDefault, setIsDefault] = useState(false);
 
-  // Lists and arrays lifted
+  // Lists and arrays liftedx
   const [technicalSkills, setTechnicalSkills] = useState<SkillTag[]>([]);
   const [softSkills, setSoftSkills] = useState<SkillTag[]>([]);
   const [educations, setEducations] = useState<Education[]>([]);
@@ -109,25 +116,22 @@ export default function ResumeBuilderPage() {
 
   const RESULT_PDF_URL = "/pdfs/Resume.pdf";
 
-  const { data: apiData } = useQuery({
-    queryKey: ["resume", "format"],
-    queryFn: async () => {
-      try {
-        return await resumeService.getResumeFormats();
-      } catch {
-        return null;
-      }
-    },
-    staleTime: 1000 * 60 * 5,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-  });
+  const { data: getUserDetailsAllRes } = useGetUserDetailsAll();
+
+  const fullName = getUserDetailsAllRes?.user?.full_name ?? "";
+  const email = getUserDetailsAllRes?.user?.email ?? "";
+  // console.log(getUserDetailsAllRes?.user?.full_name);
+
+  const { data: resumeData } = useGetResumeFormats();
+  const { data: skillsMasterData } = useGetSkillsMaster();
+
+  console.log(skillsMasterData);
 
   const localFormats: { key: TemplateKey; title: string }[] = [
-    // { key: "modern", title: "Modern" },
-    // { key: "classic", title: "Classic" },
-    // { key: "creative", title: "Creative" },
-    // { key: "minimal", title: "Minimal" },
+    { key: "modern", title: "Modern" },
+    { key: "classic", title: "Classic" },
+    { key: "creative", title: "Creative" },
+    { key: "minimal", title: "Minimal" },
     { key: "standard", title: "Standard" },
   ];
 
@@ -258,14 +262,14 @@ export default function ResumeBuilderPage() {
     const props = { data, showPlaceholders };
 
     switch (resumeFormat) {
-      // case "creative":
-      //   return <CreativeResumeTemplate {...props} />;
-      // case "classic":
-      //   return <ProfessionalResumeTemplateVertical {...props} />;
-      // case "modern":
-      //   return <ModernResumeTemplate {...props} />;
-      // case "minimal":
-      //   return <MinimalResumeTemplate {...props} />;
+      case "creative":
+        return <CreativeResumeTemplate {...props} />;
+      case "classic":
+        return <ProfessionalResumeTemplateVertical {...props} />;
+      case "modern":
+        return <ModernResumeTemplate {...props} />;
+      case "minimal":
+        return <MinimalResumeTemplate {...props} />;
       case "standard":
       default:
         return <StandardResumeTemplate {...props} />;
@@ -277,6 +281,7 @@ export default function ResumeBuilderPage() {
     const errors: Record<string, boolean> = {};
 
     // Required simple fields
+    errors.resumeTitle = !(resumeTitle && resumeTitle.trim().length > 0);
     errors.fullName = !(fullName && fullName.trim().length > 0);
     errors.email = !(email && email.trim().length > 0);
     errors.phone = !(phone && phone.trim().length > 0);
@@ -385,6 +390,7 @@ export default function ResumeBuilderPage() {
   const currentValidation = useMemo(
     () => validateAll(),
     [
+      resumeTitle,
       fullName,
       email,
       phone,
@@ -653,6 +659,40 @@ export default function ResumeBuilderPage() {
     URL.revokeObjectURL(url);
   };
 
+  const selectedResumeFormat = useMemo(() => {
+    if (!resumeData?.resumeFormats) return null;
+
+    return resumeData.resumeFormats.find(
+      (f: any) => f.format_key === resumeFormat
+    );
+  }, [resumeData?.resumeFormats, resumeFormat]);
+
+  const skillNames = technicalSkills.map((skill) => skill.text);
+
+  useEffect(() => {
+    console.log(experiences);
+  }, [experiences]);
+
+  const payload: AddResumeRequest = {
+    resume_details: {
+      format_id: selectedResumeFormat?.format_id ?? 0,
+      title: resumeTitle,
+      is_default: isDefault,
+    },
+    user: {
+      location: location,
+      phone: phone,
+      objective: summary,
+      portfolio_website_url: portfolioLink,
+      linkedin_url: linkedinLink,
+      github_url: githubLink,
+    },
+    skills: skillNames,
+    experience: experiences,
+    projects: projects,
+    education: educations,
+  };
+
   return (
     <div className="min-h-screen bg-white py-8">
       <main className="w-full">
@@ -694,10 +734,12 @@ export default function ResumeBuilderPage() {
             <div className="space-y-4">
               <VerticalAccordion isOpenProp={true} title="Personal details">
                 <BasicDetails
+                  isDefault={isDefault}
+                  setIsDefault={setIsDefault}
+                  resumeTitle={resumeTitle}
+                  setResumeTitle={setResumeTitle}
                   fullName={fullName}
-                  setFullName={setFullName}
                   email={email}
-                  setEmail={setEmail}
                   phone={phone}
                   setPhone={setPhone}
                   location={location}
@@ -716,6 +758,7 @@ export default function ResumeBuilderPage() {
 
               <VerticalAccordion isOpenProp={false} title="Skills">
                 <SkillsPanel
+                  skillsMaster={skillsMasterData}
                   skills={technicalSkills}
                   setSkills={
                     setTechnicalSkills as React.Dispatch<
@@ -778,8 +821,9 @@ export default function ResumeBuilderPage() {
                       className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm"
                     >
                       {
-                        (apiData?.resumeFormats && apiData.resumeFormats.length
-                          ? apiData.resumeFormats.map((f: any) => (
+                        (resumeData?.resumeFormats &&
+                        resumeData?.resumeFormats.length
+                          ? resumeData?.resumeFormats?.map((f: any) => (
                               <option key={f.format_id} value={f.format_key}>
                                 {f.title}
                               </option>

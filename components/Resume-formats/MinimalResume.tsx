@@ -1,42 +1,5 @@
+import { ResumeData } from "@/utils/api/types/education.types";
 import React from "react";
-
-type Education = {
-  level: string;
-  institute: string;
-  location: string;
-  duration: string;
-  grade: string;
-};
-
-type WorkExperience = {
-  company: string;
-  role: string;
-  duration: string;
-  description: string;
-  logo?: string;
-};
-
-type Project = {
-  title: string;
-  description: string;
-};
-
-export type ResumeData = {
-  fullName: string;
-  title?: string;
-  location?: string;
-  email?: string;
-  phone?: string;
-  objective?: string;
-  portfolioLink?: string;
-  githubLink?: string;
-  linkedinLink?: string;
-  technicalSkills?: string[];
-  softSkills?: string[];
-  educations?: Education[];
-  experiences?: WorkExperience[];
-  projects?: Project[];
-};
 
 export default function MinimalResumeTemplate({
   data,
@@ -160,7 +123,7 @@ export default function MinimalResumeTemplate({
               <div key={i} className="flex justify-between items-start">
                 <div>
                   <div className="text-sm font-medium">
-                    {ed.level || (showPlaceholders ? "Degree / Course" : "")}
+                    {ed.degree || (showPlaceholders ? "Degree / Course" : "")}
                   </div>
                   <div className="text-xs text-slate-600">
                     {ed.institute || (showPlaceholders ? "Institute Name" : "")}
@@ -168,7 +131,9 @@ export default function MinimalResumeTemplate({
                 </div>
                 <div className="text-xs text-slate-500 text-right">
                   <div>
-                    {ed.duration || (showPlaceholders ? "YYYY-YYYY" : "")}
+                    {ed.startYear ||
+                      ed.endYear ||
+                      (showPlaceholders ? "YYYY-YYYY" : "")}
                   </div>
                   <div>
                     {ed.location || (showPlaceholders ? "City, Country" : "")}

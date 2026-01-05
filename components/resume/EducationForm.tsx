@@ -1,13 +1,6 @@
 // components/resume/EducationForm.tsx
+import { Education } from "@/utils/api/types/education.types";
 import React, { useState } from "react";
-
-export interface Education {
-  level: string;
-  institute: string;
-  location: string;
-  duration: string;
-  grade: string;
-}
 
 export default function EducationForm({
   educations,
@@ -19,10 +12,11 @@ export default function EducationForm({
   validationErrors?: Record<string, boolean>;
 }) {
   const [newEdu, setNewEdu] = useState<Education>({
-    level: "",
+    degree: "",
     institute: "",
     location: "",
-    duration: "",
+    startYear: "",
+    endYear: "",
     grade: "",
   });
 
@@ -36,20 +30,22 @@ export default function EducationForm({
   const addEducation = () => {
     // prevent adding completely empty record
     if (
-      !newEdu.level &&
+      !newEdu.degree &&
       !newEdu.institute &&
       !newEdu.location &&
-      !newEdu.duration &&
+      !newEdu.startYear &&
+      !newEdu.endYear &&
       !newEdu.grade
     ) {
       return;
     }
     setEducations([...educations, newEdu]);
     setNewEdu({
-      level: "",
+      degree: "",
       institute: "",
       location: "",
-      duration: "",
+      startYear: "",
+      endYear: "",
       grade: "",
     });
   };
@@ -111,8 +107,8 @@ export default function EducationForm({
             <input
               type="text"
               placeholder="B.Tech"
-              value={newEdu.level}
-              onChange={(e) => handleNewChange("level", e.target.value)}
+              value={newEdu.degree}
+              onChange={(e) => handleNewChange("degree", e.target.value)}
               className={`w-full ${inputClasses} ${baseBorder}`}
             />
           </div>
@@ -144,24 +140,44 @@ export default function EducationForm({
           </div>
         </div>
 
-        {/* Second line: Duration + Grade + Add button */}
-        <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-3">
+        {/* Second line: Start Year + End Year + Add button */}
+        <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr_auto] gap-3">
+          {/* Start Year */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Duration
+              Start Year
             </label>
             <input
-              type="text"
-              placeholder="2018–2022"
-              value={newEdu.duration}
-              onChange={(e) => handleNewChange("duration", e.target.value)}
+              type="number"
+              placeholder="2018"
+              value={newEdu.startYear}
+              onChange={(e) => handleNewChange("startYear", e.target.value)}
               className={`w-full ${inputClasses} ${baseBorder}`}
+              min={1950}
+              max={new Date().getFullYear()}
             />
           </div>
 
+          {/* End Year */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Grade/CGPA
+              End Year
+            </label>
+            <input
+              type="number"
+              placeholder="2022"
+              value={newEdu.endYear}
+              onChange={(e) => handleNewChange("endYear", e.target.value)}
+              className={`w-full ${inputClasses} ${baseBorder}`}
+              min={newEdu.startYear || 1950}
+              max={new Date().getFullYear() + 5}
+            />
+          </div>
+
+          {/* Grade */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Grade / CGPA
             </label>
             <input
               type="text"
@@ -172,6 +188,7 @@ export default function EducationForm({
             />
           </div>
 
+          {/* Add Button */}
           <div className="flex items-end">
             <button
               onClick={addEducation}
@@ -200,9 +217,9 @@ export default function EducationForm({
               <div className="flex flex-wrap items-center gap-3 flex-1">
                 <input
                   type="text"
-                  value={editEdu.level}
+                  value={editEdu.degree}
                   onChange={(e) =>
-                    setEditEdu({ ...editEdu, level: e.target.value })
+                    setEditEdu({ ...editEdu, degree: e.target.value })
                   }
                   className={`w-full sm:w-1/4 ${inputClasses} ${baseBorder}`}
                 />
@@ -224,9 +241,17 @@ export default function EducationForm({
                 />
                 <input
                   type="text"
-                  value={editEdu.duration}
+                  value={editEdu.startYear}
                   onChange={(e) =>
-                    setEditEdu({ ...editEdu, duration: e.target.value })
+                    setEditEdu({ ...editEdu, startYear: e.target.value })
+                  }
+                  className={`w-full sm:w-1/6 ${inputClasses} ${baseBorder}`}
+                />
+                <input
+                  type="text"
+                  value={editEdu.endYear}
+                  onChange={(e) =>
+                    setEditEdu({ ...editEdu, endYear: e.target.value })
                   }
                   className={`w-full sm:w-1/6 ${inputClasses} ${baseBorder}`}
                 />
@@ -242,7 +267,7 @@ export default function EducationForm({
             ) : (
               <div className="flex-1">
                 <h3 className="text-lg font-semibold text-gray-900">
-                  {edu.level}
+                  {edu.degree}
                 </h3>
                 <p className="text-sm font-medium text-gray-700">
                   {edu.institute}
@@ -250,7 +275,8 @@ export default function EducationForm({
 
                 <div className="mt-1 flex flex-wrap gap-4 text-xs text-gray-500">
                   <span>📍 {edu.location || "N/A"}</span>
-                  <span>⏳ {edu.duration || "N/A"}</span>
+                  <span>⏳ {edu.startYear || "N/A"}</span>
+                  <span>⏳ {edu.endYear || "N/A"}</span>
                   <span>🎯 {edu.grade || "N/A"}</span>
                 </div>
               </div>

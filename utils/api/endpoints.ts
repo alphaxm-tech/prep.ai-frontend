@@ -6,7 +6,9 @@ export const AUTH = `auth`;
 export const HOME = `home`;
 export const SUPER_ADMIN = `super-admin`;
 
+/// RESUME endpoints ///
 export const GET_RESUME_FORMATS = `get-resume-formats`;
+export const GET_SKILLS_MASTER = `get-skills-master`;
 
 /// AUTH endpoints ///
 export const VERIFY_USER_EMAIL = `verify-user-email`;
@@ -18,9 +20,7 @@ export const LOGIN_WITH_OTP = `auth/login-with-otp`;
 export const VERIFY_LOGIN_OTP = `auth/verify-login-otp`;
 
 /// HOME endpoints ///
-export const GET_USER_DETAILS = `get-user-details`;
-export const GET_USER_SERVICES = `get-user-services`;
-export const GET_USER_LEARNING_PATH = `get-user-learningpath`;
+export const GET_USER_DETAILS_ALL = `get-user-details-all`;
 
 // convert them to strings instead of functions
 

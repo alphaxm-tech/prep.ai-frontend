@@ -1,42 +1,6 @@
 // components/resume-formats/CreativeResume.tsx
+import { ResumeData } from "@/utils/api/types/education.types";
 import React from "react";
-
-type Education = {
-  level: string;
-  institute: string;
-  location: string;
-  duration: string;
-  grade: string;
-};
-
-type WorkExperience = {
-  company: string;
-  role: string;
-  duration: string;
-  description: string;
-  logo?: string;
-};
-
-type Project = {
-  title: string;
-  description: string;
-};
-
-type ResumeData = {
-  fullName: string;
-  location?: string;
-  email?: string;
-  phone?: string;
-  objective?: string;
-  portfolioLink?: string;
-  githubLink?: string;
-  linkedinLink?: string;
-  technicalSkills?: string[];
-  softSkills?: string[];
-  educations?: Education[];
-  experiences?: WorkExperience[];
-  projects?: Project[];
-};
 
 export default function CreativeResumeTemplate({
   data,
@@ -215,13 +179,13 @@ export default function CreativeResumeTemplate({
                   data.educations.map((ed, idx) => (
                     <div key={idx}>
                       <div className="font-semibold text-slate-900">
-                        {ed.level}
+                        {ed.degree}
                       </div>
                       <div className="text-xs text-slate-600">
                         {ed.institute}
                       </div>
                       <div className="text-xs text-slate-500">
-                        {ed.duration} • {ed.location}
+                        {ed.startYear} • {ed.endYear} • {ed.location}
                       </div>
                     </div>
                   ))
