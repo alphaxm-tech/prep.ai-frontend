@@ -274,17 +274,28 @@ export default function BasicDetails({
           <label className="block text-sm font-medium text-gray-700">
             Phone
           </label>
+
           <input
             value={phone}
-            onChange={(e) => setPhone(e.target.value)}
+            onChange={(e) => {
+              // allow only digits
+              const digitsOnly = e.target.value.replace(/\D/g, "");
+              setPhone(digitsOnly);
+            }}
+            inputMode="numeric"
+            pattern="[0-9]*"
+            maxLength={10}
             className={`${inputBase} ${
               invalid("phone") ? inputInvalid : inputNormal
             }`}
             placeholder="e.g. 0123456789"
             aria-invalid={invalid("phone")}
           />
+
           {invalid("phone") && (
-            <p className="mt-1 text-xs text-red-600">Phone is required.</p>
+            <p className="mt-1 text-xs text-red-600">
+              Phone number must be 10 digits.
+            </p>
           )}
         </div>
       </div>

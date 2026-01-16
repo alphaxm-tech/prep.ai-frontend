@@ -29,7 +29,9 @@ import {
 import {
   AddResumeRequest,
   Education,
+  GetResumeFormatsResponse,
   Project,
+  ResumeFormat,
   UsersResumeResponse,
   WorkExperience,
 } from "@/utils/api/types/resume.types";
@@ -181,6 +183,10 @@ export default function ResumeBuilderPage() {
     () => technicalSkills.map((s) => s.skillId),
     [technicalSkills]
   );
+  const [selectedResume, setSelectedResume] =
+    useState<UsersResumeResponse | null>(null);
+
+  const [showResumeViewModal, setShowResumeViewModal] = useState(false);
 
   const assembledData = useMemo(
     () => ({
@@ -338,7 +344,7 @@ export default function ResumeBuilderPage() {
     errors.resumeTitle = !(resumeTitle && resumeTitle.trim().length > 0);
     errors.fullName = !(fullName && fullName.trim().length > 0);
     errors.email = !(email && email.trim().length > 0);
-    errors.phone = !(phone && phone.trim().length > 0);
+    errors.phone = !(phone && phone.trim().length > 9);
     errors.location = !(location && location.trim().length > 0);
     errors.summary = !(summary && summary.trim().length > 0);
 
@@ -378,7 +384,6 @@ export default function ResumeBuilderPage() {
     }
 
     // All good: open modal for clean preview and final save
-    setShowPreviewModal(true);
     setLoading(true);
 
     saveResumeMutation.mutate(payload, {
@@ -386,15 +391,27 @@ export default function ResumeBuilderPage() {
         // console.log("Verification successful", data);
         // setLoading(false);
         setLoading(false);
+        setShowPreviewModal(true);
       },
       onError: (err: any) => {
         const status = err?.response?.status;
         const data = err?.response?.data;
         setLoading(false);
-        console.log(data);
+        console.log(data, status);
 
-        showToast("error", data);
-        // setLoading(false);
+        if (
+          data?.error ==
+          "resume title already exists, please choose a different title"
+        ) {
+          console.log("hello");
+          showToast(
+            "error",
+            "Resume title already exists, please provide unique one"
+          );
+        }
+
+        // showToast("error", data);
+        setLoading(false);
       },
     });
   };
@@ -736,6 +753,51 @@ export default function ResumeBuilderPage() {
   // }, [technicalSkillIds]);
 
   const disableSave = remainingResumes === 0 || hasAnyErrors(validationErrors);
+  useEffect(() => {
+    if (!hasAnyErrors(currentValidation)) {
+      setValidationErrors({});
+      setQuotaError(null);
+    }
+  }, [currentValidation]);
+
+  const renderResumeByFormat = (resume: ResumeFormat) => {
+    const formatKey = resume?.format_key as TemplateKey;
+
+    const data = {
+      resume_details: {
+        format_id: resume.format_id,
+        title: resume.title,
+        // is_default: resume.is_default,
+      },
+      user: resume.user,
+      skills: resume.skills,
+      softskills: resume.softskills,
+      education: resume.education,
+      experience: resume.experience,
+      projects: resume.projects,
+    };
+
+    const props = {
+      data,
+      showPlaceholders: false,
+      fullName: resume.user?.full_name,
+      email: resume.user?.email,
+    };
+
+    switch (formatKey) {
+      case "creative":
+        return <CreativeResumeTemplate {...props} />;
+      case "classic":
+        return <ProfessionalResumeTemplateVertical {...props} />;
+      case "modern":
+        return <ModernResumeTemplate {...props} />;
+      case "minimal":
+        return <MinimalResumeTemplate {...props} />;
+      case "standard":
+      default:
+        return <StandardResumeTemplate {...props} />;
+    }
+  };
 
   return (
     <div className="min-h-screen bg-white py-8 px-3 sm:px-4 md:px-6 lg:px-8">
@@ -753,33 +815,53 @@ export default function ResumeBuilderPage() {
           </div>
 
           <div className="flex items-center gap-4">
-            <ResumeDropdown
-              resumes={usersAllResumes!?.resumes}
-              // onSelect={(r) => console.log("select", r)}
-            />
+            {/* Resume Selector */}
+            <div className="relative">
+              <ResumeDropdown
+                resumes={usersAllResumes!?.resumes}
+                onSelect={(resume) => {
+                  setSelectedResume(resume);
+                  setShowResumeViewModal(true);
+                }}
+              />
+            </div>
 
-            {/* Quota display */}
+            {/* Quota Status */}
             <div
-              className={`text-sm font-semibold ${
-                remainingResumes === 0 ? "text-red-600" : "text-gray-600"
+              className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium border ${
+                remainingResumes === 0
+                  ? "bg-red-50 border-red-200 text-red-700"
+                  : "bg-gray-50 border-gray-200 text-gray-700"
               }`}
             >
-              <div className="flex items-center gap-2">
-                <div
-                  className={`font-semibold ${
-                    remainingResumes === 0 ? "text-red-700" : "text-gray-800"
-                  }`}
-                >
-                  {usersAllResumesLength}/{MAX_RESUMES} resumes
-                </div>
-                <div
-                  className={`text-xs ${
-                    remainingResumes === 0 ? "text-red-600" : "text-gray-500"
-                  }`}
-                >
-                  ({remainingResumes} left)
-                </div>
+              {/* Icon */}
+              <span
+                className={`text-base ${
+                  remainingResumes === 0 ? "text-red-500" : "text-gray-500"
+                }`}
+              >
+                📄
+              </span>
+
+              {/* Text */}
+              <div className="flex items-baseline gap-1">
+                <span className="font-semibold">
+                  {usersAllResumesLength}/{MAX_RESUMES}
+                </span>
+                <span className="text-xs opacity-80">resumes</span>
               </div>
+
+              {/* Divider */}
+              <span className="mx-1 h-3 w-px bg-gray-300 opacity-50" />
+
+              {/* Remaining */}
+              <span
+                className={`text-xs font-semibold ${
+                  remainingResumes === 0 ? "text-red-600" : "text-gray-500"
+                }`}
+              >
+                {remainingResumes} left
+              </span>
             </div>
           </div>
         </div>
@@ -1097,6 +1179,41 @@ export default function ResumeBuilderPage() {
           </div>
         )}
       </div>
+
+      {showResumeViewModal && selectedResume && (
+        <div className="fixed inset-0 z-50 flex items-start md:items-center justify-center p-4">
+          {/* Overlay */}
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setShowResumeViewModal(false)}
+          />
+
+          {/* Modal */}
+          <div className="relative max-w-4xl w-full max-h-[90vh] overflow-auto rounded-2xl bg-white shadow-xl border border-gray-100 z-10">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b">
+              <div>
+                <div className="text-sm font-semibold text-gray-800">
+                  {selectedResume.title}
+                </div>
+                <div className="text-xs text-gray-500">
+                  Format: {selectedResume.format_key}
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowResumeViewModal(false)}
+                className="px-3 py-1.5 rounded-md bg-gray-100 hover:bg-gray-200 text-sm text-gray-700"
+              >
+                Close
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">{renderResumeByFormat(selectedResume)}</div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
