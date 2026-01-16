@@ -36,59 +36,190 @@ type EvaluationAnswer = {
  */
 
 const INTERVIEW_1_QUESTIONS: Q[] = [
-  { id: 1, text: "What is data abstraction", suggestedTimeSec: 60 },
   {
-    id: 2,
-    text: "What are the three levels of data abstraction with Example",
+    id: 1,
+    text: "What steps would you take if a desktop PC is heating up and performance is slowing down?",
     suggestedTimeSec: 60,
   },
-  { id: 3, text: "What is command line argument)", suggestedTimeSec: 60 },
+  {
+    id: 2,
+    text: "How would you troubleshoot a USB port that is not detecting any device?",
+    suggestedTimeSec: 60,
+  },
+  {
+    id: 3,
+    text: "What actions would you take if a desktop PC is running very slowly?",
+    suggestedTimeSec: 60,
+  },
   {
     id: 4,
-    text: "Advantages of a macro over a function",
+    text: "How do you troubleshoot a Blue Screen of Death (BSOD) error?",
     suggestedTimeSec: 60,
   },
   {
     id: 5,
-    text: "What are the different storage classes in C",
+    text: "What would you check if a computer does not turn on at all?",
     suggestedTimeSec: 60,
   },
-  { id: 6, text: "Why do you want to join TCS", suggestedTimeSec: 60 },
+  {
+    id: 6,
+    text: "How would you diagnose a desktop PC that keeps restarting automatically?",
+    suggestedTimeSec: 60,
+  },
   {
     id: 7,
-    text: "What are your strengths and weaknesses",
+    text: "What steps would you follow if a computer has no internet connection?",
+    suggestedTimeSec: 60,
+  },
+  {
+    id: 8,
+    text: "How do you troubleshoot a keyboard that is not working?",
+    suggestedTimeSec: 60,
+  },
+  {
+    id: 9,
+    text: "What would you do if a printer is not printing or jobs are stuck in the queue?",
+    suggestedTimeSec: 60,
+  },
+  {
+    id: 10,
+    text: "How would you fix a situation where the PC is on but there is no display on the monitor?",
+    suggestedTimeSec: 60,
+  },
+  {
+    id: 11,
+    text: "Tell me about yourself and your experience with desktop or technical support.",
+    suggestedTimeSec: 60,
+  },
+  {
+    id: 12,
+    text: "Why do you want to work in a desktop support or IT support role?",
     suggestedTimeSec: 60,
   },
 ];
 
 const INTERVIEW_2_QUESTIONS: Q[] = [
-  { id: 1, text: "What is trigger", suggestedTimeSec: 60 },
-  { id: 2, text: "What do you mean by joins in SQL", suggestedTimeSec: 60 },
-  { id: 3, text: "How can VoLTE work in a 4G mobile", suggestedTimeSec: 60 },
-  { id: 4, text: "What is an IP address", suggestedTimeSec: 60 },
-  { id: 5, text: "What is Cloud Computing", suggestedTimeSec: 60 },
-  { id: 6, text: "Tell me about yourself", suggestedTimeSec: 60 },
-  { id: 7, text: "How you handle the pressure", suggestedTimeSec: 60 },
+  {
+    id: 1,
+    text: "What are the signs of a hard drive failure and how would you handle it?",
+    suggestedTimeSec: 60,
+  },
+  {
+    id: 2,
+    text: "How do you repair corrupted system files in Windows?",
+    suggestedTimeSec: 60,
+  },
+  {
+    id: 3,
+    text: "What troubleshooting steps would you take if sound is not working on a PC?",
+    suggestedTimeSec: 60,
+  },
+  {
+    id: 4,
+    text: "How would you resolve user account login or profile corruption issues?",
+    suggestedTimeSec: 60,
+  },
+  {
+    id: 5,
+    text: "What steps would you take if an application keeps freezing or crashing?",
+    suggestedTimeSec: 60,
+  },
+  {
+    id: 6,
+    text: "How do you troubleshoot a desktop fan that is very loud?",
+    suggestedTimeSec: 60,
+  },
+  {
+    id: 7,
+    text: "What would you do if a desktop PC does not shut down properly?",
+    suggestedTimeSec: 60,
+  },
+  {
+    id: 8,
+    text: "How do you fix missing or corrupted DLL file errors?",
+    suggestedTimeSec: 60,
+  },
+  {
+    id: 9,
+    text: "What steps would you follow if the system date and time are incorrect?",
+    suggestedTimeSec: 60,
+  },
+  {
+    id: 10,
+    text: "How would you troubleshoot a mouse that is not responding?",
+    suggestedTimeSec: 60,
+  },
+  {
+    id: 11,
+    text: "How do you handle pressure when multiple users report issues at the same time?",
+    suggestedTimeSec: 60,
+  },
+  {
+    id: 12,
+    text: "Describe a situation where you had to explain a technical issue to a non-technical user.",
+    suggestedTimeSec: 60,
+  },
 ];
 
 const INTERVIEW_3_QUESTIONS: Q[] = [
   {
     id: 1,
-    text: "What do you know about the garbage collector",
+    text: "What actions would you take if the system drive is full and the PC is slowing down?",
     suggestedTimeSec: 60,
   },
-  { id: 2, text: "Write a Binary Search program", suggestedTimeSec: 60 },
-  { id: 3, text: "What are enumerations", suggestedTimeSec: 60 },
-  { id: 4, text: "What is a static identifier", suggestedTimeSec: 60 },
-  { id: 5, text: "What is Cryptography", suggestedTimeSec: 60 },
+  {
+    id: 2,
+    text: "How would you handle a computer infected with a virus or malware?",
+    suggestedTimeSec: 60,
+  },
+  {
+    id: 3,
+    text: "What steps would you take if a system freezes frequently?",
+    suggestedTimeSec: 60,
+  },
+  {
+    id: 4,
+    text: "How do you fix screen resolution or display scaling issues?",
+    suggestedTimeSec: 60,
+  },
+  {
+    id: 5,
+    text: "What troubleshooting steps would you take if sound is coming from only one speaker?",
+    suggestedTimeSec: 60,
+  },
   {
     id: 6,
-    text: "How to connect nine dots using three straight lines",
+    text: "How would you reset a forgotten Windows password?",
     suggestedTimeSec: 60,
   },
   {
     id: 7,
-    text: "Are you comfortable working in night shift",
+    text: "What steps would you take if a Windows update fails to install?",
+    suggestedTimeSec: 60,
+  },
+  {
+    id: 8,
+    text: "How would you recover important data that was deleted accidentally?",
+    suggestedTimeSec: 60,
+  },
+  {
+    id: 9,
+    text: "What would you do if the system shows a 'Bootable device not found' error?",
+    suggestedTimeSec: 60,
+  },
+  {
+    id: 10,
+    text: "How do you troubleshoot email issues where a user cannot send or receive emails?",
+    suggestedTimeSec: 60,
+  },
+  {
+    id: 11,
+    text: "Are you comfortable working in shifts or handling on-call support responsibilities?",
+    suggestedTimeSec: 60,
+  },
+  {
+    id: 12,
+    text: "How do you prioritize tasks when you have multiple unresolved tickets?",
     suggestedTimeSec: 60,
   },
 ];

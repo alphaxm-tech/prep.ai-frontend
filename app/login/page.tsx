@@ -92,6 +92,11 @@ export default function LoginPage() {
       password: "pavankumarpadala06@prepai",
       role: "student",
     },
+    {
+      email: "sasidharmarripati08@gmail.com",
+      password: "sasidharmarripati08@prepai",
+      role: "student",
+    },
   ];
 
   const router = useRouter();
