@@ -22,7 +22,7 @@ type SkillsMaster = {
 
 export type AddResumeRequest = {
   resume_details: ResumeDetails;
-  user: User;
+  user: UserTemp;
   skills?: number[];
   softskills?: string[];
   experience?: WorkExperience[];
@@ -69,7 +69,7 @@ export type Education = {
 };
 
 export type resumes = {
-  resume_id: string;
+  ResumeID: string;
   FormatID: number;
   UserID: number;
   Title: string;
@@ -82,3 +82,35 @@ export type resumes = {
 export type UsersResumeResponse = {
   resumes: resumes[];
 };
+
+export type ResumeResponse = {
+  resume_details: ResumeDetails;
+  user: UserTemp;
+  skills?: number[];
+  softskills?: string[];
+  experience?: WorkExperience[];
+  projects?: Project[];
+  education?: Education[];
+};
+
+type UserTemp = {
+  full_name?: string;
+  email?: string;
+  location: string;
+  phone?: string;
+  objective: string;
+  portfolio_website_url?: string;
+  linkedin_url?: string;
+  github_url?: string;
+};
+
+export interface Resume {
+  ResumeID: string; // UUID
+  FormatID: number;
+  UserID: number;
+  Title: string;
+  IsPublic: boolean;
+  IsDefault: boolean;
+  CreatedAt: string; // ISO timestamp
+  UpdatedAt: string; // ISO timestamp
+}

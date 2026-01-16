@@ -11,6 +11,7 @@ export const GET_RESUME_FORMATS = `get-resume-formats`;
 export const GET_SKILLS_MASTER = `get-skills-master`;
 export const POST_SAVE_RESUME = `save-resume`;
 export const GET_USERS_ALL_RESUMES = `get-users-all-resumes`;
+export const GET_COMPLETE_RESUME_BY_ID = `get-complete-resume-by-id`;
 
 /// AUTH endpoints ///
 export const VERIFY_USER_EMAIL = `verify-user-email`;

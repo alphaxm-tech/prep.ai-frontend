@@ -1,20 +1,12 @@
 "use client";
 
 import React, { useState, useMemo, useRef, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { resumeService } from "@/utils/services/resume.service";
-import {
-  VerticalAccordion,
-  SkillsPanel,
-  Tag as SkillTag,
-} from "@/components/resume/SkillsPanel";
+import { SkillsPanel, Tag as SkillTag } from "@/components/resume/SkillsPanel";
 import EducationForm from "@/components/resume/EducationForm";
 import ResumeDropdown from "@/components/ResumeDropdown";
 import BasicDetails from "@/components/resume/BasicDetails";
 import WorkExperienceForm from "@/components/resume/WorkExperienceForm";
-// import ProjectsForm, { Project } from "@/components/resume/ProjectForm";
-
-// resume templates (assumed paths - adjust if required)
 import CreativeResumeTemplate from "../../../components/Resume-formats/CreativeResume";
 import ProfessionalResumeTemplateVertical from "../../../components/Resume-formats/ProfessionalResume";
 import ModernResumeTemplate from "../../../components/Resume-formats/ModernResume";
@@ -22,6 +14,7 @@ import MinimalResumeTemplate from "../../../components/Resume-formats/MinimalRes
 import StandardResumeTemplate from "../../../components/Resume-formats/StandardResume";
 import { useGetUserDetailsAll } from "@/utils/queries/home.queries";
 import {
+  useGetCompleteResumeByID,
   useGetResumeFormats,
   useGetSkillsMaster,
   useGetUsersAllResumes,
@@ -29,9 +22,8 @@ import {
 import {
   AddResumeRequest,
   Education,
-  GetResumeFormatsResponse,
   Project,
-  ResumeFormat,
+  Resume,
   UsersResumeResponse,
   WorkExperience,
 } from "@/utils/api/types/resume.types";
@@ -39,11 +31,19 @@ import {
 import { useSaveResume } from "@/utils/mutations/resume.mutations";
 import ProjectsForm from "@/components/resume/ProjectForm";
 import { useToast } from "@/components/toast/ToastContext";
+import { VerticalAccordion } from "@/components/VerticalAccordian";
 
 type TemplateKey = "modern" | "classic" | "creative" | "minimal" | "standard";
-/**
- * Dummy defaults used to populate the inline preview when user hasn't entered data.
- */
+
+export function capitalizeFullName(name: string): string {
+  return name
+    .trim()
+    .toLowerCase()
+    .split(/\s+/) // handles multiple spaces
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
 const DEFAULT_SAMPLE = {
   fullName: "Full Name",
   title: "Your Job Title (e.g., Fullstack Developer)",
@@ -128,7 +128,9 @@ export default function ResumeBuilderPage() {
 
   const { data: getUserDetailsAllRes } = useGetUserDetailsAll();
 
-  const fullName = getUserDetailsAllRes?.user?.full_name ?? "";
+  const rawName = getUserDetailsAllRes?.user?.full_name ?? "";
+  const fullName = capitalizeFullName(rawName);
+
   const email = getUserDetailsAllRes?.user?.email ?? "";
 
   const service = getUserDetailsAllRes?.userServices?.find(
@@ -183,9 +185,7 @@ export default function ResumeBuilderPage() {
     () => technicalSkills.map((s) => s.skillId),
     [technicalSkills]
   );
-  const [selectedResume, setSelectedResume] =
-    useState<UsersResumeResponse | null>(null);
-
+  const [selectedResume, setSelectedResume] = useState<Resume | null>(null);
   const [showResumeViewModal, setShowResumeViewModal] = useState(false);
 
   const assembledData = useMemo(
@@ -333,7 +333,6 @@ export default function ResumeBuilderPage() {
     skills: technicalSkillIds,
     experience: experiences,
     projects: projects,
-    // education: educations,
   };
 
   // Validation rules (you can adjust which fields are required)
@@ -376,6 +375,8 @@ export default function ResumeBuilderPage() {
 
     const errors = validateAll();
     setValidationErrors(errors);
+
+    console.log(errors);
 
     if (hasAnyErrors(errors)) {
       // If invalid, DO NOT open preview modal; user must fix fields.
@@ -759,29 +760,32 @@ export default function ResumeBuilderPage() {
       setQuotaError(null);
     }
   }, [currentValidation]);
+  const FORMAT_ID_TO_KEY: Record<number, string> = {
+    1: "creative",
+    2: "modern",
+    3: "professional",
+    4: "standard",
+    5: "minimalist",
+  };
 
-  const renderResumeByFormat = (resume: ResumeFormat) => {
-    const formatKey = resume?.format_key as TemplateKey;
-
-    const data = {
-      resume_details: {
-        format_id: resume.format_id,
-        title: resume.title,
-        // is_default: resume.is_default,
-      },
-      user: resume.user,
-      skills: resume.skills,
-      softskills: resume.softskills,
-      education: resume.education,
-      experience: resume.experience,
-      projects: resume.projects,
+  const renderResumeByFormat = (userResumeByIDData: AddResumeRequest) => {
+    const formatId = userResumeByIDData?.resume_details?.format_id;
+    const formatKey = formatId ? FORMAT_ID_TO_KEY[formatId] : undefined;
+    const data: AddResumeRequest = {
+      resume_details: userResumeByIDData.resume_details,
+      user: userResumeByIDData?.user,
+      skills: userResumeByIDData?.skills,
+      softskills: userResumeByIDData?.softskills,
+      education: userResumeByIDData?.education,
+      experience: userResumeByIDData?.experience,
+      projects: userResumeByIDData?.projects,
     };
 
     const props = {
       data,
       showPlaceholders: false,
-      fullName: resume.user?.full_name,
-      email: resume.user?.email,
+      fullName: userResumeByIDData.user?.full_name,
+      email: userResumeByIDData.user?.email,
     };
 
     switch (formatKey) {
@@ -798,6 +802,19 @@ export default function ResumeBuilderPage() {
         return <StandardResumeTemplate {...props} />;
     }
   };
+
+  const handleDropdownClick = (e: any) => {
+    console.log(e.target.value);
+  };
+
+  const resumeId = selectedResume?.ResumeID as string;
+  const {
+    data: userResumeByIDData,
+    isLoading,
+    error,
+  } = useGetCompleteResumeByID(resumeId);
+
+  console.log(userResumeByIDData);
 
   return (
     <div className="min-h-screen bg-white py-8 px-3 sm:px-4 md:px-6 lg:px-8">
@@ -823,6 +840,7 @@ export default function ResumeBuilderPage() {
                   setSelectedResume(resume);
                   setShowResumeViewModal(true);
                 }}
+                // onClick={handleDropdownClick}
               />
             </div>
 
@@ -900,7 +918,11 @@ export default function ResumeBuilderPage() {
           {/* Left: forms */}
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-4">
             <div className="space-y-4">
-              <VerticalAccordion isOpenProp={true} title="Personal details">
+              <VerticalAccordion
+                isOpenProp={true}
+                title="Personal details"
+                invalid={validationErrors}
+              >
                 <BasicDetails
                   isDefault={isDefault}
                   setIsDefault={setIsDefault}
@@ -924,7 +946,11 @@ export default function ResumeBuilderPage() {
                 />
               </VerticalAccordion>
 
-              <VerticalAccordion isOpenProp={false} title="Skills">
+              <VerticalAccordion
+                isOpenProp={false}
+                title="Skills"
+                invalid={validationErrors}
+              >
                 <SkillsPanel
                   skillsMaster={skillsMasterData}
                   skills={technicalSkills}
@@ -945,7 +971,11 @@ export default function ResumeBuilderPage() {
                 />
               </VerticalAccordion>
 
-              <VerticalAccordion isOpenProp={false} title="Education">
+              <VerticalAccordion
+                isOpenProp={false}
+                title="Education"
+                invalid={{ __static: validationErrors?.educations }}
+              >
                 <EducationForm
                   educations={educations}
                   setEducations={setEducations}
@@ -953,7 +983,11 @@ export default function ResumeBuilderPage() {
                 />
               </VerticalAccordion>
 
-              <VerticalAccordion isOpenProp={false} title="Work Experience">
+              <VerticalAccordion
+                isOpenProp={false}
+                title="Work Experience"
+                invalid={{ __static: true }}
+              >
                 <WorkExperienceForm
                   experiences={experiences}
                   setExperiences={setExperiences}
@@ -961,7 +995,11 @@ export default function ResumeBuilderPage() {
                 />
               </VerticalAccordion>
 
-              <VerticalAccordion isOpenProp={false} title="Project Details">
+              <VerticalAccordion
+                isOpenProp={false}
+                title="Project Details"
+                invalid={{ __static: true }}
+              >
                 <ProjectsForm
                   projects={projects}
                   setProjects={setProjects}
@@ -1194,10 +1232,10 @@ export default function ResumeBuilderPage() {
             <div className="flex items-center justify-between p-4 border-b">
               <div>
                 <div className="text-sm font-semibold text-gray-800">
-                  {selectedResume.title}
+                  {/* {selectedResume.title} */}
                 </div>
                 <div className="text-xs text-gray-500">
-                  Format: {selectedResume.format_key}
+                  {/* Format: {selectedResume.format_key} */}
                 </div>
               </div>
 
@@ -1210,7 +1248,9 @@ export default function ResumeBuilderPage() {
             </div>
 
             {/* Content */}
-            <div className="p-6">{renderResumeByFormat(selectedResume)}</div>
+            <div className="p-6">
+              {/* {renderResumeByFormat(userResumeByIDData!)} */}
+            </div>
           </div>
         </div>
       )}

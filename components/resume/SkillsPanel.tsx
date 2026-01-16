@@ -1,41 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-
-export function VerticalAccordion({
-  title,
-  children,
-  isOpenProp = false,
-}: {
-  title: string;
-  children: React.ReactNode;
-  isOpenProp?: boolean;
-}) {
-  const [open, setOpen] = useState(isOpenProp);
-  useEffect(() => setOpen(isOpenProp), [isOpenProp]);
-
-  return (
-    <div className="w-full rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden">
-      <button
-        onClick={() => setOpen((s) => !s)}
-        className="w-full px-5 py-3 flex items-center justify-between text-left focus:outline-none"
-        aria-expanded={open}
-      >
-        <div className="flex items-center gap-3">
-          <div className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
-          <h3 className="text-sm font-semibold text-gray-800">{title}</h3>
-        </div>
-        <div className="text-sm text-gray-500">{open ? "Close" : "Open"}</div>
-      </button>
-
-      <div
-        className={`transition-[max-height,opacity] duration-300 overflow-hidden ${
-          open ? "max-h-[1200px] opacity-100" : "max-h-0 opacity-0"
-        }`}
-      >
-        <div className="px-5 pb-5">{children}</div>
-      </div>
-    </div>
-  );
-}
+import React, { useMemo, useState } from "react";
 
 export type Tag = {
   id: string;
@@ -54,28 +17,22 @@ export function SkillsPanel({
   setSkills,
   softSkills,
   setSoftSkills,
-  validation,
+  validation = {},
 }: {
   skillsMaster: any;
   skills: Tag[];
   setSkills: (t: Tag[]) => void;
   softSkills: Tag[];
   setSoftSkills: (t: Tag[]) => void;
-  validation?: { skillsMissing?: boolean };
+  validation?: {
+    skillsMissing?: boolean;
+    softSkillsMissing?: boolean;
+  };
 }) {
   const [inputSoft, setInputSoft] = useState("");
   const [selectedSkill, setSelectedSkill] = useState<number | "">("");
 
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingText, setEditingText] = useState("");
-  const [editingProf, setEditingProf] = useState<Tag["proficiency"] | null>(
-    null
-  );
-
-  const editRef = useRef<HTMLInputElement | null>(null);
-  useEffect(() => {
-    if (editingId && editRef.current) editRef.current.focus();
-  }, [editingId]);
+  const invalid = (k: "skillsMissing" | "softSkillsMissing") => !!validation[k];
 
   const addTag = (
     list: Tag[],
@@ -105,36 +62,6 @@ export function SkillsPanel({
     id: string
   ) => {
     listSetter(list.filter((x) => x.id !== id));
-    if (editingId === id) {
-      setEditingId(null);
-      setEditingText("");
-      setEditingProf(null);
-    }
-  };
-
-  const commitEdit = () => {
-    if (!editingId) return;
-
-    const update = (arr: Tag[]) =>
-      arr.map((t) =>
-        t.id === editingId
-          ? {
-              ...t,
-              text: editingText.trim() || t.text,
-              proficiency: editingProf,
-            }
-          : t
-      );
-
-    if (skills.some((t) => t.id === editingId)) {
-      setSkills(update(skills));
-    } else {
-      setSoftSkills(update(softSkills));
-    }
-
-    setEditingId(null);
-    setEditingText("");
-    setEditingProf(null);
   };
 
   const handleAddSkill = () => {
@@ -160,23 +87,47 @@ export function SkillsPanel({
     [skills.length, softSkills.length]
   );
 
+  const handleSoftSkillEnter = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault(); // important if inside a form
+      handleAddSoftSkill();
+    }
+  };
+
+  const handleSkillEnter = (e: React.KeyboardEvent<HTMLSelectElement>) => {
+    if ((e.key = "Enter")) {
+      e.preventDefault();
+      handleAddSkill();
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {/* Technical Skills */}
-      <div className="p-4 rounded-xl border border-gray-200 bg-gray-50/40 shadow-sm">
+      <div
+        className={`p-4 rounded-xl border bg-gray-50/40 shadow-sm border-gray-200`}
+      >
         <h4 className="text-sm font-semibold mb-2 text-gray-800">Skills</h4>
 
         <div className="flex gap-2">
           <select
             value={selectedSkill}
+            onKeyDown={handleSkillEnter}
             onChange={(e) =>
               setSelectedSkill(
                 e.target.value === "" ? "" : Number(e.target.value)
               )
             }
-            className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:border-yellow-300"
+            className={`flex-1 rounded-lg bg-white px-4 py-2 text-sm border
+                          focus:outline-none focus:ring-2 focus:ring-yellow-200 focus:border-yellow-300
+                          ${
+                            invalid("skillsMissing")
+                              ? "border-red-200 ring-1 ring-red-200"
+                              : "border-gray-300"
+                          }
+                        `}
           >
-            <option value="" disabled>
+            <option value="" disabled className="text-gray-400">
               Select a skill
             </option>
             {skillsMaster?.skills.map((skill: any) => (
@@ -193,6 +144,12 @@ export function SkillsPanel({
             +
           </button>
         </div>
+
+        {invalid("skillsMissing") && (
+          <p className="mt-1 text-xs text-red-600">
+            At least one technical skill is required.
+          </p>
+        )}
 
         <div className="mt-3 flex flex-wrap gap-2">
           {skills.map((t) => (
@@ -213,7 +170,13 @@ export function SkillsPanel({
       </div>
 
       {/* Soft Skills */}
-      <div className="p-4 rounded-xl border border-gray-200 bg-gray-50/40 shadow-sm">
+      <div
+        className={`p-4 rounded-xl border bg-gray-50/40 shadow-sm ${
+          invalid("softSkillsMissing")
+            ? "border-red-400 ring-1 ring-red-200"
+            : "border-gray-200"
+        }`}
+      >
         <h4 className="text-sm font-semibold mb-2 text-gray-800">
           Soft Skills
         </h4>
@@ -223,7 +186,12 @@ export function SkillsPanel({
             value={inputSoft}
             onChange={(e) => setInputSoft(e.target.value)}
             placeholder="e.g. Communication"
-            className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:border-yellow-300"
+            className={`flex-1 rounded-lg bg-white px-4 py-2 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 border ${
+              invalid("softSkillsMissing")
+                ? "border-red-400 focus:ring-red-200"
+                : "border-gray-300 focus:ring-yellow-300"
+            }`}
+            onKeyDown={handleSoftSkillEnter}
           />
           <button
             onClick={handleAddSoftSkill}
@@ -232,6 +200,12 @@ export function SkillsPanel({
             +
           </button>
         </div>
+
+        {invalid("softSkillsMissing") && (
+          <p className="mt-1 text-xs text-red-600">
+            Add at least one soft skill.
+          </p>
+        )}
 
         <div className="mt-3 flex flex-wrap gap-2">
           {softSkills.map((t) => (

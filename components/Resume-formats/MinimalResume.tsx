@@ -13,9 +13,9 @@ export default function MinimalResumeTemplate({
   email,
 }: {
   data: AddResumeRequest;
-  showPlaceholders?: boolean;
-  fullName: string;
-  email: string;
+  showPlaceholders: boolean;
+  fullName?: string;
+  email?: string;
 }) {
   const { resume_details, user, experience, projects, education, softskills } =
     data;

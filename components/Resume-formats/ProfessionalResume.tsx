@@ -13,9 +13,9 @@ export default function ProfessionalResumeTemplateVertical({
   email,
 }: {
   data: AddResumeRequest;
-  showPlaceholders?: boolean;
-  fullName: string;
-  email: string;
+  showPlaceholders: boolean;
+  fullName?: string;
+  email?: string;
 }) {
   const { resume_details, user, softskills, education, experience, projects } =
     data;

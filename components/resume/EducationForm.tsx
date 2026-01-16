@@ -89,6 +89,17 @@ export default function EducationForm({
         className={`mb-6 p-4 bg-gray-50/40 rounded-xl border shadow-sm space-y-3 ${
           sectionInvalid ? invalidBorder : baseBorder
         }`}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            const target = e.target as HTMLElement;
+
+            // Do NOT hijack Enter inside textarea (future-proofing)
+            if (target.tagName === "TEXTAREA") return;
+
+            e.preventDefault();
+            addEducation();
+          }
+        }}
       >
         {sectionInvalid && (
           <div className="text-sm text-red-600 mb-1">
@@ -148,7 +159,7 @@ export default function EducationForm({
               value={newEdu.start_year}
               onChange={(e) => handleNewChange("start_year", e.target.value)}
               className={`w-full ${inputClasses} ${baseBorder}`}
-              min={1950}
+              min={1995}
               max={new Date().getFullYear()}
             />
           </div>

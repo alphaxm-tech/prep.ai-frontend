@@ -1,5 +1,6 @@
 import {
   BASE_API_URL,
+  GET_COMPLETE_RESUME_BY_ID,
   GET_RESUME_FORMATS,
   GET_SKILLS_MASTER,
   GET_USERS_ALL_RESUMES,
@@ -44,6 +45,13 @@ export const resumeService = {
       `${BASE_API_URL}/${RESUME}/${GET_USERS_ALL_RESUMES}`
     );
 
+    return response.data;
+  },
+
+  getCompleteResumeByID: async (resumeId: string) => {
+    const response = await api.get(
+      `${BASE_API_URL}/${RESUME}/${GET_COMPLETE_RESUME_BY_ID}/${resumeId}`
+    );
     return response.data;
   },
 };
