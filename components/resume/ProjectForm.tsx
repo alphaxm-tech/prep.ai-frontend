@@ -130,6 +130,16 @@ export default function ProjectsForm({
       {/* --- Add New Project Form --- */}
       <div
         className={`p-4 bg-gray-50/40 rounded-xl border shadow-sm flex flex-col gap-3 mb-6 ${baseBorder}`}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            const target = e.target as HTMLElement;
+
+            if (target.tagName === "TEXTAREA") return;
+
+            e.preventDefault();
+            addProject();
+          }
+        }}
       >
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -144,6 +154,7 @@ export default function ProjectsForm({
               className={`flex-1 ${inputClasses} ${baseBorder}`}
             />
             <button
+              type="button"
               onClick={addProject}
               className="flex items-center justify-center w-10 h-10 rounded-full bg-yellow-300 text-white text-xl shadow-sm hover:bg-yellow-400"
             >

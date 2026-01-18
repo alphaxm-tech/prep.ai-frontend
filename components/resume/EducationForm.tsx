@@ -28,16 +28,10 @@ export default function EducationForm({
   };
 
   const addEducation = () => {
-    if (
-      !newEdu.degree &&
-      !newEdu.institute &&
-      !newEdu.location &&
-      !newEdu.start_year &&
-      !newEdu.end_year &&
-      !newEdu.grade
-    ) {
+    if (!newEdu.degree || !newEdu.institute) {
       return;
     }
+
     setEducations([...educations, newEdu]);
     setNewEdu({
       degree: "",
@@ -110,7 +104,7 @@ export default function EducationForm({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Degree
+              Degree*
             </label>
             <input
               type="text"
@@ -123,7 +117,7 @@ export default function EducationForm({
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Institute
+              Institute*
             </label>
             <input
               type="text"
@@ -194,6 +188,7 @@ export default function EducationForm({
 
           <div className="flex items-end">
             <button
+              type="button"
               onClick={addEducation}
               className="flex items-center justify-center w-10 h-10 rounded-full bg-yellow-300 text-white text-xl shadow-sm hover:bg-yellow-400"
             >

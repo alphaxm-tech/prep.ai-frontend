@@ -14,7 +14,7 @@ export function VerticalAccordion({
   const [open, setOpen] = useState(isOpenProp);
   useEffect(() => setOpen(isOpenProp), [isOpenProp]);
 
-  //   console.log(title, invalid?.__static);
+  if (title == "Education") console.log(title, invalid?.__static);
 
   return (
     <div

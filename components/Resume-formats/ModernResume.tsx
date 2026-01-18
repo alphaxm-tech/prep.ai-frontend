@@ -109,12 +109,12 @@ export default function ModernResumeTemplate({
               ))
             ) : showPlaceholders ? (
               <>
-                <span className="px-3 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-full">
+                {/* <span className="px-3 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-full">
                   Communication
                 </span>
                 <span className="px-3 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-full">
                   Ownership
-                </span>
+                </span> */}
               </>
             ) : (
               <span className="text-sm text-gray-400">No skills added</span>

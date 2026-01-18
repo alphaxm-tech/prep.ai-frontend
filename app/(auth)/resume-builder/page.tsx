@@ -59,13 +59,13 @@ const DEFAULT_SAMPLE = {
   technicalSkills: [
     "Skill 1 (e.g., React)",
     "Skill 2 (e.g., TypeScript)",
-    "Skill 3 (e.g., Solidity)",
+    // "Skill 3 (e.g., Solidity)",
   ],
 
   softSkills: [
     "Soft Skill 1 (e.g., Communication)",
     "Soft Skill 2 (e.g., Ownership)",
-    "Soft Skill 3 (e.g., Curiosity)",
+    // "Soft Skill 3 (e.g., Curiosity)",
   ],
 
   educations: [
@@ -180,7 +180,10 @@ export default function ResumeBuilderPage() {
     );
   }, [resumeData?.resumeFormats, resumeFormat]);
 
-  const skillNames = technicalSkills.map((skill) => skill.text);
+  const skillNames = useMemo(
+    () => technicalSkills.map((skill) => skill.text),
+    [technicalSkills]
+  );
   const technicalSkillIds = useMemo(
     () => technicalSkills.map((s) => s.skillId),
     [technicalSkills]
@@ -250,7 +253,7 @@ export default function ResumeBuilderPage() {
       // MUST be number[]
       skills:
         technicalSkillIds.length > 0
-          ? technicalSkillIds
+          ? skillNames
           : DEFAULT_SAMPLE.technicalSkills,
 
       softskills:
@@ -432,6 +435,7 @@ export default function ResumeBuilderPage() {
 
     const errors = validateAll();
     setValidationErrors(errors);
+
     if (hasAnyErrors(errors)) {
       // Shouldn't happen because modal only opens when valid, but be safe
       return;
@@ -760,6 +764,7 @@ export default function ResumeBuilderPage() {
       setQuotaError(null);
     }
   }, [currentValidation]);
+  
   const FORMAT_ID_TO_KEY: Record<number, string> = {
     1: "creative",
     2: "modern",
@@ -814,7 +819,11 @@ export default function ResumeBuilderPage() {
     error,
   } = useGetCompleteResumeByID(resumeId);
 
-  console.log(userResumeByIDData);
+  // console.log(userResumeByIDData);
+
+  useEffect(() => {
+    console.log(hasAnyErrors);
+  }, [hasAnyErrors]);
 
   return (
     <div className="min-h-screen bg-white py-8 px-3 sm:px-4 md:px-6 lg:px-8">

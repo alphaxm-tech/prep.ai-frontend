@@ -120,7 +120,7 @@ export default function BasicDetails({
       <div className="mb-4">
         <div className="flex items-center justify-between">
           <label className="block text-sm font-medium text-gray-700">
-            Resume Title
+            Resume Title*
             <span className="ml-2 text-xs font-normal text-gray-500">
               (for reference only, not shown on the resume)
             </span>
@@ -184,6 +184,7 @@ export default function BasicDetails({
                   py-2.5
                   text-gray-900
                   focus:outline-none
+                  text-sm
                   ${
                     capitalizeFullName(fullName)
                       ? "bg-gray-100 cursor-not-allowed"
@@ -207,7 +208,7 @@ export default function BasicDetails({
 
         <div>
           <label className="block text-sm font-medium text-gray-700">
-            Location
+            Location <span className="text-xs text-gray-400">(required)</span>
           </label>
           <input
             value={location}
@@ -244,6 +245,7 @@ export default function BasicDetails({
                   px-4
                   py-2.5
                   focus:outline-none
+                  text-sm
                   ${
                     email
                       ? "bg-gray-100 text-gray-900 cursor-not-allowed"

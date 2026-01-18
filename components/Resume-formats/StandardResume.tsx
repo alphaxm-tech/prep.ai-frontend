@@ -18,13 +18,25 @@ export default function StandardResumeTemplate({
   fullName?: string;
   email?: string;
 }) {
-  const { resume_details, user, softskills, education, experience, projects } =
-    data;
+  const {
+    resume_details,
+    user,
+    skills,
+    softskills,
+    education,
+    experience,
+    projects,
+  } = data;
 
   const ph = (val?: string, fallback = "") =>
     val && val.trim() ? val : showPlaceholders ? fallback : "";
 
   // console.log(projects);
+
+  const allSkills =
+    skills?.length || softskills?.length
+      ? [...(skills ?? []), ...(softskills ?? [])]
+      : [];
 
   return (
     <div className="max-w-4xl mx-auto my-8 bg-white shadow-md rounded-lg border border-gray-200 p-8">
@@ -55,8 +67,44 @@ export default function StandardResumeTemplate({
           </p>
         </section>
 
+        {(allSkills.length || showPlaceholders) && (
+          <section>
+            <h2 className="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-1 mb-2">
+              Skills
+            </h2>
+
+            <div className="flex flex-wrap gap-2">
+              {allSkills.length
+                ? allSkills.map((s, i) => (
+                    <span
+                      key={i}
+                      className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded"
+                    >
+                      {s}
+                    </span>
+                  ))
+                : showPlaceholders && (
+                    <>
+                      <span className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded">
+                        React
+                      </span>
+                      <span className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded">
+                        TypeScript
+                      </span>
+                      <span className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded">
+                        Communication
+                      </span>
+                      <span className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded">
+                        Ownership
+                      </span>
+                    </>
+                  )}
+            </div>
+          </section>
+        )}
+
         {/* Skills (soft only) */}
-        {(softskills?.length || showPlaceholders) && (
+        {/* {(softskills?.length || showPlaceholders) && (
           <section>
             <h2 className="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-1 mb-2">
               Skills
@@ -83,7 +131,7 @@ export default function StandardResumeTemplate({
                   )}
             </div>
           </section>
-        )}
+        )} */}
 
         {/* Education */}
         <section>
