@@ -1,11 +1,70 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import QuizModal, { Question } from "../../../../components/QuizModal";
+
+// ✅ IMPORT REAL QUESTION BANK
+import {
+  infosysQuestions,
+  tcsQuestions,
+  wiproQuestions,
+  accentureQuestions,
+} from "../questionBank";
+
+/**
+ * Convert QuestionBank question → QuizModal question
+ * (minimal & deterministic, no randomness)
+ */
+function mapToQuizModalQuestions(
+  questions: {
+    id: number;
+    question: string;
+    answer: string | number;
+    options?: string[];
+    correctOptionIndex?: number;
+  }[],
+  prefix: string,
+): Question[] {
+  return questions.map((q) => {
+    const id = `${prefix}-q${q.id}`;
+
+    // CASE 1: options already exist in questionBank
+    if (q.options && typeof q.correctOptionIndex === "number") {
+      return {
+        id,
+        text: q.question,
+        options: q.options.map((opt, idx) => ({
+          id: `${id}-${idx}`,
+          text: opt,
+        })),
+        correctOptionId: `${id}-${q.correctOptionIndex}`,
+      };
+    }
+
+    // CASE 2: no options → generate numeric options
+    const base =
+      typeof q.answer === "number" ? q.answer : Number(q.answer) || 10;
+
+    const generatedOptions = [base, base + 1, base - 1, base + 2];
+
+    return {
+      id,
+      text: q.question,
+      options: generatedOptions.map((opt, idx) => ({
+        id: `${id}-${idx}`,
+        text: String(opt),
+      })),
+      correctOptionId: `${id}-0`, // first one is always correct
+    };
+  });
+}
 
 export default function QuizTestPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const company = searchParams.get("company") || "Quiz";
+
   const [open, setOpen] = useState(true);
   const [result, setResult] = useState<{
     score: number;
@@ -13,126 +72,23 @@ export default function QuizTestPage() {
   } | null>(null);
 
   /**
-   * Real JavaScript questions (Demo-ready)
+   * ✅ Company-wise REAL questions
    */
-  const QUESTIONS = useMemo<Question[]>(
-    () => [
-      {
-        id: "q1",
-        text: "What is the output of `typeof null` in JavaScript?",
-        options: [
-          { id: "q1-a", text: "null" },
-          { id: "q1-b", text: "object" },
-          { id: "q1-c", text: "undefined" },
-          { id: "q1-d", text: "number" },
-        ],
-        correctOptionId: "q1-b",
-      },
-      {
-        id: "q2",
-        text: "Which keyword is used to declare a constant in JavaScript?",
-        options: [
-          { id: "q2-a", text: "var" },
-          { id: "q2-b", text: "let" },
-          { id: "q2-c", text: "const" },
-          { id: "q2-d", text: "static" },
-        ],
-        correctOptionId: "q2-c",
-      },
-      {
-        id: "q3",
-        text: "What does `===` operator do?",
-        options: [
-          { id: "q3-a", text: "Compares value only" },
-          { id: "q3-b", text: "Compares type only" },
-          { id: "q3-c", text: "Compares value and type" },
-          { id: "q3-d", text: "Assignment" },
-        ],
-        correctOptionId: "q3-c",
-      },
-      {
-        id: "q4",
-        text: "Which method converts JSON string into a JavaScript object?",
-        options: [
-          { id: "q4-a", text: "JSON.stringify()" },
-          { id: "q4-b", text: "JSON.parse()" },
-          { id: "q4-c", text: "JSON.object()" },
-          { id: "q4-d", text: "JSON.convert()" },
-        ],
-        correctOptionId: "q4-b",
-      },
-      {
-        id: "q5",
-        text: "What will `Boolean([])` return?",
-        options: [
-          { id: "q5-a", text: "false" },
-          { id: "q5-b", text: "true" },
-          { id: "q5-c", text: "undefined" },
-          { id: "q5-d", text: "null" },
-        ],
-        correctOptionId: "q5-b",
-      },
-      {
-        id: "q6",
-        text: "Which of the following is NOT a primitive type?",
-        options: [
-          { id: "q6-a", text: "string" },
-          { id: "q6-b", text: "number" },
-          { id: "q6-c", text: "object" },
-          { id: "q6-d", text: "boolean" },
-        ],
-        correctOptionId: "q6-c",
-      },
-      {
-        id: "q7",
-        text: "What is the scope of variables declared with `let`?",
-        options: [
-          { id: "q7-a", text: "Function scope" },
-          { id: "q7-b", text: "Block scope" },
-          { id: "q7-c", text: "Global scope only" },
-          { id: "q7-d", text: "Module scope only" },
-        ],
-        correctOptionId: "q7-b",
-      },
-      {
-        id: "q8",
-        text: "Which array method creates a new array with filtered values?",
-        options: [
-          { id: "q8-a", text: "map()" },
-          { id: "q8-b", text: "filter()" },
-          { id: "q8-c", text: "reduce()" },
-          { id: "q8-d", text: "forEach()" },
-        ],
-        correctOptionId: "q8-b",
-      },
-      {
-        id: "q9",
-        text: "What is a closure in JavaScript?",
-        options: [
-          { id: "q9-a", text: "A function inside another function" },
-          {
-            id: "q9-b",
-            text: "A function that remembers its lexical scope",
-          },
-          { id: "q9-c", text: "A block of code" },
-          { id: "q9-d", text: "An object reference" },
-        ],
-        correctOptionId: "q9-b",
-      },
-      {
-        id: "q10",
-        text: "Which statement is true about `var`?",
-        options: [
-          { id: "q10-a", text: "Block scoped" },
-          { id: "q10-b", text: "Function scoped" },
-          { id: "q10-c", text: "Cannot be redeclared" },
-          { id: "q10-d", text: "Immutable" },
-        ],
-        correctOptionId: "q10-b",
-      },
-    ],
-    []
-  );
+  const QUESTIONS = useMemo<Question[]>(() => {
+    if (company.includes("TCS"))
+      return mapToQuizModalQuestions(tcsQuestions, "TCS");
+
+    if (company.includes("Infosys"))
+      return mapToQuizModalQuestions(infosysQuestions, "Infosys");
+
+    if (company.includes("Wipro"))
+      return mapToQuizModalQuestions(wiproQuestions, "Wipro");
+
+    if (company.includes("Accenture"))
+      return mapToQuizModalQuestions(accentureQuestions, "Accenture");
+
+    return [];
+  }, [company]);
 
   /**
    * Compute score
@@ -152,30 +108,29 @@ export default function QuizTestPage() {
         <button
           onClick={() => router.push("/quiz")}
           className="
-      inline-flex items-center gap-2 mb-10
-      text-sm font-semibold text-yellow-800
-      bg-yellow-100/70 hover:bg-yellow-200
-      px-4 py-2 rounded-full
-      shadow-sm hover:shadow-md
-      transition-all
-    "
+            inline-flex items-center gap-2 mb-10
+            text-sm font-semibold text-yellow-800
+            bg-yellow-100/70 hover:bg-yellow-200
+            px-4 py-2 rounded-full
+            shadow-sm hover:shadow-md
+            transition-all
+          "
         >
           <span className="text-lg leading-none">←</span>
           Back to Quizzes
         </button>
 
-        {/* Title Section */}
+        {/* Title */}
         <div className="mb-10">
           <h1 className="text-4xl font-extrabold tracking-tight text-gray-900 mb-3">
-            JavaScript Fundamentals
+            {company}
             <span className="block text-yellow-600 text-lg font-semibold mt-1">
-              Demo Test
+              Mock Test
             </span>
           </h1>
 
           <p className="text-gray-600 text-lg max-w-2xl">
-            Answer all questions and submit to instantly evaluate your
-            JavaScript fundamentals.
+            25 questions · 25 minutes · Company-style assessment
           </p>
         </div>
 
@@ -204,23 +159,23 @@ export default function QuizTestPage() {
 
             <div className="mt-4">
               <p className="text-base text-gray-700 font-medium">
-                {result.score >= 8
-                  ? "Excellent! Strong JavaScript fundamentals 🚀"
-                  : result.score >= 5
-                  ? "Good attempt! Keep improving 👍"
-                  : "Needs more practice 💪"}
+                {result.score >= 18
+                  ? "Excellent performance 🚀"
+                  : result.score >= 12
+                    ? "Good attempt 👍"
+                    : "Needs more practice 💪"}
               </p>
             </div>
           </div>
         )}
       </div>
 
-      {/* QUIZ MODAL (portal-controlled, no wrapper) */}
+      {/* QUIZ MODAL */}
       <QuizModal
         isOpen={open}
         questions={QUESTIONS}
-        durationMinutes={20}
-        title="JavaScript Fundamentals"
+        durationMinutes={25}
+        title={company}
         onClose={() => setOpen(false)}
         onSubmit={(answers: Record<string, string>) => {
           const score = calculateScore(answers);

@@ -12,10 +12,10 @@ const userStats = {
 };
 
 const leaderboard = [
-  { name: "Alex Johnson", score: 2450 },
-  { name: "Sarah Chen", score: 2380 },
-  { name: "Mike Rodriguez", score: 2290 },
-  { name: "Emily Davis", score: 2180 },
+  { name: "Arjun Reddy", score: 2450 },
+  { name: "Suresh Kumar", score: 2380 },
+  { name: "Karthik", score: 2290 },
+  { name: "Ananya Iyer", score: 2180 },
   { name: "You", score: 1950 },
 ];
 
@@ -30,52 +30,47 @@ type Quiz = {
 
 const quizzes: Quiz[] = [
   {
-    title: "JavaScript Fundamentals",
-    questions: 20,
-    duration: "30 minutes",
-    difficulty: "Easy",
-    attempts: 156,
-    bestScore: 85,
-  },
-  {
-    title: "React Basics",
+    title: "TCS Placement Aptitude Test",
     questions: 25,
-    duration: "40 minutes",
-    difficulty: "Medium",
-    attempts: 102,
-    bestScore: 78,
-  },
-  {
-    title: "Data Structures & Algorithms",
-    questions: 30,
-    duration: "60 minutes",
-    difficulty: "Hard",
-    attempts: 85,
-    bestScore: 92,
-  },
-  {
-    title: "TypeScript Essentials",
-    questions: 18,
     duration: "25 minutes",
-    difficulty: "Easy",
-    attempts: 134,
-    bestScore: 88,
+    difficulty: "Medium",
+    attempts: 184,
+    bestScore: 82,
   },
   {
-    title: "Node.js & Express",
-    questions: 22,
-    duration: "35 minutes",
+    title: "Infosys Technical Assessment",
+    questions: 25,
+    duration: "25 minutes",
     difficulty: "Medium",
-    attempts: 97,
-    bestScore: 81,
+    attempts: 163,
+    bestScore: 79,
+  },
+  {
+    title: "Wipro Written Test",
+    questions: 25,
+    duration: "25 minutes",
+    difficulty: "Medium",
+    attempts: 141,
+    bestScore: 76,
+  },
+  {
+    title: "Accenture Cognitive & Technical Test",
+    questions: 25,
+    duration: "25 minutes",
+    difficulty: "Medium",
+    attempts: 156,
+    bestScore: 80,
   },
 ];
 
 export default function Quiz() {
   const router = useRouter();
-  const handleStartQuiz = () => {
-    router.push("/quiz/test");
+
+  // inside Quiz component
+  const handleStartQuiz = (title: string) => {
+    router.push(`/quiz/test?company=${encodeURIComponent(title)}`);
   };
+
   return (
     <div className="min-h-screen bg-white px-4 md:px-8 py-8 font-sans">
       {/* Header */}
@@ -224,8 +219,8 @@ export default function Quiz() {
                         quiz.difficulty === "Easy"
                           ? "text-green-600"
                           : quiz.difficulty === "Medium"
-                          ? "text-yellow-600"
-                          : "text-red-600"
+                            ? "text-yellow-600"
+                            : "text-red-600"
                       }`}
                     >
                       {quiz.difficulty}
@@ -240,7 +235,7 @@ export default function Quiz() {
                 </div>
                 <button
                   className="bg-yellow-400 hover:bg-yellow-300 transition px-8 py-3 text-yellow-900 font-semibold rounded-lg shadow-lg text-lg mt-4 md:mt-0"
-                  onClick={handleStartQuiz}
+                  onClick={() => handleStartQuiz(quiz.title)}
                 >
                   Start Quiz
                 </button>
@@ -266,10 +261,10 @@ export default function Quiz() {
                   {idx + 1 === 1
                     ? "🥇 "
                     : idx + 1 === 2
-                    ? "🥈 "
-                    : idx + 1 === 3
-                    ? "🥉 "
-                    : ""}
+                      ? "🥈 "
+                      : idx + 1 === 3
+                        ? "🥉 "
+                        : ""}
                   {user.name}
                 </span>
                 <span>{user.score}</span>
