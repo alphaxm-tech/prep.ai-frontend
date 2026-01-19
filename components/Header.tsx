@@ -68,7 +68,7 @@ export function Header() {
 
             {/* Main Brand */}
             <div className="flex items-center gap-0.5 font-extrabold tracking-tight">
-              <span className="text-gray-900 text-3xl pr-1">Prep</span>
+              <span className="text-gray-900 text-3xl">Prep</span>
               <span className="text-yellow-700 text-3xl">Buddy</span>
               <span className="ml-1 text-yellow-700 text-xs font-semibold relative -top-2">
                 AI
