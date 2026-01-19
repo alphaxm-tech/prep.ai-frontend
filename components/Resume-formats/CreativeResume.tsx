@@ -1,286 +1,188 @@
 // components/resume-formats/CreativeResume.tsx
 import React from "react";
-
-type Education = {
-  level: string;
-  institute: string;
-  location: string;
-  duration: string;
-  grade: string;
-};
-
-type WorkExperience = {
-  company: string;
-  role: string;
-  duration: string;
-  description: string;
-  logo?: string;
-};
-
-type Project = {
-  title: string;
-  description: string;
-};
-
-type ResumeData = {
-  fullName: string;
-  location?: string;
-  email?: string;
-  phone?: string;
-  objective?: string;
-  portfolioLink?: string;
-  githubLink?: string;
-  linkedinLink?: string;
-  technicalSkills?: string[];
-  softSkills?: string[];
-  educations?: Education[];
-  experiences?: WorkExperience[];
-  projects?: Project[];
-};
+import {
+  AddResumeRequest,
+  Education,
+  WorkExperience,
+  Project,
+} from "@/utils/api/types/resume.types";
 
 export default function CreativeResumeTemplate({
   data,
   showPlaceholders = true,
+  fullName,
+  email,
 }: {
-  data: ResumeData;
-  showPlaceholders?: boolean;
+  data: AddResumeRequest;
+  showPlaceholders: boolean;
+  fullName?: string;
+  email?: string;
 }) {
-  // helper to return either value or placeholder (for inline preview)
-  const ph = (val?: string, fallback = "") => {
-    if (val && val.trim() !== "") return val;
-    if (showPlaceholders) return fallback;
-    return "";
-  };
+  const { resume_details, user, experience, projects, education, softskills } =
+    data;
 
-  const renderListOrPlaceholder = (arr?: string[], placeholder?: string) => {
-    if (arr && arr.length) return arr;
-    if (showPlaceholders) return [placeholder ?? "—"];
-    return [];
-  };
+  const ph = (val?: string, fallback = "") =>
+    val && val.trim() ? val : showPlaceholders ? fallback : "";
+
+  console.log(data);
 
   return (
     <div className="max-w-4xl mx-auto my-10 p-6 bg-gradient-to-b from-white to-slate-50 rounded-2xl shadow-lg border border-gray-100">
-      {/* Decorative header strip */}
+      {/* Decorative header */}
       <div className="relative -mx-6 -mt-6 mb-6">
         <div className="h-2 rounded-t-2xl bg-gradient-to-r from-indigo-400 via-teal-300 to-rose-300 opacity-90" />
       </div>
 
       {/* HEADER */}
-      <header className="text-center mb-4">
-        <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight text-slate-900">
-          {ph(data.fullName, "Your Name")}
+      <header className="text-center mb-6">
+        <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900">
+          {ph(fullName, "Resume Title")}
         </h1>
-        <div className="mt-2 text-sm md:text-base text-slate-600 flex flex-col md:flex-row items-center justify-center gap-3">
-          <span className="inline-flex items-center gap-2 text-slate-500">
-            <span className="text-indigo-400">📍</span>
-            <span>{ph(data.location, "Your location")}</span>
-          </span>
 
-          <span className="inline-flex items-center gap-2 text-slate-500">
-            <span className="text-teal-400">✉️</span>
-            <span className="truncate">
-              {ph(data.email, "you@example.com")}
-            </span>
-          </span>
-
-          <span className="inline-flex items-center gap-2 text-slate-500">
-            <span className="text-rose-400">📞</span>
-            <span>{ph(data.phone, "0000000000")}</span>
-          </span>
+        <div className="mt-2 text-sm md:text-base text-slate-600 flex flex-wrap justify-center gap-4">
+          <span>📧 {ph(email, "example@gmail.com")}</span>
+          <span>📍 {ph(user.location, "Your location")}</span>
+          <span>📞 {ph(user.phone, "0000000000")}</span>
         </div>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* LEFT column: compact info */}
-        <aside className="md:col-span-1 space-y-4">
-          {/* Objective card */}
-          {(data.objective || showPlaceholders) && (
-            <div className="p-4 rounded-xl bg-white/80 border border-gray-100 shadow-sm">
+        {/* LEFT */}
+        <aside className="space-y-4">
+          {/* Objective */}
+          {(user.objective || showPlaceholders) && (
+            <div className="p-4 rounded-xl bg-white border shadow-sm">
               <h3 className="text-sm font-semibold text-indigo-700 flex items-center gap-2">
-                <span className="text-lg">🎯</span> Objective
+                🎯 Objective
               </h3>
-              <p className="mt-2 text-sm text-slate-700 leading-relaxed">
-                {ph(
-                  data.objective,
-                  "Add your objective — what do you want to do?"
-                )}
+              <p className="mt-2 text-sm text-slate-700">
+                {ph(user.objective, "Briefly describe your career objective")}
               </p>
             </div>
           )}
 
           {/* Links */}
-          <div className="p-4 rounded-xl bg-white/90 border border-gray-100 shadow-sm">
+          <div className="p-4 rounded-xl bg-white border shadow-sm">
             <h3 className="text-sm font-semibold text-slate-700">Links</h3>
-            <ul className="mt-2 text-sm space-y-2">
-              {data.portfolioLink ? (
+            <ul className="mt-2 space-y-2 text-sm">
+              {user.portfolio_website_url ? (
                 <li>
                   <a
-                    href={data.portfolioLink}
+                    href={user.portfolio_website_url}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex items-center gap-3 text-slate-700 hover:text-indigo-600"
+                    className="hover:text-indigo-600"
                   >
-                    <span className="w-2 h-2 rounded-full bg-indigo-300" />
                     Portfolio
                   </a>
                 </li>
-              ) : showPlaceholders ? (
-                <li className="text-slate-400">Portfolio (add link)</li>
-              ) : null}
+              ) : (
+                showPlaceholders && (
+                  <li className="text-slate-400">Portfolio</li>
+                )
+              )}
 
-              {data.githubLink ? (
+              {user.github_url ? (
                 <li>
                   <a
-                    href={data.githubLink}
+                    href={user.github_url}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex items-center gap-3 text-slate-700 hover:text-indigo-600"
+                    className="hover:text-indigo-600"
                   >
-                    <span className="w-2 h-2 rounded-full bg-teal-300" />
                     GitHub
                   </a>
                 </li>
-              ) : showPlaceholders ? (
-                <li className="text-slate-400">GitHub (add link)</li>
-              ) : null}
+              ) : (
+                showPlaceholders && <li className="text-slate-400">GitHub</li>
+              )}
 
-              {data.linkedinLink ? (
+              {user.linkedin_url ? (
                 <li>
                   <a
-                    href={data.linkedinLink}
+                    href={user.linkedin_url}
                     target="_blank"
                     rel="noreferrer"
-                    className="flex items-center gap-3 text-slate-700 hover:text-indigo-600"
+                    className="hover:text-indigo-600"
                   >
-                    <span className="w-2 h-2 rounded-full bg-rose-300" />
                     LinkedIn
                   </a>
                 </li>
-              ) : showPlaceholders ? (
-                <li className="text-slate-400">LinkedIn (add link)</li>
-              ) : null}
+              ) : (
+                showPlaceholders && <li className="text-slate-400">LinkedIn</li>
+              )}
             </ul>
           </div>
 
-          {/* Skills */}
-          <div className="p-4 rounded-xl bg-white/90 border border-gray-100 shadow-sm">
+          {/* Skills (soft only — technical is ID based now) */}
+          <div className="p-4 rounded-xl bg-white border shadow-sm">
             <h3 className="text-sm font-semibold text-slate-700">Skills</h3>
-
-            <div className="mt-3">
-              <div className="text-xs font-medium text-indigo-600 mb-2">
-                Technical
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {renderListOrPlaceholder(
-                  data.technicalSkills,
-                  "No technical skills"
-                ).map((s, i) => (
+            <div className="mt-2 flex flex-wrap gap-2">
+              {softskills?.length ? (
+                softskills.map((s, i) => (
                   <span
                     key={i}
-                    className="text-xs px-2 py-1 bg-gradient-to-r from-indigo-50 to-teal-50 text-indigo-700 rounded-full border border-indigo-100"
+                    className="text-xs px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full"
                   >
                     {s}
                   </span>
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-3">
-              <div className="text-xs font-medium text-rose-600 mb-2">Soft</div>
-              <div className="flex flex-wrap gap-2">
-                {renderListOrPlaceholder(data.softSkills, "No soft skills").map(
-                  (s, i) => (
-                    <span
-                      key={i}
-                      className="text-xs px-2 py-1 bg-white text-slate-700 rounded-full border border-gray-100"
-                    >
-                      {s}
-                    </span>
-                  )
-                )}
-              </div>
+                ))
+              ) : showPlaceholders ? (
+                <span className="text-xs text-slate-400">No skills added</span>
+              ) : null}
             </div>
           </div>
         </aside>
 
-        {/* RIGHT column: main content */}
-        <main className="md:col-span-2 space-y-4">
+        {/* RIGHT */}
+        <main className="md:col-span-2 space-y-6">
+          {/* Education */}
           <section>
-            <h2 className="text-xl font-semibold text-slate-800 mb-3">
-              🎓 Education
-            </h2>
-            <div className="p-4 rounded-xl bg-white/90 border border-gray-100 shadow-sm">
-              <div className="mt-3 space-y-3 text-sm">
-                {data.educations && data.educations.length ? (
-                  data.educations.map((ed, idx) => (
-                    <div key={idx}>
-                      <div className="font-semibold text-slate-900">
-                        {ed.level}
-                      </div>
-                      <div className="text-xs text-slate-600">
-                        {ed.institute}
-                      </div>
-                      <div className="text-xs text-slate-500">
-                        {ed.duration} • {ed.location}
-                      </div>
+            <h2 className="text-xl font-semibold mb-3">🎓 Education</h2>
+            <div className="space-y-3">
+              {education?.length ? (
+                education.map((ed: Education, i: number) => (
+                  <div
+                    key={i}
+                    className="p-4 bg-white rounded-xl border shadow-sm"
+                  >
+                    <div className="font-semibold">{ed.degree}</div>
+                    <div className="text-sm text-slate-600">{ed.institute}</div>
+                    <div className="text-xs text-slate-500">
+                      {ed.start_year} – {ed.end_year} · {ed.location}
                     </div>
-                  ))
-                ) : showPlaceholders ? (
-                  <div className="text-xs text-slate-400">
-                    No education added
                   </div>
-                ) : null}
-              </div>
+                ))
+              ) : showPlaceholders ? (
+                <p className="text-sm text-slate-400">No education added</p>
+              ) : null}
             </div>
           </section>
 
           {/* Experience */}
           <section>
-            <h2 className="text-xl font-semibold text-slate-800 mb-3">
-              💼 Experience
-            </h2>
+            <h2 className="text-xl font-semibold mb-3">💼 Experience</h2>
             <div className="space-y-4">
-              {data.experiences && data.experiences.length ? (
-                data.experiences.map((exp, i) => (
+              {experience?.length ? (
+                experience.map((exp: WorkExperience, i: number) => (
                   <article
                     key={i}
-                    className="p-4 rounded-2xl bg-gradient-to-r from-white/80 to-indigo-50 border border-gray-100 shadow-sm transform hover:-translate-y-0.5 transition"
+                    className="p-4 rounded-xl bg-white border shadow-sm"
                   >
-                    <div className="flex items-start gap-4">
-                      <div className="flex-shrink-0">
-                        {exp.logo ? (
-                          <img
-                            src={exp.logo}
-                            alt={exp.company}
-                            className="w-14 h-14 object-contain rounded-md border"
-                          />
-                        ) : (
-                          <div className="w-14 h-14 rounded-md bg-indigo-100 flex items-center justify-center text-indigo-500 font-semibold">
-                            {exp.company?.slice(0, 1) || "🏢"}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <div className="text-md font-semibold text-slate-900">
-                              {exp.role}
-                            </div>
-                            <div className="text-sm text-slate-600">
-                              {exp.company}
-                            </div>
-                          </div>
-                          <div className="text-xs text-slate-500">
-                            {exp.duration}
-                          </div>
+                    <div className="flex justify-between">
+                      <div>
+                        <div className="font-semibold">{exp.role}</div>
+                        <div className="text-sm text-slate-600">
+                          {exp.company}
                         </div>
-
-                        <p className="mt-2 text-sm text-slate-700 leading-relaxed">
-                          {exp.description}
-                        </p>
+                      </div>
+                      <div className="text-xs text-slate-500">
+                        {exp.start_year} – {exp.end_year}
                       </div>
                     </div>
+                    <p className="mt-2 text-sm text-slate-700">
+                      {exp.description}
+                    </p>
                   </article>
                 ))
               ) : showPlaceholders ? (
@@ -291,23 +193,16 @@ export default function CreativeResumeTemplate({
 
           {/* Projects */}
           <section>
-            <h2 className="text-xl font-semibold text-slate-800 mb-3">
-              🚀 Projects
-            </h2>
-            <div className="grid grid-cols-1 gap-3">
-              {data.projects && data.projects.length ? (
-                data.projects.map((p, i) => (
+            <h2 className="text-xl font-semibold mb-3">🚀 Projects</h2>
+            <div className="space-y-3">
+              {projects?.length ? (
+                projects.map((p: Project, i: number) => (
                   <div
                     key={i}
-                    className="p-4 rounded-xl bg-white/90 border border-gray-100 shadow-sm"
+                    className="p-4 bg-white rounded-xl border shadow-sm"
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="text-md font-semibold text-slate-900">
-                        {p.title}
-                      </div>
-                      <div className="text-xs text-slate-500">Project</div>
-                    </div>
-                    <p className="mt-2 text-sm text-slate-700">
+                    <div className="font-semibold">{p.name}</div>
+                    <p className="text-sm text-slate-700 mt-1">
                       {p.description}
                     </p>
                   </div>
@@ -320,9 +215,8 @@ export default function CreativeResumeTemplate({
         </main>
       </div>
 
-      {/* FOOTER */}
-      <footer className="mt-6 text-xs text-slate-500 text-center">
-        Generated with a creative vertical resume · Clean & modern
+      <footer className="mt-8 text-xs text-slate-500 text-center">
+        Creative resume · Modern · Print friendly
         <br />
         <span className="italic">Created by AI Prep Buddy</span>
       </footer>

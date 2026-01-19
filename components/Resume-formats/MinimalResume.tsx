@@ -1,77 +1,50 @@
 import React from "react";
-
-type Education = {
-  level: string;
-  institute: string;
-  location: string;
-  duration: string;
-  grade: string;
-};
-
-type WorkExperience = {
-  company: string;
-  role: string;
-  duration: string;
-  description: string;
-  logo?: string;
-};
-
-type Project = {
-  title: string;
-  description: string;
-};
-
-export type ResumeData = {
-  fullName: string;
-  title?: string;
-  location?: string;
-  email?: string;
-  phone?: string;
-  objective?: string;
-  portfolioLink?: string;
-  githubLink?: string;
-  linkedinLink?: string;
-  technicalSkills?: string[];
-  softSkills?: string[];
-  educations?: Education[];
-  experiences?: WorkExperience[];
-  projects?: Project[];
-};
+import {
+  AddResumeRequest,
+  Education,
+  WorkExperience,
+  Project,
+} from "@/utils/api/types/resume.types";
 
 export default function MinimalResumeTemplate({
   data,
   showPlaceholders = true,
+  fullName,
+  email,
 }: {
-  data: ResumeData;
-  showPlaceholders?: boolean;
+  data: AddResumeRequest;
+  showPlaceholders: boolean;
+  fullName?: string;
+  email?: string;
 }) {
+  const { resume_details, user, experience, projects, education, softskills } =
+    data;
+
   return (
     <div className="max-w-4xl mx-auto my-8 bg-white print:bg-white text-slate-800 font-sans">
       <div className="h-1 w-24 bg-slate-800 mb-6 rounded-full mx-auto" />
 
+      {/* Header */}
       <header className="text-center pb-4">
         <h1 className="text-2xl font-semibold tracking-tight">
-          {data.fullName || (showPlaceholders ? "Your Full Name" : "")}
+          {fullName || (showPlaceholders ? "Your Resume Title" : "")}
         </h1>
-        <div className="text-sm text-slate-600 mt-1">
-          {data.title || (showPlaceholders ? "Your Title / Role" : "")}
-        </div>
 
         <div className="mt-3 text-xs text-slate-500 flex flex-wrap justify-center gap-4">
-          {data.email || (showPlaceholders ? "✉️ your@email.com" : "")}
-          {data.phone || (showPlaceholders ? "📞 +91-0000000000" : "")}
-          {data.location || (showPlaceholders ? "📍 Your Location" : "")}
+          {email || (showPlaceholders ? "example@gmail.com" : "")}
+          {user.phone || (showPlaceholders ? "📞 +91-0000000000" : "")}
+          {user.location || (showPlaceholders ? "📍 Your Location" : "")}
         </div>
       </header>
 
       <main className="px-4 pb-6 space-y-6">
-        {/* Objective */}
+        {/* Summary */}
         <section>
           <h2 className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-2">
             Summary
           </h2>
           <p className="text-sm text-slate-700 leading-snug">
-            {data.objective ||
+            {user.objective ||
               (showPlaceholders
                 ? "Write a short professional summary here..."
                 : "")}
@@ -80,53 +53,53 @@ export default function MinimalResumeTemplate({
 
         {/* Links */}
         <section className="flex flex-wrap gap-4 items-center text-sm">
-          {data.portfolioLink && (
+          {user.portfolio_website_url && (
             <a
-              href={data.portfolioLink}
-              className="text-slate-700 underline text-sm"
+              href={user.portfolio_website_url}
+              className="text-slate-700 underline"
               target="_blank"
               rel="noreferrer"
             >
               Portfolio
             </a>
           )}
-          {data.githubLink && (
+          {user.github_url && (
             <a
-              href={data.githubLink}
-              className="text-slate-700 underline text-sm"
+              href={user.github_url}
+              className="text-slate-700 underline"
               target="_blank"
               rel="noreferrer"
             >
               GitHub
             </a>
           )}
-          {data.linkedinLink && (
+          {user.linkedin_url && (
             <a
-              href={data.linkedinLink}
-              className="text-slate-700 underline text-sm"
+              href={user.linkedin_url}
+              className="text-slate-700 underline"
               target="_blank"
               rel="noreferrer"
             >
               LinkedIn
             </a>
           )}
-          {!data.portfolioLink &&
-            !data.githubLink &&
-            !data.linkedinLink &&
+          {!user.portfolio_website_url &&
+            !user.github_url &&
+            !user.linkedin_url &&
             showPlaceholders && (
               <div className="text-xs text-slate-400">
-                Add your portfolio / GitHub / LinkedIn
+                Add portfolio / GitHub / LinkedIn
               </div>
             )}
         </section>
 
-        {/* Skills */}
+        {/* Soft Skills */}
         <section>
           <h3 className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-2">
             Skills
           </h3>
           <div className="flex flex-wrap gap-2">
-            {data.technicalSkills?.map((s, i) => (
+            {softskills?.map((s, i) => (
               <span
                 key={i}
                 className="text-xs px-2 py-1 bg-slate-100 rounded text-slate-700"
@@ -134,19 +107,9 @@ export default function MinimalResumeTemplate({
                 {s}
               </span>
             ))}
-            {data.softSkills?.map((s, i) => (
-              <span
-                key={`soft-${i}`}
-                className="text-xs px-2 py-1 bg-slate-50 rounded text-slate-600"
-              >
-                {s}
-              </span>
-            ))}
-            {!data.technicalSkills?.length &&
-              !data.softSkills?.length &&
-              showPlaceholders && (
-                <div className="text-xs text-slate-400">No skills added</div>
-              )}
+            {!softskills?.length && showPlaceholders && (
+              <div className="text-xs text-slate-400">No skills added</div>
+            )}
           </div>
         </section>
 
@@ -156,11 +119,11 @@ export default function MinimalResumeTemplate({
             Education
           </h3>
           <div className="space-y-3">
-            {data.educations?.map((ed, i) => (
+            {education?.map((ed: Education, i: number) => (
               <div key={i} className="flex justify-between items-start">
                 <div>
                   <div className="text-sm font-medium">
-                    {ed.level || (showPlaceholders ? "Degree / Course" : "")}
+                    {ed.degree || (showPlaceholders ? "Degree / Course" : "")}
                   </div>
                   <div className="text-xs text-slate-600">
                     {ed.institute || (showPlaceholders ? "Institute Name" : "")}
@@ -168,7 +131,11 @@ export default function MinimalResumeTemplate({
                 </div>
                 <div className="text-xs text-slate-500 text-right">
                   <div>
-                    {ed.duration || (showPlaceholders ? "YYYY-YYYY" : "")}
+                    {ed.start_year && ed.end_year
+                      ? `${ed.start_year} - ${ed.end_year}`
+                      : showPlaceholders
+                      ? "YYYY-YYYY"
+                      : ""}
                   </div>
                   <div>
                     {ed.location || (showPlaceholders ? "City, Country" : "")}
@@ -176,7 +143,7 @@ export default function MinimalResumeTemplate({
                 </div>
               </div>
             ))}
-            {!data.educations?.length && showPlaceholders && (
+            {!education?.length && showPlaceholders && (
               <div className="text-xs text-slate-400">No education listed</div>
             )}
           </div>
@@ -188,7 +155,7 @@ export default function MinimalResumeTemplate({
             Experience
           </h3>
           <div className="space-y-4">
-            {data.experiences?.map((exp, i) => (
+            {experience?.map((exp: WorkExperience, i: number) => (
               <article key={i} className="flex flex-col gap-1">
                 <div className="flex justify-between items-start">
                   <div>
@@ -200,7 +167,11 @@ export default function MinimalResumeTemplate({
                     </div>
                   </div>
                   <div className="text-xs text-slate-500">
-                    {exp.duration || (showPlaceholders ? "YYYY-YYYY" : "")}
+                    {exp.start_year && exp.end_year
+                      ? `${exp.start_year} - ${exp.end_year}`
+                      : showPlaceholders
+                      ? "YYYY-YYYY"
+                      : ""}
                   </div>
                 </div>
                 <p className="text-sm text-slate-700 leading-snug">
@@ -211,7 +182,7 @@ export default function MinimalResumeTemplate({
                 </p>
               </article>
             ))}
-            {!data.experiences?.length && showPlaceholders && (
+            {!experience?.length && showPlaceholders && (
               <div className="text-xs text-slate-400">No experience listed</div>
             )}
           </div>
@@ -223,10 +194,10 @@ export default function MinimalResumeTemplate({
             Projects
           </h3>
           <div className="space-y-3">
-            {data.projects?.map((p, i) => (
+            {projects?.map((p: Project, i: number) => (
               <div key={i}>
                 <div className="text-sm font-medium">
-                  {p.title || (showPlaceholders ? "Project Title" : "")}
+                  {p.name || (showPlaceholders ? "Project Name" : "")}
                 </div>
                 <div className="text-sm text-slate-700 leading-snug">
                   {p.description ||
@@ -236,7 +207,7 @@ export default function MinimalResumeTemplate({
                 </div>
               </div>
             ))}
-            {!data.projects?.length && showPlaceholders && (
+            {!projects?.length && showPlaceholders && (
               <div className="text-xs text-slate-400">No projects listed</div>
             )}
           </div>

@@ -1,37 +1,52 @@
 "use client";
 
-import React, { useState, useMemo, useRef } from "react";
-import { useQuery } from "@tanstack/react-query";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import { resumeService } from "@/utils/services/resume.service";
-import {
-  VerticalAccordion,
-  SkillsPanel,
-  Tag as SkillTag,
-} from "@/components/resume/SkillsPanel";
-import EducationForm, { Education } from "@/components/resume/EducationForm";
-import ResumeDropdown, { ResumeItem } from "@/components/ResumeDropdown";
+import { SkillsPanel, Tag as SkillTag } from "@/components/resume/SkillsPanel";
+import EducationForm from "@/components/resume/EducationForm";
+import ResumeDropdown from "@/components/ResumeDropdown";
 import BasicDetails from "@/components/resume/BasicDetails";
-import WorkExperienceForm, {
-  WorkExperience,
-} from "@/components/resume/WorkExperienceForm";
-import ProjectsForm, { Project } from "@/components/resume/ProjectForm";
-
-// resume templates (assumed paths - adjust if required)
+import WorkExperienceForm from "@/components/resume/WorkExperienceForm";
 import CreativeResumeTemplate from "../../../components/Resume-formats/CreativeResume";
 import ProfessionalResumeTemplateVertical from "../../../components/Resume-formats/ProfessionalResume";
 import ModernResumeTemplate from "../../../components/Resume-formats/ModernResume";
 import MinimalResumeTemplate from "../../../components/Resume-formats/MinimalResume";
 import StandardResumeTemplate from "../../../components/Resume-formats/StandardResume";
+import { useGetUserDetailsAll } from "@/utils/queries/home.queries";
+import {
+  useGetCompleteResumeByID,
+  useGetResumeFormats,
+  useGetSkillsMaster,
+  useGetUsersAllResumes,
+} from "@/utils/queries/resume.queries";
+import {
+  AddResumeRequest,
+  Education,
+  Project,
+  Resume,
+  UsersResumeResponse,
+  WorkExperience,
+} from "@/utils/api/types/resume.types";
+// import { Education } from "@/utils/api/types/education.types";
+import { useSaveResume } from "@/utils/mutations/resume.mutations";
+import ProjectsForm from "@/components/resume/ProjectForm";
+import { useToast } from "@/components/toast/ToastContext";
+import { VerticalAccordion } from "@/components/VerticalAccordian";
 
-// type TemplateKey = "modern" | "classic" | "creative" | "minimal" | "standard";
-type TemplateKey = "standard";
+type TemplateKey = "modern" | "classic" | "creative" | "minimal" | "standard";
 
-/**
- * Dummy defaults used to populate the inline preview when user hasn't entered data.
- */
+export function capitalizeFullName(name: string): string {
+  return name
+    .trim()
+    .toLowerCase()
+    .split(/\s+/) // handles multiple spaces
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
 const DEFAULT_SAMPLE = {
-  fullName: "Your Full Name",
-  title: "Your Job Title (e.g., Fullstack Blockchain Developer)",
+  fullName: "Full Name",
+  title: "Your Job Title (e.g., Fullstack Developer)",
   email: "your.email@example.com",
   phone: "0000000000",
   location: "Your City, Country",
@@ -44,21 +59,23 @@ const DEFAULT_SAMPLE = {
   technicalSkills: [
     "Skill 1 (e.g., React)",
     "Skill 2 (e.g., TypeScript)",
-    "Skill 3 (e.g., Solidity)",
+    // "Skill 3 (e.g., Solidity)",
   ],
 
   softSkills: [
     "Soft Skill 1 (e.g., Communication)",
     "Soft Skill 2 (e.g., Ownership)",
-    "Soft Skill 3 (e.g., Curiosity)",
+    // "Soft Skill 3 (e.g., Curiosity)",
   ],
 
   educations: [
     {
-      level: "Degree (e.g., B.Tech)",
+      degree: "Degree (e.g., B.Tech)",
       institute: "Your College Name",
       location: "City",
-      duration: "Start–End (e.g., 2019–2023)",
+      // duration: "Start–End (e.g., 2019–2023)",
+      startYear: "2016",
+      endYear: "2020",
       grade: "CGPA/Percentage (e.g., 8.0)",
     },
   ],
@@ -83,71 +100,65 @@ const DEFAULT_SAMPLE = {
   ],
 };
 
-const MAX_RESUMES = 10;
-
 export default function ResumeBuilderPage() {
   // --- MAIN LIFTED STATE (single source of truth for basic details) ---
-  const [fullName, setFullName] = useState<string>("");
-  const [email, setEmail] = useState<string>("");
+  const [resumeTitle, setResumeTitle] = useState("");
   const [phone, setPhone] = useState<string>("");
   const [location, setLocation] = useState<string>("");
   const [summary, setSummary] = useState<string>("");
   const [portfolioLink, setPortfolioLink] = useState<string>("");
   const [githubLink, setGithubLink] = useState<string>("");
   const [linkedinLink, setLinkedinLink] = useState<string>("");
+  const [isDefault, setIsDefault] = useState(false);
 
-  // Lists and arrays lifted
+  // Lists and arrays liftedx
   const [technicalSkills, setTechnicalSkills] = useState<SkillTag[]>([]);
   const [softSkills, setSoftSkills] = useState<SkillTag[]>([]);
   const [educations, setEducations] = useState<Education[]>([]);
   const [experiences, setExperiences] = useState<WorkExperience[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(false);
 
   // other page state
   const [resumeFormat, setResumeFormat] = useState<TemplateKey>("standard");
   const [showPreviewModal, setShowPreviewModal] = useState<boolean>(false);
+  const saveResumeMutation = useSaveResume();
 
   const RESULT_PDF_URL = "/pdfs/Resume.pdf";
 
-  const { data: apiData } = useQuery({
-    queryKey: ["resume", "format"],
-    queryFn: async () => {
-      try {
-        return await resumeService.getResumeFormats();
-      } catch {
-        return null;
-      }
-    },
-    staleTime: 1000 * 60 * 5,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
-  });
+  const { data: getUserDetailsAllRes } = useGetUserDetailsAll();
+
+  const rawName = getUserDetailsAllRes?.user?.full_name ?? "";
+  const fullName = capitalizeFullName(rawName);
+
+  const email = getUserDetailsAllRes?.user?.email ?? "";
+
+  const service = getUserDetailsAllRes?.userServices?.find(
+    (s) => s.service_id === 1
+  );
+  // console.log(service?.services_config?.max_resumes_per_student);
+  const MAX_RESUMES = service?.services_config
+    ?.max_resumes_per_student as number;
+
+  const { data: resumeData } = useGetResumeFormats();
+  const { data: skillsMasterData } = useGetSkillsMaster();
+  const { data: usersAllResumes } = useGetUsersAllResumes();
+  const usersAllResumesLength = usersAllResumes?.resumes?.length;
 
   const localFormats: { key: TemplateKey; title: string }[] = [
-    // { key: "modern", title: "Modern" },
-    // { key: "classic", title: "Classic" },
-    // { key: "creative", title: "Creative" },
-    // { key: "minimal", title: "Minimal" },
+    { key: "modern", title: "Modern" },
+    { key: "classic", title: "Classic" },
+    { key: "creative", title: "Creative" },
+    { key: "minimal", title: "Minimal" },
     { key: "standard", title: "Standard" },
   ];
 
   // demo resumes list
-  const [resumes, setResumes] = useState<ResumeItem[]>([
-    {
-      id: "r1",
-      title: "Software Engineer Resume",
-      createdAt: new Date().toISOString(),
-    },
-    {
-      id: "r2",
-      title: "Blockchain Developer Resume",
-      createdAt: new Date().toISOString(),
-    },
-  ]);
+  const [resumes, setResumes] = useState<UsersResumeResponse[]>([]);
 
   // quota derived values
   const usedResumes = resumes.length;
-  const remainingResumes = Math.max(0, MAX_RESUMES - usedResumes);
+  const remainingResumes = Math.max(0, MAX_RESUMES - usersAllResumesLength!);
   const canCreateMore = usedResumes < MAX_RESUMES;
 
   // small state for quota error display
@@ -159,11 +170,32 @@ export default function ResumeBuilderPage() {
     Record<string, boolean>
   >({});
 
-  // assemble live data for templates (actual user-entered values)
+  const { showToast } = useToast();
+
+  const selectedResumeFormat = useMemo(() => {
+    if (!resumeData?.resumeFormats) return null;
+
+    return resumeData.resumeFormats.find(
+      (f: any) => f.format_key === resumeFormat
+    );
+  }, [resumeData?.resumeFormats, resumeFormat]);
+
+  const skillNames = useMemo(
+    () => technicalSkills.map((skill) => skill.text),
+    [technicalSkills]
+  );
+  const technicalSkillIds = useMemo(
+    () => technicalSkills.map((s) => s.skillId),
+    [technicalSkills]
+  );
+  const [selectedResume, setSelectedResume] = useState<Resume | null>(null);
+  const [showResumeViewModal, setShowResumeViewModal] = useState(false);
+
   const assembledData = useMemo(
     () => ({
       fullName,
-      title: undefined as string | undefined,
+      title: "",
+
       email,
       phone,
       location,
@@ -171,8 +203,12 @@ export default function ResumeBuilderPage() {
       portfolioLink,
       githubLink,
       linkedinLink,
+
+      // UI-friendly
       technicalSkills: technicalSkills.map((s) => s.text),
       softSkills: softSkills.map((s) => s.text),
+
+      // keep UI versions (camelCase tolerated here)
       educations,
       experiences,
       projects,
@@ -194,82 +230,112 @@ export default function ResumeBuilderPage() {
     ]
   );
 
-  // Build data with defaults for inline preview
-  const assembledDataWithDefaults = useMemo(() => {
+  const assembledDataWithDefaults = useMemo<any>(() => {
     return {
-      fullName:
-        assembledData.fullName && assembledData.fullName.trim()
-          ? assembledData.fullName
-          : DEFAULT_SAMPLE.fullName,
-      title: DEFAULT_SAMPLE.title,
-      email:
-        assembledData.email && assembledData.email.trim()
-          ? assembledData.email
-          : DEFAULT_SAMPLE.email,
-      phone:
-        assembledData.phone && assembledData.phone.trim()
-          ? assembledData.phone
-          : DEFAULT_SAMPLE.phone,
-      location:
-        assembledData.location && assembledData.location.trim()
-          ? assembledData.location
-          : DEFAULT_SAMPLE.location,
-      objective:
-        assembledData.objective && assembledData.objective.trim()
-          ? assembledData.objective
-          : DEFAULT_SAMPLE.objective,
-      portfolioLink:
-        assembledData.portfolioLink && assembledData.portfolioLink.trim()
-          ? assembledData.portfolioLink
-          : DEFAULT_SAMPLE.portfolioLink,
-      githubLink:
-        assembledData.githubLink && assembledData.githubLink.trim()
-          ? assembledData.githubLink
-          : DEFAULT_SAMPLE.githubLink,
-      linkedinLink:
-        assembledData.linkedinLink && assembledData.linkedinLink.trim()
-          ? assembledData.linkedinLink
-          : DEFAULT_SAMPLE.linkedinLink,
-      technicalSkills:
-        assembledData.technicalSkills && assembledData.technicalSkills.length
-          ? assembledData.technicalSkills
+      resume_details: {
+        format_id: selectedResumeFormat?.format_id, // REQUIRED, comes from format selection
+        title: resumeTitle?.trim() || DEFAULT_SAMPLE.title,
+        is_default: false,
+      },
+
+      user: {
+        location: assembledData.location?.trim() || DEFAULT_SAMPLE.location,
+        phone: assembledData.phone?.trim() || DEFAULT_SAMPLE.phone,
+        objective: assembledData.objective?.trim() || DEFAULT_SAMPLE.objective,
+        portfolio_website_url:
+          assembledData.portfolioLink?.trim() || DEFAULT_SAMPLE.portfolioLink,
+        github_url:
+          assembledData.githubLink?.trim() || DEFAULT_SAMPLE.githubLink,
+        linkedin_url:
+          assembledData.linkedinLink?.trim() || DEFAULT_SAMPLE.linkedinLink,
+      },
+
+      // MUST be number[]
+      skills:
+        technicalSkillIds.length > 0
+          ? skillNames
           : DEFAULT_SAMPLE.technicalSkills,
-      softSkills:
-        assembledData.softSkills && assembledData.softSkills.length
+
+      softskills:
+        assembledData.softSkills.length > 0
           ? assembledData.softSkills
           : DEFAULT_SAMPLE.softSkills,
-      educations:
-        assembledData.educations && assembledData.educations.length
-          ? assembledData.educations
+
+      education:
+        assembledData.educations.length > 0
+          ? assembledData.educations.map((e: any) => ({
+              degree: e.degree,
+              institute: e.institute,
+              location: e.location,
+              start_year: e.start_year ?? e.startYear,
+              end_year: e.end_year ?? e.endYear,
+              grade: e.grade,
+            }))
           : DEFAULT_SAMPLE.educations,
-      experiences:
-        assembledData.experiences && assembledData.experiences.length
-          ? assembledData.experiences
+
+      experience:
+        assembledData.experiences.length > 0
+          ? assembledData.experiences.map((exp: any) => ({
+              company: exp.company,
+              role: exp.role,
+              start_year: exp.start_year ?? exp.startYear,
+              end_year: exp.end_year ?? exp.endYear,
+              description: exp.description,
+            }))
           : DEFAULT_SAMPLE.experiences,
+
       projects:
-        assembledData.projects && assembledData.projects.length
-          ? assembledData.projects
+        assembledData.projects.length > 0
+          ? assembledData.projects.map((p: any) => ({
+              name: p.name ?? p.title,
+              description: p.description,
+            }))
           : DEFAULT_SAMPLE.projects,
     };
-  }, [assembledData]);
+  }, [
+    assembledData,
+    selectedResumeFormat?.format_id,
+    resumeTitle,
+    technicalSkills,
+  ]);
 
   const renderSelectedTemplate = (showPlaceholders = true) => {
-    const data = showPlaceholders ? assembledDataWithDefaults : assembledData;
-    const props = { data, showPlaceholders };
+    // const data = showPlaceholders ? assembledDataWithDefaults : assembledData;
+    const data = assembledDataWithDefaults;
+    const props = { data, showPlaceholders, fullName, email };
 
     switch (resumeFormat) {
-      // case "creative":
-      //   return <CreativeResumeTemplate {...props} />;
-      // case "classic":
-      //   return <ProfessionalResumeTemplateVertical {...props} />;
-      // case "modern":
-      //   return <ModernResumeTemplate {...props} />;
-      // case "minimal":
-      //   return <MinimalResumeTemplate {...props} />;
+      case "creative":
+        return <CreativeResumeTemplate {...props} />;
+      case "classic":
+        return <ProfessionalResumeTemplateVertical {...props} />;
+      case "modern":
+        return <ModernResumeTemplate {...props} />;
+      case "minimal":
+        return <MinimalResumeTemplate {...props} />;
       case "standard":
       default:
         return <StandardResumeTemplate {...props} />;
     }
+  };
+
+  const payload: AddResumeRequest = {
+    resume_details: {
+      format_id: selectedResumeFormat?.format_id ?? 0,
+      title: resumeTitle,
+      is_default: true,
+    },
+    user: {
+      location: location,
+      phone: phone,
+      objective: summary,
+      portfolio_website_url: portfolioLink,
+      linkedin_url: linkedinLink,
+      github_url: githubLink,
+    },
+    skills: technicalSkillIds,
+    experience: experiences,
+    projects: projects,
   };
 
   // Validation rules (you can adjust which fields are required)
@@ -277,9 +343,10 @@ export default function ResumeBuilderPage() {
     const errors: Record<string, boolean> = {};
 
     // Required simple fields
+    errors.resumeTitle = !(resumeTitle && resumeTitle.trim().length > 0);
     errors.fullName = !(fullName && fullName.trim().length > 0);
     errors.email = !(email && email.trim().length > 0);
-    errors.phone = !(phone && phone.trim().length > 0);
+    errors.phone = !(phone && phone.trim().length > 9);
     errors.location = !(location && location.trim().length > 0);
     errors.summary = !(summary && summary.trim().length > 0);
 
@@ -312,6 +379,8 @@ export default function ResumeBuilderPage() {
     const errors = validateAll();
     setValidationErrors(errors);
 
+    console.log(errors);
+
     if (hasAnyErrors(errors)) {
       // If invalid, DO NOT open preview modal; user must fix fields.
       // Optionally we could scroll to first invalid — omitted for brevity.
@@ -319,7 +388,36 @@ export default function ResumeBuilderPage() {
     }
 
     // All good: open modal for clean preview and final save
-    setShowPreviewModal(true);
+    setLoading(true);
+
+    saveResumeMutation.mutate(payload, {
+      onSuccess: (data: any) => {
+        // console.log("Verification successful", data);
+        // setLoading(false);
+        setLoading(false);
+        setShowPreviewModal(true);
+      },
+      onError: (err: any) => {
+        const status = err?.response?.status;
+        const data = err?.response?.data;
+        setLoading(false);
+        console.log(data, status);
+
+        if (
+          data?.error ==
+          "resume title already exists, please choose a different title"
+        ) {
+          console.log("hello");
+          showToast(
+            "error",
+            "Resume title already exists, please provide unique one"
+          );
+        }
+
+        // showToast("error", data);
+        setLoading(false);
+      },
+    });
   };
 
   // Called from modal Save button (final commit)
@@ -337,6 +435,7 @@ export default function ResumeBuilderPage() {
 
     const errors = validateAll();
     setValidationErrors(errors);
+
     if (hasAnyErrors(errors)) {
       // Shouldn't happen because modal only opens when valid, but be safe
       return;
@@ -362,16 +461,16 @@ export default function ResumeBuilderPage() {
       }
 
       // Add the newly saved resume to local list (so UI shows updated counts)
-      setResumes((prev) => [
-        ...prev,
-        {
-          id: `r${Date.now()}`,
-          title: assembledData.fullName
-            ? `${assembledData.fullName} Resume`
-            : "Untitled Resume",
-          createdAt: new Date().toISOString(),
-        },
-      ]);
+      // setResumes((prev) => [
+      //   ...prev,
+      //   {
+      //     id: `r${Date.now()}`,
+      //     title: assembledData.fullName
+      //       ? `${assembledData.fullName} Resume`
+      //       : "Untitled Resume",
+      //     createdAt: new Date().toISOString(),
+      //   },
+      // ]);
 
       // Optionally show success toast or update resumes list
       setShowPreviewModal(false);
@@ -385,6 +484,7 @@ export default function ResumeBuilderPage() {
   const currentValidation = useMemo(
     () => validateAll(),
     [
+      resumeTitle,
       fullName,
       email,
       phone,
@@ -653,8 +753,80 @@ export default function ResumeBuilderPage() {
     URL.revokeObjectURL(url);
   };
 
+  // useEffect(() => {
+  //   console.log(technicalSkillIds);
+  // }, [technicalSkillIds]);
+
+  const disableSave = remainingResumes === 0 || hasAnyErrors(validationErrors);
+  useEffect(() => {
+    if (!hasAnyErrors(currentValidation)) {
+      setValidationErrors({});
+      setQuotaError(null);
+    }
+  }, [currentValidation]);
+  
+  const FORMAT_ID_TO_KEY: Record<number, string> = {
+    1: "creative",
+    2: "modern",
+    3: "professional",
+    4: "standard",
+    5: "minimalist",
+  };
+
+  const renderResumeByFormat = (userResumeByIDData: AddResumeRequest) => {
+    const formatId = userResumeByIDData?.resume_details?.format_id;
+    const formatKey = formatId ? FORMAT_ID_TO_KEY[formatId] : undefined;
+    const data: AddResumeRequest = {
+      resume_details: userResumeByIDData.resume_details,
+      user: userResumeByIDData?.user,
+      skills: userResumeByIDData?.skills,
+      softskills: userResumeByIDData?.softskills,
+      education: userResumeByIDData?.education,
+      experience: userResumeByIDData?.experience,
+      projects: userResumeByIDData?.projects,
+    };
+
+    const props = {
+      data,
+      showPlaceholders: false,
+      fullName: userResumeByIDData.user?.full_name,
+      email: userResumeByIDData.user?.email,
+    };
+
+    switch (formatKey) {
+      case "creative":
+        return <CreativeResumeTemplate {...props} />;
+      case "classic":
+        return <ProfessionalResumeTemplateVertical {...props} />;
+      case "modern":
+        return <ModernResumeTemplate {...props} />;
+      case "minimal":
+        return <MinimalResumeTemplate {...props} />;
+      case "standard":
+      default:
+        return <StandardResumeTemplate {...props} />;
+    }
+  };
+
+  const handleDropdownClick = (e: any) => {
+    console.log(e.target.value);
+  };
+
+  const resumeId = selectedResume?.ResumeID as string;
+  const {
+    data: userResumeByIDData,
+    isLoading,
+    error,
+  } = useGetCompleteResumeByID(resumeId);
+
+  // console.log(userResumeByIDData);
+
+  useEffect(() => {
+    console.log(hasAnyErrors);
+  }, [hasAnyErrors]);
+
   return (
-    <div className="min-h-screen bg-white py-8">
+    <div className="min-h-screen bg-white py-8 px-3 sm:px-4 md:px-6 lg:px-8">
       <main className="w-full">
         {/* Heading + Dropdown */}
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-6 max-w-[1550px] mx-auto">
@@ -669,35 +841,104 @@ export default function ResumeBuilderPage() {
           </div>
 
           <div className="flex items-center gap-4">
-            <ResumeDropdown
-              resumes={resumes}
-              onSelect={(r) => console.log("select", r)}
-            />
+            {/* Resume Selector */}
+            <div className="relative">
+              <ResumeDropdown
+                resumes={usersAllResumes!?.resumes}
+                onSelect={(resume) => {
+                  setSelectedResume(resume);
+                  setShowResumeViewModal(true);
+                }}
+                // onClick={handleDropdownClick}
+              />
+            </div>
 
-            {/* Quota display */}
-            <div className="text-sm text-gray-600">
-              <div className="flex items-center gap-2">
-                <div className="font-medium text-gray-800">
-                  {usedResumes}/{MAX_RESUMES} resumes
-                </div>
-                <div className="text-xs text-gray-500">
-                  ({remainingResumes} left)
-                </div>
+            {/* Quota Status */}
+            <div
+              className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium border ${
+                remainingResumes === 0
+                  ? "bg-red-50 border-red-200 text-red-700"
+                  : "bg-gray-50 border-gray-200 text-gray-700"
+              }`}
+            >
+              {/* Icon */}
+              <span
+                className={`text-base ${
+                  remainingResumes === 0 ? "text-red-500" : "text-gray-500"
+                }`}
+              >
+                📄
+              </span>
+
+              {/* Text */}
+              <div className="flex items-baseline gap-1">
+                <span className="font-semibold">
+                  {usersAllResumesLength}/{MAX_RESUMES}
+                </span>
+                <span className="text-xs opacity-80">resumes</span>
               </div>
+
+              {/* Divider */}
+              <span className="mx-1 h-3 w-px bg-gray-300 opacity-50" />
+
+              {/* Remaining */}
+              <span
+                className={`text-xs font-semibold ${
+                  remainingResumes === 0 ? "text-red-600" : "text-gray-500"
+                }`}
+              >
+                {remainingResumes} left
+              </span>
             </div>
           </div>
         </div>
+
+        {remainingResumes === 0 && (
+          <div className="max-w-[1550px] mx-auto mb-6">
+            <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+              <svg
+                className="w-5 h-5 text-red-600 flex-shrink-0"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                aria-hidden
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 9v2m0 4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"
+                />
+              </svg>
+
+              <p className="text-sm font-medium text-red-700">
+                You’ve reached your resume limit.
+                <span className="font-semibold">
+                  {" "}
+                  Please delete an existing resume to create a new one.
+                </span>
+              </p>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-6 max-w-[1550px] mx-auto">
           {/* Left: forms */}
           <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-4">
             <div className="space-y-4">
-              <VerticalAccordion isOpenProp={true} title="Personal details">
+              <VerticalAccordion
+                isOpenProp={true}
+                title="Personal details"
+                invalid={validationErrors}
+              >
                 <BasicDetails
+                  isDefault={isDefault}
+                  setIsDefault={setIsDefault}
+                  resumeTitle={resumeTitle}
+                  setResumeTitle={setResumeTitle}
                   fullName={fullName}
-                  setFullName={setFullName}
                   email={email}
-                  setEmail={setEmail}
                   phone={phone}
                   setPhone={setPhone}
                   location={location}
@@ -714,8 +955,13 @@ export default function ResumeBuilderPage() {
                 />
               </VerticalAccordion>
 
-              <VerticalAccordion isOpenProp={false} title="Skills">
+              <VerticalAccordion
+                isOpenProp={false}
+                title="Skills"
+                invalid={validationErrors}
+              >
                 <SkillsPanel
+                  skillsMaster={skillsMasterData}
                   skills={technicalSkills}
                   setSkills={
                     setTechnicalSkills as React.Dispatch<
@@ -734,7 +980,11 @@ export default function ResumeBuilderPage() {
                 />
               </VerticalAccordion>
 
-              <VerticalAccordion isOpenProp={false} title="Education">
+              <VerticalAccordion
+                isOpenProp={false}
+                title="Education"
+                invalid={{ __static: validationErrors?.educations }}
+              >
                 <EducationForm
                   educations={educations}
                   setEducations={setEducations}
@@ -742,7 +992,11 @@ export default function ResumeBuilderPage() {
                 />
               </VerticalAccordion>
 
-              <VerticalAccordion isOpenProp={false} title="Work Experience">
+              <VerticalAccordion
+                isOpenProp={false}
+                title="Work Experience"
+                invalid={{ __static: true }}
+              >
                 <WorkExperienceForm
                   experiences={experiences}
                   setExperiences={setExperiences}
@@ -750,7 +1004,11 @@ export default function ResumeBuilderPage() {
                 />
               </VerticalAccordion>
 
-              <VerticalAccordion isOpenProp={false} title="Project Details">
+              <VerticalAccordion
+                isOpenProp={false}
+                title="Project Details"
+                invalid={{ __static: true }}
+              >
                 <ProjectsForm
                   projects={projects}
                   setProjects={setProjects}
@@ -778,8 +1036,9 @@ export default function ResumeBuilderPage() {
                       className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm"
                     >
                       {
-                        (apiData?.resumeFormats && apiData.resumeFormats.length
-                          ? apiData.resumeFormats.map((f: any) => (
+                        (resumeData?.resumeFormats &&
+                        resumeData?.resumeFormats.length
+                          ? resumeData?.resumeFormats?.map((f: any) => (
                               <option key={f.format_id} value={f.format_key}>
                                 {f.title}
                               </option>
@@ -793,17 +1052,17 @@ export default function ResumeBuilderPage() {
                     </select>
 
                     <button
-                      onClick={handleSaveClick}
-                      className={`px-3 py-2 rounded-lg text-white font-bold text-sm ${
-                        !canCreateMore || hasAnyErrors(validationErrors)
-                          ? "bg-gray-300 cursor-not-allowed"
-                          : "bg-yellow-400"
-                      }`}
-                      aria-disabled={
-                        !canCreateMore || hasAnyErrors(validationErrors)
-                      }
+                      onClick={disableSave ? undefined : handleSaveClick}
+                      disabled={disableSave}
+                      className={`px-3 py-2 rounded-lg text-white font-bold text-sm transition
+                                    ${
+                                      disableSave
+                                        ? "bg-gray-300 cursor-not-allowed"
+                                        : "bg-yellow-400 hover:bg-yellow-500"
+                                    }
+                              `}
                       title={
-                        !canCreateMore
+                        remainingResumes === 0
                           ? `Resume limit reached (${usedResumes}/${MAX_RESUMES})`
                           : hasAnyErrors(validationErrors)
                           ? "Fill required fields to save"
@@ -895,7 +1154,7 @@ export default function ResumeBuilderPage() {
                         )}
                       </button>
 
-                      <button
+                      {/* <button
                         onClick={handleFinalSave}
                         aria-label="Save resume"
                         title="Save resume"
@@ -922,7 +1181,7 @@ export default function ResumeBuilderPage() {
                           />
                         </svg>
                         Save
-                      </button>
+                      </button> */}
 
                       <button
                         onClick={() => setShowPreviewModal(false)}
@@ -967,6 +1226,43 @@ export default function ResumeBuilderPage() {
           </div>
         )}
       </div>
+
+      {showResumeViewModal && selectedResume && (
+        <div className="fixed inset-0 z-50 flex items-start md:items-center justify-center p-4">
+          {/* Overlay */}
+          <div
+            className="absolute inset-0 bg-black/40"
+            onClick={() => setShowResumeViewModal(false)}
+          />
+
+          {/* Modal */}
+          <div className="relative max-w-4xl w-full max-h-[90vh] overflow-auto rounded-2xl bg-white shadow-xl border border-gray-100 z-10">
+            {/* Header */}
+            <div className="flex items-center justify-between p-4 border-b">
+              <div>
+                <div className="text-sm font-semibold text-gray-800">
+                  {/* {selectedResume.title} */}
+                </div>
+                <div className="text-xs text-gray-500">
+                  {/* Format: {selectedResume.format_key} */}
+                </div>
+              </div>
+
+              <button
+                onClick={() => setShowResumeViewModal(false)}
+                className="px-3 py-1.5 rounded-md bg-gray-100 hover:bg-gray-200 text-sm text-gray-700"
+              >
+                Close
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              {/* {renderResumeByFormat(userResumeByIDData!)} */}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

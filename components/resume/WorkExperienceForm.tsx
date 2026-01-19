@@ -2,14 +2,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { SparklesIcon } from "@heroicons/react/24/outline";
 import Loader from "../Loader";
-
-export interface WorkExperience {
-  company: string;
-  role: string;
-  duration: string;
-  description: string;
-  logo: string;
-}
+import { WorkExperience } from "@/utils/api/types/resume.types";
 
 export default function WorkExperienceForm({
   experiences,
@@ -23,9 +16,9 @@ export default function WorkExperienceForm({
   const [newExp, setNewExp] = useState<WorkExperience>({
     company: "",
     role: "",
-    duration: "",
+    start_year: "",
+    end_year: "",
     description: "",
-    logo: "",
   });
 
   const [editIndex, setEditIndex] = useState<number | null>(null);
@@ -35,7 +28,7 @@ export default function WorkExperienceForm({
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const [loading, setLoading] = useState(false);
-  const [keywords, setKeywords] = useState(""); // optional keywords input for AI
+  const [keywords, setKeywords] = useState("");
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -55,11 +48,11 @@ export default function WorkExperienceForm({
   };
 
   const addExperience = () => {
-    // require the primary fields before adding
     if (
       !newExp.company ||
       !newExp.role ||
-      !newExp.duration ||
+      !newExp.start_year ||
+      !newExp.end_year ||
       !newExp.description
     ) {
       return;
@@ -68,9 +61,9 @@ export default function WorkExperienceForm({
     setNewExp({
       company: "",
       role: "",
-      duration: "",
+      start_year: "",
       description: "",
-      logo: "",
+      end_year: "",
     });
   };
 
@@ -104,12 +97,9 @@ export default function WorkExperienceForm({
   const baseBorder = "border-gray-200";
   const invalidBorder = "border-red-400 ring-1 ring-red-200";
 
-  // If parent says experiences are required and none exist -> section invalid
   const sectionInvalid =
     !!validationErrors?.experiences && experiences.length === 0;
 
-  // New: real AI-enhance integration calling server API route
-  // setter: function that accepts the new description (e.g., setNewExpDesc or setEditExpDesc)
   const handleAIEnhance = async (
     setter: (val: string) => void,
     value: string,
@@ -119,7 +109,6 @@ export default function WorkExperienceForm({
       setShowDropdown(false);
       setLoading(true);
 
-      // build keywords array from comma-separated input (optional)
       const kwArr = keywords
         .split(",")
         .map((k) => k.trim())
@@ -127,9 +116,7 @@ export default function WorkExperienceForm({
 
       const resp = await fetch("/api/modify-description", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           description: value || "",
           keywords: kwArr,
@@ -139,9 +126,6 @@ export default function WorkExperienceForm({
       });
 
       if (!resp.ok) {
-        const err = await resp.json().catch(() => ({}));
-        console.error("AI enhance server error:", err);
-        // graceful fallback: keep original value but annotate failure
         setter(
           value
             ? `${value} — (AI enhance failed, keeping original)`
@@ -151,23 +135,12 @@ export default function WorkExperienceForm({
       }
 
       const data = await resp.json();
-      const modified = data?.modified ?? "";
-
-      if (!modified) {
-        setter(
-          value
-            ? `${value} — (AI returned empty result, keeping original)`
-            : "AI returned empty result."
-        );
-      } else {
-        setter(modified.trim());
-      }
-    } catch (e) {
-      console.error("handleAIEnhance error:", e);
+      setter(data?.modified?.trim() || value);
+    } catch {
       setter(
         value
           ? `${value} — (AI enhance failed: network error)`
-          : "AI enhance failed: network error"
+          : "AI enhance failed."
       );
     } finally {
       setLoading(false);
@@ -180,7 +153,7 @@ export default function WorkExperienceForm({
 
       {/* --- Add New Work Experience Form --- */}
       <div
-        className={`p-4 bg-white rounded-lg shadow flex flex-col gap-3 mb-6 ${
+        className={`p-4 bg-gray-50/40 rounded-xl border shadow-sm flex flex-col gap-3 mb-6 ${
           sectionInvalid ? invalidBorder : baseBorder
         }`}
       >
@@ -190,7 +163,6 @@ export default function WorkExperienceForm({
           </div>
         )}
 
-        {/* Row 1: Company, Role, Duration */}
         <div className="flex items-end gap-3">
           <div className="flex-1">
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -224,8 +196,8 @@ export default function WorkExperienceForm({
             </label>
             <input
               type="text"
-              value={newExp.duration}
-              onChange={(e) => handleNewChange("duration", e.target.value)}
+              value={newExp.start_year}
+              onChange={(e) => handleNewChange("start_year", e.target.value)}
               className={`w-full ${inputClasses} ${baseBorder}`}
               placeholder="2022-2024"
             />
@@ -233,93 +205,50 @@ export default function WorkExperienceForm({
 
           <button
             onClick={addExperience}
-            aria-label="Add experience"
-            title="Add experience"
-            className="flex items-center justify-center w-8 h-8 rounded-full bg-yellow-300 text-white text-xl shadow-sm hover:bg-yellow-400 focus:outline-none shrink-0 mb-1"
+            className="flex items-center justify-center w-10 h-10 rounded-full bg-yellow-300 text-white text-xl shadow-sm hover:bg-yellow-400"
           >
             +
           </button>
         </div>
 
-        {/* Row 2: Description with AI Enhance */}
         <div>
           <div className="flex items-center justify-between mb-1">
             <label className="block text-sm font-medium text-gray-700">
               Work Experience
             </label>
 
-            <div className="flex items-center gap-3">
-              <div className="w-56">
-                {/* <input
-                  type="text"
-                  value={keywords}
-                  onChange={(e) => setKeywords(e.target.value)}
-                  placeholder="Keywords (optional): React, Golang"
-                  className="w-full px-2 py-1 text-sm border rounded"
-                /> */}
-              </div>
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setShowDropdown((prev) => !prev)}
+                className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium text-gray-800 bg-gradient-to-r from-purple-100 via-pink-100 to-orange-100 shadow-sm hover:shadow-md transition"
+              >
+                <SparklesIcon className="w-3 h-3 text-pink-500" /> AI Enhance
+              </button>
 
-              <div className="relative" ref={dropdownRef}>
-                <button
-                  onClick={() => setShowDropdown((prev) => !prev)}
-                  className="flex items-center gap-1 px-2 py-1 mb-1 rounded-md text-xs font-medium text-gray-800 bg-gradient-to-r from-purple-100 via-pink-100 to-orange-100 shadow-sm hover:shadow-md transition"
-                >
-                  <SparklesIcon className="w-3 h-3 text-pink-500" /> AI Enhance
-                </button>
-
-                {showDropdown && (
-                  <div className="absolute right-0 mt-1 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+              {showDropdown && (
+                <div className="absolute right-0 mt-1 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                  {[
+                    ["✨ Polish", "polish"],
+                    ["✂️ Make Concise", "concise"],
+                    ["🔧 More Technical", "technical"],
+                    ["🏢 Recruiter-Friendly", "recruiter"],
+                  ].map(([label, type]) => (
                     <button
+                      key={type}
                       onClick={() =>
                         handleAIEnhance(
                           (val) => setNewExp({ ...newExp, description: val }),
                           newExp.description,
-                          "polish"
+                          type as any
                         )
                       }
                       className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50"
                     >
-                      ✨ Polish
+                      {label}
                     </button>
-                    <button
-                      onClick={() =>
-                        handleAIEnhance(
-                          (val) => setNewExp({ ...newExp, description: val }),
-                          newExp.description,
-                          "concise"
-                        )
-                      }
-                      className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50"
-                    >
-                      ✂️ Make Concise
-                    </button>
-                    <button
-                      onClick={() =>
-                        handleAIEnhance(
-                          (val) => setNewExp({ ...newExp, description: val }),
-                          newExp.description,
-                          "technical"
-                        )
-                      }
-                      className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50"
-                    >
-                      🔧 More Technical
-                    </button>
-                    <button
-                      onClick={() =>
-                        handleAIEnhance(
-                          (val) => setNewExp({ ...newExp, description: val }),
-                          newExp.description,
-                          "recruiter"
-                        )
-                      }
-                      className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50"
-                    >
-                      🏢 Recruiter-Friendly
-                    </button>
-                  </div>
-                )}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 
@@ -335,118 +264,37 @@ export default function WorkExperienceForm({
 
       {/* --- List of Added Experiences --- */}
       <div className="space-y-4">
-        {sectionInvalid && experiences.length === 0 ? (
-          <div className="text-sm text-red-600">
-            No work experience entries yet.
-          </div>
-        ) : null}
-
         {experiences.map((exp, index) => (
           <div
             key={index}
-            className="p-4 bg-white rounded-lg shadow hover:shadow-md transition border border-gray-100 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4"
+            className="p-4 bg-gray-50/40 rounded-xl border border-gray-200 shadow-sm flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4"
           >
-            {editIndex === index && editExp ? (
-              <div className="flex-1 flex flex-col gap-3">
-                <div className="flex gap-3">
-                  <input
-                    type="text"
-                    value={editExp.company}
-                    onChange={(e) =>
-                      setEditExp({ ...editExp, company: e.target.value })
-                    }
-                    className={`flex-1 ${inputClasses} ${baseBorder}`}
-                  />
-                  <input
-                    type="text"
-                    value={editExp.role}
-                    onChange={(e) =>
-                      setEditExp({ ...editExp, role: e.target.value })
-                    }
-                    className={`flex-1 ${inputClasses} ${baseBorder}`}
-                  />
-                  <input
-                    type="text"
-                    value={editExp.duration}
-                    onChange={(e) =>
-                      setEditExp({ ...editExp, duration: e.target.value })
-                    }
-                    className={`w-40 ${inputClasses} ${baseBorder}`}
-                  />
-                </div>
-                <textarea
-                  value={editExp.description}
-                  onChange={(e) =>
-                    setEditExp({ ...editExp, description: e.target.value })
-                  }
-                  rows={3}
-                  className={`w-full ${inputClasses} ${baseBorder}`}
-                />
-                <input
-                  type="text"
-                  value={editExp.logo}
-                  onChange={(e) =>
-                    setEditExp({ ...editExp, logo: e.target.value })
-                  }
-                  className={`w-full ${inputClasses} ${baseBorder}`}
-                />
-              </div>
-            ) : (
-              <div className="flex-1 flex items-start gap-3">
-                {exp.logo && (
-                  <img
-                    src={exp.logo}
-                    alt={exp.company}
-                    className="w-12 h-12 object-contain rounded border border-gray-200"
-                  />
-                )}
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    👔 {exp.role}
-                  </h3>
-                  <p className="text-sm font-medium text-gray-700">
-                    🏢 {exp.company}
-                  </p>
-                  <p className="text-xs text-gray-500">⏳ {exp.duration}</p>
-                  <p className="mt-2 text-sm text-gray-600 leading-snug">
-                    📄 {exp.description}
-                  </p>
-                </div>
-              </div>
-            )}
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-gray-900">
+                👔 {exp.role}
+              </h3>
+              <p className="text-sm font-medium text-gray-700">
+                🏢 {exp.company}
+              </p>
+              <p className="text-xs text-gray-500">⏳ {exp.start_year}</p>
+              <p className="mt-2 text-sm text-gray-600 leading-snug">
+                📄 {exp.description}
+              </p>
+            </div>
 
             <div className="flex items-center gap-2">
-              {editIndex === index ? (
-                <>
-                  <button
-                    onClick={saveEdit}
-                    className="px-3 py-1 text-sm rounded-md bg-yellow-300 text-white hover:bg-yellow-400"
-                  >
-                    Save
-                  </button>
-                  <button
-                    onClick={cancelEdit}
-                    className="px-3 py-1 text-sm rounded-md bg-gray-200 text-gray-700 hover:bg-gray-300"
-                  >
-                    Cancel
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={() => startEdit(index)}
-                    className="px-3 py-1 text-sm rounded-md bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => deleteExperience(index)}
-                    className="px-3 py-1 text-sm rounded-md bg-red-100 text-red-700 hover:bg-red-200"
-                  >
-                    Delete
-                  </button>
-                </>
-              )}
+              <button
+                onClick={() => startEdit(index)}
+                className="px-3 py-1 text-sm rounded-md bg-yellow-100 text-yellow-700 hover:bg-yellow-200"
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => deleteExperience(index)}
+                className="px-3 py-1 text-sm rounded-md bg-red-100 text-red-700 hover:bg-red-200"
+              >
+                Delete
+              </button>
             </div>
           </div>
         ))}

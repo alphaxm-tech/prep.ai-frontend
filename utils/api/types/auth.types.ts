@@ -46,8 +46,8 @@ export interface User {
 
   email: string;
   phoneNumber: string | null;
-  fullName: string | null;
-  passwordHash?: string | null;
+  full_name: string | null;
+  // passwordHash?: string | null;
 
   authProvider: string | null;
   roleId: number;

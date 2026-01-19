@@ -1,4 +1,4 @@
-import api from "@/lib/axios";
+import api from "@/utils/api/axios";
 import {
   ADD_USER_DETAILS,
   AUTH,

@@ -63,41 +63,36 @@ const InputWithIcon = memo(function InputWithIcon({
  * - POST /api/auth/setPasswordAndLogin { email, password } -> { success } (sets cookies)
  */
 export default function LoginPage() {
-  const DEMO_ADMIN_EMAIL = "admin.prepai@gmail.com";
-  const DEMO_ADMIN_PASSWORD = "Admin@2025";
+  // const DEMO_ADMIN_EMAIL = "admin.prepai@gmail.com";
+  // const DEMO_ADMIN_PASSWORD = "Admin@2025";
 
-  const DEMO_ADMINS = [
-    {
-      email: "admin.prepai@gmail.com",
-      password: "Admin@2025",
-      role: "admin",
-    },
-    {
-      email: "sanket.naukarkar@gmail.com",
-      password: "Sanket@1998",
-      role: "admin",
-    },
-    {
-      email: "vm.prepai@gmail.com",
-      password: "prepai@1993",
-      role: "admin",
-    },
-    {
-      email: "santhikannuru28@gmail.com",
-      password: "santhikannuru28@prepai",
-      role: "student",
-    },
-    {
-      email: "pavankumarpadala06@gmail.com",
-      password: "pavankumarpadala06@prepai",
-      role: "student",
-    },
-    {
-      email: "sasidharmarripati08@gmail.com",
-      password: "sasidharmarripati08@prepai",
-      role: "student",
-    },
-  ];
+  // const DEMO_ADMINS = [
+  //   {
+  //     email: "admin.prepai@gmail.com",
+  //     password: "Admin@2025",
+  //     role: "admin",
+  //   },
+  //   {
+  //     email: "sanket.naukarkar@gmail.com",
+  //     password: "Sanket@1998",
+  //     role: "admin",
+  //   },
+  //   {
+  //     email: "vm.prepai@gmail.com",
+  //     password: "prepai@1993",
+  //     role: "admin",
+  //   },
+  //   {
+  //     email: "santhikannuru28@gmail.com",
+  //     password: "santhikannuru28@prepai",
+  //     role: "student",
+  //   },
+  //   {
+  //     email: "pavankumarpadala06@gmail.com",
+  //     password: "pavankumarpadala06@prepai",
+  //     role: "student",
+  //   },
+  // ];
 
   const router = useRouter();
   // const { success, error: showError } = useToast();
@@ -299,18 +294,18 @@ export default function LoginPage() {
      * 🔐 UI-ONLY DEMO LOGIN (NO BACKEND)
      * Works for ALL emails in DEMO_ADMINS
      */
-    const demoUser = DEMO_ADMINS.find((u) => u.email.toLowerCase() === trimmed);
+    // const demoUser = DEMO_ADMINS.find((u) => u.email.toLowerCase() === trimmed);
 
-    if (demoUser) {
-      showToast("success", "Demo user verified");
+    // if (demoUser) {
+    //   showToast("success", "Demo user verified");
 
-      setEmailVerified(true);
-      setHasPassword(true); // all demo users have passwords
-      setUserID(-1); // dummy ID
-      setStep("password"); // go directly to password login
+    //   setEmailVerified(true);
+    //   setHasPassword(true); // all demo users have passwords
+    //   setUserID(-1); // dummy ID
+    //   setStep("password"); // go directly to password login
 
-      return;
-    }
+    //   return;
+    // }
 
     /**
      * 🔁 REAL BACKEND FLOW (UNCHANGED)
@@ -523,17 +518,17 @@ export default function LoginPage() {
     //   return;
     // }
 
-    const matchedDemoUser = DEMO_ADMINS.find(
-      (u) =>
-        u.email.toLowerCase() === normalizedEmail &&
-        u.password === normalizedPassword
-    );
+    // const matchedDemoUser = DEMO_ADMINS.find(
+    //   (u) =>
+    //     u.email.toLowerCase() === normalizedEmail &&
+    //     u.password === normalizedPassword
+    // );
 
-    if (matchedDemoUser) {
-      showToast("success", `Login successful (${matchedDemoUser.role})`);
-      router.push("/home");
-      return;
-    }
+    // if (matchedDemoUser) {
+    //   showToast("success", `Login successful (${matchedDemoUser.role})`);
+    //   router.push("/home");
+    //   return;
+    // }
 
     /**
      * 🔁 REAL BACKEND LOGIN (unchanged)
@@ -838,12 +833,13 @@ export default function LoginPage() {
           {/* Right: Form card */}
           <div className="p-6 sm:p-8">
             <div className="text-center mb-4">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
                 PrepBuddy
                 <sup className="ml-1 text-sm font-semibold text-yellow-500 align-super">
                   AI
                 </sup>
               </h1>
+
               <p className="text-gray-500 mt-2 text-sm sm:text-base">
                 {step === "email" && "Enter your email to continue."}
                 {step === "choose" && "Choose a login method."}

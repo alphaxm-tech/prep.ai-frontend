@@ -4,12 +4,17 @@
 import { useState } from "react";
 import { SparklesIcon } from "@heroicons/react/24/outline";
 import Loader from "../Loader";
+import { capitalizeFullName } from "@/app/(auth)/resume-builder/page";
 
 type Props = {
+  isDefault: boolean;
+  setIsDefault: (v: boolean) => void;
+  resumeTitle: string;
+  setResumeTitle: (v: string) => void;
   fullName: string;
-  setFullName: (v: string) => void;
+  // setFullName: (v: string) => void;
   email: string;
-  setEmail: (v: string) => void;
+  // setEmail: (v: string) => void;
   phone: string;
   setPhone: (v: string) => void;
   location: string;
@@ -28,10 +33,12 @@ type Props = {
 };
 
 export default function BasicDetails({
+  isDefault,
+  setIsDefault,
+  resumeTitle,
+  setResumeTitle,
   fullName,
-  setFullName,
   email,
-  setEmail,
   phone,
   setPhone,
   location,
@@ -109,29 +116,99 @@ export default function BasicDetails({
     <>
       <Loader show={loading} message="Modifying your text with AI" />
 
+      {/* ================= Resume Title ================= */}
+      <div className="mb-4">
+        <div className="flex items-center justify-between">
+          <label className="block text-sm font-medium text-gray-700">
+            Resume Title*
+            <span className="ml-2 text-xs font-normal text-gray-500">
+              (for reference only, not shown on the resume)
+            </span>
+          </label>
+
+          {/* Toggle */}
+          {/* <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-600">Default</span>
+            <button
+              type="button"
+              onClick={() => setIsDefault(!isDefault)}
+              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 ${
+                isDefault ? "bg-yellow-400" : "bg-gray-300"
+              }`}
+              aria-pressed={isDefault}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform duration-200 ${
+                  isDefault ? "translate-x-4" : "translate-x-1"
+                }`}
+              />
+            </button>
+          </div> */}
+        </div>
+
+        {/* Input */}
+        <input
+          value={resumeTitle}
+          onChange={(e) => setResumeTitle(e.target.value)}
+          className={`${inputBase} ${
+            invalid("resumeTitle") ? inputInvalid : inputNormal
+          } font-medium`}
+          placeholder="e.g. Frontend Developer Resume"
+          aria-invalid={invalid("resumeTitle")}
+        />
+
+        {/* Error */}
+        {invalid("resumeTitle") && (
+          <p className="mt-1 text-xs text-red-600">Resume title is required.</p>
+        )}
+      </div>
+
       {/* Full Name + Location */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
             Full Name
           </label>
-          <input
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            className={`${inputBase} ${
-              invalid("fullName") ? inputInvalid : inputNormal
-            }`}
-            placeholder="e.g. Vaishnavi"
-            aria-invalid={invalid("fullName")}
-          />
-          {invalid("fullName") && (
-            <p className="mt-1 text-xs text-red-600">Full name is required.</p>
+
+          <div className="relative">
+            <input
+              value={capitalizeFullName(fullName) ?? ""}
+              readOnly
+              placeholder="Not available"
+              className={`
+                  w-full
+                  rounded-lg
+                  border
+                  border-gray-200
+                  px-4
+                  py-2.5
+                  text-gray-900
+                  focus:outline-none
+                  text-sm
+                  ${
+                    capitalizeFullName(fullName)
+                      ? "bg-gray-100 cursor-not-allowed"
+                      : "bg-gray-50 text-gray-400 italic"
+                  }
+                `}
+              aria-readonly="true"
+            />
+
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+              {capitalizeFullName(fullName) ? "🔒" : "—"}
+            </span>
+          </div>
+
+          {!capitalizeFullName(fullName) && (
+            <p className="mt-1 text-xs text-gray-500">
+              Name couldn’t be loaded. Please try again later.
+            </p>
           )}
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-700">
-            Location
+            Location <span className="text-xs text-gray-400">(required)</span>
           </label>
           <input
             value={location}
@@ -139,7 +216,7 @@ export default function BasicDetails({
             className={`${inputBase} ${
               invalid("location") ? inputInvalid : inputNormal
             }`}
-            placeholder="e.g. New York"
+            placeholder="e.g. Hyderabad, India"
             aria-invalid={invalid("location")}
           />
           {invalid("location") && (
@@ -151,37 +228,71 @@ export default function BasicDetails({
       {/* Email + Phone */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700">
+          <label className="block text-sm font-medium text-gray-700 mb-1">
             Email
           </label>
-          <input
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className={`${inputBase} ${
-              invalid("email") ? inputInvalid : inputNormal
-            }`}
-            placeholder="e.g. name@example.com"
-            aria-invalid={invalid("email")}
-          />
-          {invalid("email") && (
-            <p className="mt-1 text-xs text-red-600">Email is required.</p>
+
+          <div className="relative">
+            <input
+              value={email ?? ""}
+              readOnly
+              placeholder="Not available"
+              className={`
+                  w-full
+                  rounded-lg
+                  border
+                  border-gray-200
+                  px-4
+                  py-2.5
+                  focus:outline-none
+                  text-sm
+                  ${
+                    email
+                      ? "bg-gray-100 text-gray-900 cursor-not-allowed"
+                      : "bg-gray-50 text-gray-400 italic"
+                  }
+                `}
+              aria-readonly="true"
+            />
+
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
+              {email ? "🔒" : "—"}
+            </span>
+          </div>
+
+          {!email && (
+            <p className="mt-1 text-xs text-gray-500">
+              Email couldn’t be loaded. Please refresh or try again later.
+            </p>
           )}
         </div>
+
         <div>
           <label className="block text-sm font-medium text-gray-700">
             Phone
           </label>
+
           <input
             value={phone}
-            onChange={(e) => setPhone(e.target.value)}
+            onChange={(e) => {
+              // allow only digits
+              const digitsOnly = e.target.value.replace(/\D/g, "");
+              setPhone(digitsOnly);
+            }}
+            inputMode="numeric"
+            pattern="[0-9]*"
+            maxLength={10}
             className={`${inputBase} ${
               invalid("phone") ? inputInvalid : inputNormal
             }`}
-            placeholder="e.g. 0123456789"
+            placeholder="e.g. 9130972585"
             aria-invalid={invalid("phone")}
           />
+
           {invalid("phone") && (
-            <p className="mt-1 text-xs text-red-600">Phone is required.</p>
+            <p className="mt-1 text-xs text-red-600">
+              Phone number must be 10 digits.
+            </p>
           )}
         </div>
       </div>
