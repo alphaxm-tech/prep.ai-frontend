@@ -1,5 +1,5 @@
-export const BASE_API_URL = `http://localhost:8080/api/v1`;
-// export const BASE_API_URL = `https://prep-ai-backend-zcbs.onrender.com/api/v1`;
+// export const BASE_API_URL = `http://localhost:8080/api/v1`;
+export const BASE_API_URL = `https://prep-ai-backend-zcbs.onrender.com/api/v1`;
 
 export const RESUME = `resume`;
 export const AIINTERVIEW = `ai-interview`;
