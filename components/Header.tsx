@@ -7,6 +7,7 @@ export function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+  const isAdmin = true; // replace with auth-based check
 
   const isLandingPage = pathname === "/";
   const isLoginPage = pathname.startsWith("/login");
@@ -110,7 +111,7 @@ export function Header() {
           )}
 
           {/* INSIDE APP → LOGOUT ONLY */}
-          {isInsideApp && (
+          {/* {isInsideApp && (
             <nav className="hidden md:flex">
               <button
                 onClick={handleLogout}
@@ -120,6 +121,36 @@ export function Header() {
                   shadow-sm hover:shadow-md hover:bg-gray-800
                   transition-all
                 "
+              >
+                Logout
+              </button>
+            </nav>
+          )} */}
+
+          {isInsideApp && (
+            <nav className="hidden md:flex items-center gap-4">
+              {isAdmin && (
+                <button
+                  onClick={() => router.push("/admin/home")}
+                  className="
+          px-5 py-2 text-sm font-semibold
+          rounded-full bg-yellow-600 text-white
+          shadow-sm hover:shadow-md hover:bg-yellow-700
+          transition-all
+        "
+                >
+                  Admin
+                </button>
+              )}
+
+              <button
+                onClick={handleLogout}
+                className="
+        px-6 py-2 text-sm font-semibold
+        rounded-full bg-gray-900 text-white
+        shadow-sm hover:shadow-md hover:bg-gray-800
+        transition-all
+      "
               >
                 Logout
               </button>
