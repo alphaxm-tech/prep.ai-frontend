@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Card from "../../../components/Card";
+import Card from "../../../../components/Card";
 import {
   CalendarDaysIcon,
   ClipboardDocumentCheckIcon,
@@ -195,7 +195,7 @@ export default function Dashboard() {
                             {key.replaceAll("_", " ")}:{" "}
                             <strong>{String(value)}</strong>
                           </li>
-                        )
+                        ),
                       )}
                     </ul>
                   </div>

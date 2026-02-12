@@ -348,7 +348,7 @@ export default function LoginPage() {
           showToast("error", "Something went wrong. Please try again.");
           setLoading(false);
         },
-      }
+      },
     );
   }, [email]);
 
@@ -384,7 +384,7 @@ export default function LoginPage() {
           showToast("error", "Something went wrong. Please try again.");
           setLoading(false);
         },
-      }
+      },
     );
   }, [email, firstName, lastName, phoneNumber, location]);
 
@@ -452,7 +452,7 @@ export default function LoginPage() {
 
       // success?.("OTP verified. Logging in…");
       // assume server sets cookies
-      router.push("/home");
+      router.push("/student/home");
     } catch (err) {
       setLoading(false);
       // showError?.("Server error verifying OTP.");
@@ -543,14 +543,14 @@ export default function LoginPage() {
       },
       {
         onSuccess: (data: any) => {
-          router.push("/home");
+          router.push("/student/home");
           setLoading(false);
         },
         onError: (err: any) => {
           showToast("error", "Something went wrong. Please try again.");
           setLoading(false);
         },
-      }
+      },
     );
   }, [email, password, router]);
 
@@ -578,7 +578,7 @@ export default function LoginPage() {
       }
 
       // success?.("Password set. Logging in…");
-      router.push("/home");
+      router.push("/student/home");
     } catch (err) {
       setLoading(false);
       // showError?.("Server error setting password.");
@@ -593,14 +593,14 @@ export default function LoginPage() {
     const normalizedEmail = email.trim().toLowerCase();
     const matchedUser = ALLOWED_USERS.find(
       (u) =>
-        u.email.toLowerCase() === normalizedEmail && u.password === password
+        u.email.toLowerCase() === normalizedEmail && u.password === password,
     );
 
     if (matchedUser) {
       // success?.("Logged in (demo). Redirecting…");
       setTimeout(() => {
         setLoading(false);
-        router.push("/home");
+        router.push("/student/home");
       }, 400);
       return;
     }
@@ -631,7 +631,7 @@ export default function LoginPage() {
         setLoading(false);
         showToast(
           "error",
-          "Your account is temporarily suspended. Contact support."
+          "Your account is temporarily suspended. Contact support.",
         );
         break;
 
@@ -639,7 +639,7 @@ export default function LoginPage() {
         setLoading(false);
         showToast(
           "error",
-          "Your account is temporarily not active. Contact support."
+          "Your account is temporarily not active. Contact support.",
         );
         break;
 

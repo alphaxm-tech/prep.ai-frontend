@@ -12,3 +12,10 @@ export const useGetUserDetailsAll = () => {
     refetchOnReconnect: false,
   });
 };
+
+export const useMe = () => {
+  return useQuery({
+    queryKey: ["me", "home"],
+    queryFn: homeService.getMeDetails,
+  });
+};

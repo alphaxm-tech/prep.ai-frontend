@@ -25,8 +25,7 @@ export const VERIFY_LOGIN_OTP = `auth/verify-login-otp`;
 
 /// HOME endpoints ///
 export const GET_USER_DETAILS_ALL = `get-user-details-all`;
-
-// convert them to strings instead of functions
+export const ME = `me`;
 
 /// Super Admin endpoints ///
 export const ADD_COLLEGE = `add-college`;

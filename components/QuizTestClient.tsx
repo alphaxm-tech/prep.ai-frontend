@@ -9,7 +9,7 @@ import {
   tcsQuestions,
   wiproQuestions,
   accentureQuestions,
-} from "@/app/(auth)/quiz/questionBank";
+} from "@/app/(protected)/student/quiz/questionBank";
 
 /**
  * Convert QuestionBank question → QuizModal question

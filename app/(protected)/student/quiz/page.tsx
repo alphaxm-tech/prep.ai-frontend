@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { StatCard } from "../../../components/StatCard";
+import { StatCard } from "../../../../components/StatCard";
 import { useRouter } from "next/navigation";
 
 const userStats = {

@@ -134,8 +134,8 @@ export function Header() {
                   onClick={() => router.push("/admin/home")}
                   className="
           px-5 py-2 text-sm font-semibold
-          rounded-full bg-yellow-600 text-white
-          shadow-sm hover:shadow-md hover:bg-yellow-700
+          rounded-full bg-yellow-500 text-white
+          shadow-sm hover:shadow-md hover:bg-yellow-600
           transition-all
         "
                 >

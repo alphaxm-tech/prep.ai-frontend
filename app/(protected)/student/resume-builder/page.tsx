@@ -7,11 +7,11 @@ import EducationForm from "@/components/resume/EducationForm";
 import ResumeDropdown from "@/components/ResumeDropdown";
 import BasicDetails from "@/components/resume/BasicDetails";
 import WorkExperienceForm from "@/components/resume/WorkExperienceForm";
-import CreativeResumeTemplate from "../../../components/Resume-formats/CreativeResume";
-import ProfessionalResumeTemplateVertical from "../../../components/Resume-formats/ProfessionalResume";
-import ModernResumeTemplate from "../../../components/Resume-formats/ModernResume";
-import MinimalResumeTemplate from "../../../components/Resume-formats/MinimalResume";
-import StandardResumeTemplate from "../../../components/Resume-formats/StandardResume";
+import CreativeResumeTemplate from "../../../../components/Resume-formats/CreativeResume";
+import ProfessionalResumeTemplateVertical from "../../../../components/Resume-formats/ProfessionalResume";
+import ModernResumeTemplate from "../../../../components/Resume-formats/ModernResume";
+import MinimalResumeTemplate from "../../../../components/Resume-formats/MinimalResume";
+import StandardResumeTemplate from "../../../../components/Resume-formats/StandardResume";
 import { useGetUserDetailsAll } from "@/utils/queries/home.queries";
 import {
   useGetCompleteResumeByID,
@@ -134,7 +134,7 @@ export default function ResumeBuilderPage() {
   const email = getUserDetailsAllRes?.user?.email ?? "";
 
   const service = getUserDetailsAllRes?.userServices?.find(
-    (s) => s.service_id === 1
+    (s) => s.service_id === 1,
   );
   // console.log(service?.services_config?.max_resumes_per_student);
   const MAX_RESUMES = service?.services_config
@@ -176,17 +176,17 @@ export default function ResumeBuilderPage() {
     if (!resumeData?.resumeFormats) return null;
 
     return resumeData.resumeFormats.find(
-      (f: any) => f.format_key === resumeFormat
+      (f: any) => f.format_key === resumeFormat,
     );
   }, [resumeData?.resumeFormats, resumeFormat]);
 
   const skillNames = useMemo(
     () => technicalSkills.map((skill) => skill.text),
-    [technicalSkills]
+    [technicalSkills],
   );
   const technicalSkillIds = useMemo(
     () => technicalSkills.map((s) => s.skillId),
-    [technicalSkills]
+    [technicalSkills],
   );
   const [selectedResume, setSelectedResume] = useState<Resume | null>(null);
   const [showResumeViewModal, setShowResumeViewModal] = useState(false);
@@ -227,7 +227,7 @@ export default function ResumeBuilderPage() {
       educations,
       experiences,
       projects,
-    ]
+    ],
   );
 
   const assembledDataWithDefaults = useMemo<any>(() => {
@@ -371,7 +371,7 @@ export default function ResumeBuilderPage() {
     // check quota first
     if (!canCreateMore) {
       setQuotaError(
-        `Resume limit reached (${usedResumes}/${MAX_RESUMES}). Delete an existing resume to create a new one.`
+        `Resume limit reached (${usedResumes}/${MAX_RESUMES}). Delete an existing resume to create a new one.`,
       );
       return;
     }
@@ -410,7 +410,7 @@ export default function ResumeBuilderPage() {
           console.log("hello");
           showToast(
             "error",
-            "Resume title already exists, please provide unique one"
+            "Resume title already exists, please provide unique one",
           );
         }
 
@@ -428,7 +428,7 @@ export default function ResumeBuilderPage() {
     // final quota check (race-safety)
     if (!canCreateMore) {
       setQuotaError(
-        `Unable to save — resume limit reached (${usedResumes}/${MAX_RESUMES}).`
+        `Unable to save — resume limit reached (${usedResumes}/${MAX_RESUMES}).`,
       );
       return;
     }
@@ -494,7 +494,7 @@ export default function ResumeBuilderPage() {
       educations,
       // experiences,
       // projects,
-    ]
+    ],
   );
   const canSaveNow = !hasAnyErrors(currentValidation);
 
@@ -718,7 +718,7 @@ export default function ResumeBuilderPage() {
     } catch (err) {
       console.error("Print / front-end PDF generation failed:", err);
       alert(
-        "Failed to print resume. Try allowing print/popups in your browser or use the server-side PDF route for perfect fidelity."
+        "Failed to print resume. Try allowing print/popups in your browser or use the server-side PDF route for perfect fidelity.",
       );
     } finally {
       setIsDownloading(false);
@@ -764,7 +764,7 @@ export default function ResumeBuilderPage() {
       setQuotaError(null);
     }
   }, [currentValidation]);
-  
+
   const FORMAT_ID_TO_KEY: Record<number, string> = {
     1: "creative",
     2: "modern",
@@ -1065,8 +1065,8 @@ export default function ResumeBuilderPage() {
                         remainingResumes === 0
                           ? `Resume limit reached (${usedResumes}/${MAX_RESUMES})`
                           : hasAnyErrors(validationErrors)
-                          ? "Fill required fields to save"
-                          : "Save Resume"
+                            ? "Fill required fields to save"
+                            : "Save Resume"
                       }
                     >
                       Save Resume
