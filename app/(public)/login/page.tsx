@@ -1,6 +1,13 @@
 "use client";
 
-import React, { useState, useCallback, memo, useEffect } from "react";
+import React, {
+  useState,
+  useCallback,
+  memo,
+  useEffect,
+  useRef,
+  forwardRef,
+} from "react";
 import { EnvelopeIcon, LockClosedIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import Loader from "@/components/Loader";
@@ -22,39 +29,40 @@ import { UserRole } from "@/utils/enums";
 /**
  * InputWithIcon must be declared at module top-level to keep identity stable.
  */
-const InputWithIcon = memo(function InputWithIcon({
-  icon,
-  type = "text",
-  placeholder = "",
-  value,
-  onChange,
-  name,
-  autoComplete,
-  ...rest
-}: any) {
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    onChange && onChange(e);
-  };
-
-  return (
-    <div className="relative mt-1">
-      <div className="absolute left-3 top-2.5 h-5 w-5 text-gray-400 pointer-events-none">
-        {icon}
+const InputWithIcon = memo(
+  forwardRef<HTMLInputElement, any>(function InputWithIcon(
+    {
+      icon,
+      type = "text",
+      placeholder = "",
+      value,
+      onChange,
+      name,
+      autoComplete,
+      ...rest
+    },
+    ref,
+  ) {
+    return (
+      <div className="relative mt-1">
+        <div className="absolute left-3 top-2.5 h-5 w-5 text-gray-400 pointer-events-none">
+          {icon}
+        </div>
+        <input
+          ref={ref}
+          name={name}
+          autoComplete={autoComplete}
+          type={type}
+          value={value}
+          placeholder={placeholder}
+          onChange={onChange}
+          className="w-full px-4 py-3 pl-10 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-400 outline-none text-sm sm:text-base"
+          {...rest}
+        />
       </div>
-      <input
-        name={name}
-        autoComplete={autoComplete}
-        type={type}
-        value={value}
-        placeholder={placeholder}
-        onChange={handleChange}
-        className="w-full px-4 py-3 pl-10 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-400 outline-none text-sm sm:text-base"
-        {...rest}
-      />
-    </div>
-  );
-});
-
+    );
+  }),
+);
 /**
  * Multi-screen Login Page (email -> choose -> otp/password flows)
  *
@@ -98,11 +106,34 @@ export default function LoginPage() {
   const [otpSent, setOtpSent] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  const loginRef = useRef<HTMLInputElement>(null);
+  const otpRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
+  const firstNameRef = useRef<HTMLInputElement>(null);
+
   const { showToast } = useToast();
 
   const verifyEmailMutation = useVerifyUserEmail();
   const addUserDetailsMutation = addUserDetails();
   const loginWithPasswordMutation = loginWithPassword();
+
+  useEffect(() => {
+    if (step === "email") {
+      loginRef.current?.focus();
+    }
+
+    if (step === "otp") {
+      otpRef.current?.focus();
+    }
+
+    if (step === "password" || step === "setPassword") {
+      passwordRef.current?.focus();
+    }
+
+    if (step === "profile") {
+      firstNameRef.current?.focus();
+    }
+  }, [step]);
 
   // input handlers
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -257,26 +288,6 @@ export default function LoginPage() {
       return;
     }
 
-    /**
-     * 🔐 UI-ONLY DEMO LOGIN (NO BACKEND)
-     * Works for ALL emails in DEMO_ADMINS
-     */
-    // const demoUser = DEMO_ADMINS.find((u) => u.email.toLowerCase() === trimmed);
-
-    // if (demoUser) {
-    //   showToast("success", "Demo user verified");
-
-    //   setEmailVerified(true);
-    //   setHasPassword(true); // all demo users have passwords
-    //   setUserID(-1); // dummy ID
-    //   setStep("password"); // go directly to password login
-
-    //   return;
-    // }
-
-    /**
-     * 🔁 REAL BACKEND FLOW (UNCHANGED)
-     */
     setLoading(true);
     setErrorMessage(null);
     setLoadingMessage("Verifying your email id");
@@ -572,6 +583,29 @@ export default function LoginPage() {
     }
   };
 
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (loading || otpLoading) return;
+
+    switch (step) {
+      case "email":
+        verifyUserEmail();
+        break;
+      case "profile":
+        submitProfileDetails();
+        break;
+      case "otp":
+        verifyOtpAndLogin();
+        break;
+      case "password":
+        passwordLogin();
+        break;
+      case "setPassword":
+        setPasswordAndLogin();
+        break;
+    }
+  };
+
   // UI rendering by step
   return (
     <>
@@ -793,7 +827,10 @@ export default function LoginPage() {
               </p>
             </div>
 
-            <div className="space-y-4 min-h-[320px] transition-all duration-200">
+            <form
+              className="space-y-4 min-h-[320px] transition-all duration-200"
+              onSubmit={handleSubmit}
+            >
               {/* Screen 1: only email + verify button */}
               {step === "email" && (
                 <div>
@@ -801,17 +838,18 @@ export default function LoginPage() {
                     Email
                   </label>
                   <InputWithIcon
+                    ref={loginRef}
                     name="email"
                     autoComplete="email"
                     icon={<EnvelopeIcon className="h-5 w-5" />}
                     type="email"
-                    placeholder="you@example.com"
+                    placeholder="you@gmail.com"
                     value={email}
                     onChange={handleEmailChange}
                   />
 
                   <button
-                    type="button"
+                    type="submit"
                     onClick={verifyUserEmail}
                     className="w-full mt-4 bg-yellow-500 text-white font-semibold py-3 rounded-xl"
                     disabled={loading}
@@ -872,6 +910,7 @@ export default function LoginPage() {
                   </label>
                   <div className="flex gap-2">
                     <input
+                      ref={otpRef}
                       name="otp"
                       autoComplete="one-time-code"
                       type="text"
@@ -884,9 +923,9 @@ export default function LoginPage() {
 
                   <div className="mt-3 grid grid-cols-2 gap-3">
                     <button
+                      type="submit"
                       className="col-span-1 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white font-semibold py-3 rounded-xl shadow-md transform transition text-sm sm:text-base"
                       onClick={sendOtpAndGo}
-                      type="button"
                       disabled={otpLoading}
                     >
                       {otpSent ? "Resend OTP" : "Send OTP"}
@@ -911,6 +950,7 @@ export default function LoginPage() {
                     {step === "password" ? "Password" : "Set New Password"}
                   </label>
                   <InputWithIcon
+                    ref={passwordRef}
                     name="password"
                     autoComplete={
                       step === "password" ? "current-password" : "new-password"
@@ -944,7 +984,7 @@ export default function LoginPage() {
                   )}
 
                   <button
-                    type="button"
+                    type="submit"
                     onClick={
                       step === "password" ? passwordLogin : setPasswordAndLogin
                     }
@@ -1061,7 +1101,7 @@ export default function LoginPage() {
                   {/* Hidden by default per your requirement — no Sign In button on first screen other than Verify Email */}
                 </div>
               )}
-            </div>
+            </form>
 
             <div className="my-4 flex items-center">
               <hr className="flex-grow border-gray-300" />
