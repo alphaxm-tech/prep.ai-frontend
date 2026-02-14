@@ -16,8 +16,8 @@ import {
   PLATFORM_ROUTE,
   STUDENT_ROUTE,
   UN_AUTHORIZED,
-  UserRole,
 } from "@/utils/CONSTANTS";
+import { UserRole } from "@/utils/enums";
 
 /**
  * InputWithIcon must be declared at module top-level to keep identity stable.
@@ -577,7 +577,33 @@ export default function LoginPage() {
     <>
       <Loader show={loading || otpLoading} message={loadingMessage} />
 
-      <div className="min-h-screen flex items-start justify-center bg-yellow-50/40 px-4 py-8 sm:py-12">
+      <div className="min-h-screen flex flex-col items-center justify-start bg-yellow-50/40 px-4 pt-6 sm:pt-10">
+        {/* Header Section */}
+        <div className="w-full max-w-4xl mb-6">
+          <div className="text-center">
+            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
+              PrepBuddy
+              <sup className="text-lg font-semibold text-yellow-500">AI</sup>
+            </h1>
+            <p className="text-gray-600 text-sm sm:text-base mb-4">
+              AI-powered career platform for students, colleges & placement
+              automation
+            </p>
+            <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
+              <span className="inline-block px-3 py-1 bg-yellow-100 text-yellow-800 text-xs sm:text-sm font-medium rounded-full">
+                👨‍🎓 For Students
+              </span>
+              <span className="inline-block px-3 py-1 bg-blue-100 text-blue-800 text-xs sm:text-sm font-medium rounded-full">
+                🏫 For Colleges
+              </span>
+              <span className="inline-block px-3 py-1 bg-purple-100 text-purple-800 text-xs sm:text-sm font-medium rounded-full">
+                ⚡ Placement Automation
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Login Card */}
         <div className="bg-white rounded-2xl shadow-lg w-full max-w-4xl overflow-hidden grid grid-cols-1 md:grid-cols-2">
           {/* Small-screen hero */}
           <div className="md:hidden border-b border-gray-100 p-6">
@@ -757,19 +783,13 @@ export default function LoginPage() {
           {/* Right: Form card */}
           <div className="p-6 sm:p-8">
             <div className="text-center mb-4">
-              <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
-                PrepBuddy
-                <sup className="ml-1 text-sm font-semibold text-yellow-500 align-super">
-                  AI
-                </sup>
-              </h1>
-
-              <p className="text-gray-500 mt-2 text-sm sm:text-base">
-                {step === "email" && "Enter your email to continue."}
-                {step === "choose" && "Choose a login method."}
-                {step === "otp" && "Enter the OTP sent to your email."}
-                {step === "password" && "Enter your password to login."}
-                {step === "setPassword" && "Create a new password."}
+              <p className="text-gray-500 text-sm sm:text-base">
+                {step === "email" && "Sign in to your account"}
+                {step === "profile" && "Complete your profile"}
+                {step === "choose" && "Choose a login method"}
+                {step === "otp" && "Enter the OTP sent to your email"}
+                {step === "password" && "Enter your password"}
+                {step === "setPassword" && "Create a new password"}
               </p>
             </div>
 

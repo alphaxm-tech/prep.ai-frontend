@@ -6,6 +6,7 @@ export const AIINTERVIEW = `ai-interview`;
 export const AUTH = `auth`;
 export const HOME = `home`;
 export const SUPER_ADMIN = `super-admin`;
+export const ASSESSMENT = `assessment`;
 
 /// RESUME endpoints ///
 export const GET_RESUME_FORMATS = `get-resume-formats`;
@@ -31,3 +32,6 @@ export const ME = `me`;
 export const ADD_COLLEGE = `add-college`;
 export const CREARE_NEW_COURSE = `create-new-course`;
 export const GET_ALL_COURSES = `get-all-courses`;
+
+/// Assessments ///
+export const GET_ASESSMENTS = "get-assessments";

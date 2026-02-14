@@ -75,11 +75,6 @@ export function Header() {
             onClick={() => router.push("/")}
             className="cursor-pointer select-none flex flex-col leading-none"
           >
-            {/* Endorsement line */}
-            <span className="text-[11px] font-semibold tracking-wide text-gray-700 uppercase mb-0.5">
-              Raghu College
-            </span>
-
             {/* Main Brand */}
             <div className="flex items-center gap-0.5 font-extrabold tracking-tight">
               <span className="text-gray-900 text-3xl">Prep</span>

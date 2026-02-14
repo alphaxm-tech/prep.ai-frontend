@@ -42,7 +42,7 @@ export default async function ProtectedLayout({
   // }
 
   const getMeDetails = await res.json();
-  console.log(getMeDetails?.role?.name);
+  // console.log(getMeDetails?.role?.name);
 
   return (
     <html lang="en">
@@ -53,7 +53,7 @@ export default async function ProtectedLayout({
           <UserProvider user={getMeDetails}>
             <ProtectedHeader user={getMeDetails} />
             <AppBootstrap />
-            <SubHeader />
+            <SubHeader user={getMeDetails} />
             {children}
           </UserProvider>
         </Providers>

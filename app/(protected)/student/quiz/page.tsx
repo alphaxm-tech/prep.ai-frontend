@@ -5,6 +5,7 @@ import { StatCard } from "../../../../components/StatCard";
 import { useRouter } from "next/navigation";
 import { useContext } from "react";
 import { AuthContext } from "@/app/provider";
+import { useGetAllAssessments } from "@/utils/queries/assessment.queries";
 
 const userStats = {
   quizzesTaken: 24,
@@ -68,6 +69,12 @@ const quizzes: Quiz[] = [
 export default function Quiz() {
   const router = useRouter();
   const userDetailsMain = useContext(AuthContext);
+  const { data, isLoading, error } = useGetAllAssessments({
+    groups: [4],
+    assessmentType: "QUIZ",
+  });
+
+  console.log(data);
 
   // inside Quiz component
   const handleStartQuiz = (title: string) => {

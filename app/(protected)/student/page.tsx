@@ -14,6 +14,7 @@ import { useRouter } from "next/navigation";
 import Loader from "@/components/Loader";
 import { useContext } from "react";
 import { AuthContext } from "@/app/provider";
+import { STUDENT_ROUTE } from "@/utils/CONSTANTS";
 
 export default function Dashboard() {
   const router = useRouter();
@@ -36,7 +37,7 @@ export default function Dashboard() {
     else if (cardTitle === "AI Interviews") route = "ai-interview";
     else if (cardTitle === "Study Materials") route = "study-material";
 
-    if (route) router.push(`/${route}`);
+    if (route) router.push(`${STUDENT_ROUTE}/${route}`);
   };
 
   // if (isLoading) {
@@ -166,7 +167,7 @@ export default function Dashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {services.map((service: any) => (
                 <div
-                  key={service.college_service_id}
+                  key={service.key}
                   className="border rounded-xl p-6 bg-gray-50"
                 >
                   <h4 className="text-lg font-semibold mb-1">
