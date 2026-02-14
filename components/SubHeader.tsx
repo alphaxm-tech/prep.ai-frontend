@@ -1,5 +1,15 @@
 "use client";
 
+import { HOME } from "@/utils/api/endpoints";
+import {
+  AI_INTERVIEW_ROTUE,
+  CODE_EDITOR_ROTUE,
+  HOME_ROUTE,
+  QUIZ_ROUTE,
+  RESUME_BUILDER_ROUTE,
+  STUDENT_ROUTE,
+  STUDY_MATERIAL_ROUTE,
+} from "@/utils/CONSTANTS";
 import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 
@@ -10,12 +20,18 @@ export function SubHeader() {
   const [pendingRoute, setPendingRoute] = useState<string | null>(null);
 
   const navLinks = [
-    { label: "Home", route: "/home" },
-    { label: "Resume Builder", route: "/resume-builder" },
-    { label: "AI Interviews", route: "/ai-interview" },
-    { label: "Quizzes", route: "/quiz" },
-    { label: "Study Materials", route: "/study-material" },
-    { label: "Code editor", route: "/code-editor" },
+    { label: "Home", route: `${HOME_ROUTE}` },
+    {
+      label: "Resume Builder",
+      route: `${RESUME_BUILDER_ROUTE}`,
+    },
+    { label: "AI Interviews", route: `${AI_INTERVIEW_ROTUE}` },
+    { label: "Quizzes", route: `${QUIZ_ROUTE}` },
+    {
+      label: "Study Materials",
+      route: `${STUDY_MATERIAL_ROUTE}`,
+    },
+    { label: "Code editor", route: `${CODE_EDITOR_ROTUE}` },
   ];
 
   const handleSubHeaderClick = (route: string) => {

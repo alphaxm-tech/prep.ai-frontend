@@ -1,19 +1,22 @@
-// export const BASE_API_URL = () => `http://localhost:8080/api/v1`;
+// UI routes
 
-// export const RESUME = () => `resume`;
-// export const AIINTERVIEW = () => `ai-interview`;
-// export const AUTH = () => `auth`;
-// export const HOME = () => `home`;
+export const STUDENT_ROUTE = `student`;
+export const ADMIN_ROUTE = `admin`;
+export const PLATFORM_ROUTE = `platform`;
+export const PLACEMENT_ROUTE = `placement`;
 
-// export const GET_RESUME_FORMATS = () => `get-resume-formats`;
+export const HOME_ROUTE = `home`;
+export const AI_INTERVIEW_ROTUE = `ai-interview`;
+export const RESUME_BUILDER_ROUTE = `resume-builder`;
+export const QUIZ_ROUTE = `quiz`;
+export const STUDY_MATERIAL_ROUTE = `study-material`;
+export const CODE_EDITOR_ROTUE = `code-editor`;
 
-// /// AUTH endpoints ///
-// export const REGISTER = () => `register`;
-// export const LOGIN_WITH_PASSWORD = () => `login`;
-// export const LOGIN_WITH_OTP = () => `auth/login-with-otp`;
-// export const VERIFY_LOGIN_OTP = () => `auth/verify-login-otp`;
+export const UN_AUTHORIZED = `unauthorized`;
 
-// /// HOME endpoints ///
-// export const GET_USER_DETAILS = () => `get-user-details`;
-// export const GET_USER_SERVICES = () => `get-user-services`;
-// export const GET_USER_LEARNING_PATH = () => `get-user-learningpath`;
+export enum UserRole {
+  SUPER_ADMIN = "SUPER_ADMIN",
+  ADMIN = "ADMIN",
+  STUDENT = "STUDENT",
+  PLACEMENT = "PLACEMENT",
+}

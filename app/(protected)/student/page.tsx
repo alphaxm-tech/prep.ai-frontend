@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import Card from "../../../../components/Card";
+import { useEffect, useState } from "react";
+import Card from "../../../components/Card";
 import {
   CalendarDaysIcon,
   ClipboardDocumentCheckIcon,
@@ -11,20 +11,20 @@ import {
   XCircleIcon,
 } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
-import { useGetUserDetailsAll } from "@/utils/queries/home.queries";
 import Loader from "@/components/Loader";
+import { useContext } from "react";
+import { AuthContext } from "@/app/provider";
 
 export default function Dashboard() {
   const router = useRouter();
+  const userDetailsMain = useContext(AuthContext);
 
-  const {
-    data: getUserDetailsAll,
-    isLoading,
-    isError,
-  } = useGetUserDetailsAll();
+  // useEffect(() => {
+  //   console.log(userDetailsMain);
+  // }, [userDetailsMain]);
 
-  const user = getUserDetailsAll?.user;
-  const services = getUserDetailsAll?.userServices ?? [];
+  const user = userDetailsMain?.user;
+  const services = userDetailsMain?.services ?? [];
 
   const firstName =
     user?.full_name?.split(/[, ]+/)?.filter(Boolean)[0] ?? "there";
@@ -39,13 +39,13 @@ export default function Dashboard() {
     if (route) router.push(`/${route}`);
   };
 
-  if (isLoading) {
-    return <Loader show={isLoading} message="Loading your profile" />;
-  }
+  // if (isLoading) {
+  //   return <Loader show={isLoading} message="Loading your profile" />;
+  // }
 
-  if (isError) {
-    return <div className="p-8 text-red-500">Failed to load dashboard</div>;
-  }
+  // if (isError) {
+  //   return <div className="p-8 text-red-500">Failed to load dashboard</div>;
+  // }
 
   return (
     <div className="min-h-screen bg-white text-gray-800 font-sans">
@@ -164,7 +164,7 @@ export default function Dashboard() {
             <p className="text-gray-500">No services assigned yet.</p>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {services.map((service) => (
+              {services.map((service: any) => (
                 <div
                   key={service.college_service_id}
                   className="border rounded-xl p-6 bg-gray-50"
@@ -186,7 +186,7 @@ export default function Dashboard() {
                     </p>
                   </div>
 
-                  <div className="mt-4">
+                  {/* <div className="mt-4">
                     <p className="text-sm font-medium mb-2">Configuration</p>
                     <ul className="list-disc list-inside text-sm text-gray-600">
                       {Object.entries(service.services_config).map(
@@ -198,7 +198,7 @@ export default function Dashboard() {
                         ),
                       )}
                     </ul>
-                  </div>
+                  </div> */}
                 </div>
               ))}
             </div>

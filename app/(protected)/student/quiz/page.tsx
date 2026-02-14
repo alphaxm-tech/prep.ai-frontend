@@ -1,8 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import { StatCard } from "../../../../components/StatCard";
 import { useRouter } from "next/navigation";
+import { useContext } from "react";
+import { AuthContext } from "@/app/provider";
 
 const userStats = {
   quizzesTaken: 24,
@@ -65,11 +67,16 @@ const quizzes: Quiz[] = [
 
 export default function Quiz() {
   const router = useRouter();
+  const userDetailsMain = useContext(AuthContext);
 
   // inside Quiz component
   const handleStartQuiz = (title: string) => {
     router.push(`/quiz/test?company=${encodeURIComponent(title)}`);
   };
+
+  useEffect(() => {
+    console.log(userDetailsMain);
+  }, [userDetailsMain]);
 
   return (
     <div className="min-h-screen bg-white px-4 md:px-8 py-8 font-sans">

@@ -12,7 +12,6 @@ import ProfessionalResumeTemplateVertical from "../../../../components/Resume-fo
 import ModernResumeTemplate from "../../../../components/Resume-formats/ModernResume";
 import MinimalResumeTemplate from "../../../../components/Resume-formats/MinimalResume";
 import StandardResumeTemplate from "../../../../components/Resume-formats/StandardResume";
-import { useGetUserDetailsAll } from "@/utils/queries/home.queries";
 import {
   useGetCompleteResumeByID,
   useGetResumeFormats,
@@ -103,6 +102,8 @@ const DEFAULT_SAMPLE = {
 export default function ResumeBuilderPage() {
   // --- MAIN LIFTED STATE (single source of truth for basic details) ---
   const [resumeTitle, setResumeTitle] = useState("");
+  const [fullName, setFullName] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
   const [phone, setPhone] = useState<string>("");
   const [location, setLocation] = useState<string>("");
   const [summary, setSummary] = useState<string>("");
@@ -126,19 +127,17 @@ export default function ResumeBuilderPage() {
 
   const RESULT_PDF_URL = "/pdfs/Resume.pdf";
 
-  const { data: getUserDetailsAllRes } = useGetUserDetailsAll();
+  // const rawName = getUserDetailsAllRes?.user?.full_name ?? "";
+  // const fullName = capitalizeFullName(rawName);
 
-  const rawName = getUserDetailsAllRes?.user?.full_name ?? "";
-  const fullName = capitalizeFullName(rawName);
+  // const email = getUserDetailsAllRes?.user?.email ?? "";
 
-  const email = getUserDetailsAllRes?.user?.email ?? "";
-
-  const service = getUserDetailsAllRes?.userServices?.find(
-    (s) => s.service_id === 1,
-  );
+  // const service = getUserDetailsAllRes?.userServices?.find(
+  //   (s) => s.service_id === 1,
+  // );
   // console.log(service?.services_config?.max_resumes_per_student);
-  const MAX_RESUMES = service?.services_config
-    ?.max_resumes_per_student as number;
+  // const MAX_RESUMES = service?.services_config
+  //   ?.max_resumes_per_student as number;
 
   const { data: resumeData } = useGetResumeFormats();
   const { data: skillsMasterData } = useGetSkillsMaster();
@@ -156,6 +155,7 @@ export default function ResumeBuilderPage() {
   // demo resumes list
   const [resumes, setResumes] = useState<UsersResumeResponse[]>([]);
 
+  let MAX_RESUMES = 20;
   // quota derived values
   const usedResumes = resumes.length;
   const remainingResumes = Math.max(0, MAX_RESUMES - usersAllResumesLength!);
@@ -193,10 +193,10 @@ export default function ResumeBuilderPage() {
 
   const assembledData = useMemo(
     () => ({
-      fullName,
+      // fullName,
       title: "",
 
-      email,
+      // email,
       phone,
       location,
       objective: summary,
@@ -214,8 +214,8 @@ export default function ResumeBuilderPage() {
       projects,
     }),
     [
-      fullName,
-      email,
+      // fullName,
+      // email,
       phone,
       location,
       summary,
@@ -302,7 +302,13 @@ export default function ResumeBuilderPage() {
   const renderSelectedTemplate = (showPlaceholders = true) => {
     // const data = showPlaceholders ? assembledDataWithDefaults : assembledData;
     const data = assembledDataWithDefaults;
-    const props = { data, showPlaceholders, fullName, email };
+    const props = {
+      data,
+      showPlaceholders,
+      fullName: DEFAULT_SAMPLE.fullName,
+      email: DEFAULT_SAMPLE.email,
+    };
+    // fullName, email };
 
     switch (resumeFormat) {
       case "creative":
@@ -658,7 +664,7 @@ export default function ResumeBuilderPage() {
       document.body.appendChild(iframe);
 
       // 6) Write content into iframe
-      const filenameSafe = (assembledData.fullName || "resume")
+      const filenameSafe = (fullName || resumeTitle || "resume")
         .replace(/\s+/g, "_")
         .replace(/[^a-zA-Z0-9_\-\.]/g, "");
       const doc =
@@ -747,7 +753,7 @@ export default function ResumeBuilderPage() {
 
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${assembledData.fullName || "resume"}.pdf`;
+    a.download = `${fullName || resumeTitle || "resume"}.pdf`;
     a.click();
 
     URL.revokeObjectURL(url);

@@ -8,6 +8,7 @@ import { Providers } from "../provider";
 import { BASE_API_URL, HOME, ME } from "@/utils/api/endpoints";
 import { UserProvider } from "../context/UserContext";
 import { ProtectedHeader } from "@/components/ProtectedHeader";
+import { Header } from "@/components/Header";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -18,7 +19,7 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export default async function ProtectedLayout({
+export default async function PublicLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -26,9 +27,6 @@ export default async function ProtectedLayout({
   // ME endpoint api call
   const cookieStore = await cookies();
   const token = cookieStore.get("access_token")?.value;
-  if (!token) {
-    redirect("/login");
-  }
 
   const res = await fetch(`${BASE_API_URL}/${HOME}/${ME}`, {
     headers: {
@@ -51,9 +49,8 @@ export default async function ProtectedLayout({
       >
         <Providers user={getMeDetails}>
           <UserProvider user={getMeDetails}>
-            <ProtectedHeader user={getMeDetails} />
+            <Header />
             <AppBootstrap />
-            <SubHeader />
             {children}
           </UserProvider>
         </Providers>

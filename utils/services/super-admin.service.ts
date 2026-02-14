@@ -1,4 +1,4 @@
-import { College } from "@/lib/college";
+import { College } from "@/utils/dummy-data/college";
 import { AddCollegeRequest, Course } from "../api/types/super-admin.types";
 import {
   ADD_COLLEGE,
@@ -13,14 +13,14 @@ export const superAdminService = {
   addCollege: async (data: AddCollegeRequest): Promise<College> => {
     const response = await api.post(
       `${BASE_API_URL}/${SUPER_ADMIN}/${ADD_COLLEGE}`,
-      data
+      data,
     );
     return response.data;
   },
 
   getAllCourses: async (): Promise<GetAllCoursesResponse> => {
     const response = await api.get(
-      `${BASE_API_URL}/${SUPER_ADMIN}/${GET_ALL_COURSES}`
+      `${BASE_API_URL}/${SUPER_ADMIN}/${GET_ALL_COURSES}`,
     );
     return response.data;
   },

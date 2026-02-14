@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useCallback, memo } from "react";
+import React, { useState, useCallback, memo, useEffect } from "react";
 import { EnvelopeIcon, LockClosedIcon } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 import Loader from "@/components/Loader";
@@ -10,6 +10,14 @@ import {
   useVerifyUserEmail,
 } from "@/utils/mutations/auth.mutations";
 import { useToast } from "@/components/toast/ToastContext";
+import {
+  ADMIN_ROUTE,
+  PLACEMENT_ROUTE,
+  PLATFORM_ROUTE,
+  STUDENT_ROUTE,
+  UN_AUTHORIZED,
+  UserRole,
+} from "@/utils/CONSTANTS";
 
 /**
  * InputWithIcon must be declared at module top-level to keep identity stable.
@@ -63,40 +71,7 @@ const InputWithIcon = memo(function InputWithIcon({
  * - POST /api/auth/setPasswordAndLogin { email, password } -> { success } (sets cookies)
  */
 export default function LoginPage() {
-  // const DEMO_ADMIN_EMAIL = "admin.prepai@gmail.com";
-  // const DEMO_ADMIN_PASSWORD = "Admin@2025";
-
-  // const DEMO_ADMINS = [
-  //   {
-  //     email: "admin.prepai@gmail.com",
-  //     password: "Admin@2025",
-  //     role: "admin",
-  //   },
-  //   {
-  //     email: "sanket.naukarkar@gmail.com",
-  //     password: "Sanket@1998",
-  //     role: "admin",
-  //   },
-  //   {
-  //     email: "vm.prepai@gmail.com",
-  //     password: "prepai@1993",
-  //     role: "admin",
-  //   },
-  //   {
-  //     email: "santhikannuru28@gmail.com",
-  //     password: "santhikannuru28@prepai",
-  //     role: "student",
-  //   },
-  //   {
-  //     email: "pavankumarpadala06@gmail.com",
-  //     password: "pavankumarpadala06@prepai",
-  //     role: "student",
-  //   },
-  // ];
-
   const router = useRouter();
-  // const { success, error: showError } = useToast();
-
   // screens: "email" -> "choose" -> "otp" -> "password" | "setPassword"
   const [step, setStep] = useState<
     "email" | "profile" | "choose" | "otp" | "password" | "setPassword"
@@ -128,14 +103,6 @@ export default function LoginPage() {
   const verifyEmailMutation = useVerifyUserEmail();
   const addUserDetailsMutation = addUserDetails();
   const loginWithPasswordMutation = loginWithPassword();
-
-  // -----------------------------
-  // Demo credentials still present but this flow prefers server APIs
-  // -----------------------------
-  const ALLOWED_USERS = [
-    { email: "vm.prepai@gmail.com", password: "prepai@1993" },
-    // { email: "sanjanaaddepalli2005@gmail.com", password: "xOQDhT3cpWRut4kW" },
-  ];
 
   // input handlers
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -505,34 +472,6 @@ export default function LoginPage() {
 
     const normalizedEmail = email.trim().toLowerCase();
     const normalizedPassword = password.trim();
-
-    /**
-     * 🔐 UI-only DEMO ADMIN LOGIN (NO API CALL)
-     */
-    // if (
-    //   normalizedEmail === DEMO_ADMIN_EMAIL &&
-    //   normalizedPassword === DEMO_ADMIN_PASSWORD
-    // ) {
-    //   showToast("success", "Admin login successful");
-    //   router.push("/home");
-    //   return;
-    // }
-
-    // const matchedDemoUser = DEMO_ADMINS.find(
-    //   (u) =>
-    //     u.email.toLowerCase() === normalizedEmail &&
-    //     u.password === normalizedPassword
-    // );
-
-    // if (matchedDemoUser) {
-    //   showToast("success", `Login successful (${matchedDemoUser.role})`);
-    //   router.push("/home");
-    //   return;
-    // }
-
-    /**
-     * 🔁 REAL BACKEND LOGIN (unchanged)
-     */
     setLoading(true);
     setLoadingMessage("Logging you in....");
 
@@ -543,7 +482,18 @@ export default function LoginPage() {
       },
       {
         onSuccess: (data: any) => {
-          router.push("/student/home");
+          // routing based on user roles
+          if (data?.userRole?.name === UserRole.ADMIN) {
+            router.replace(`${ADMIN_ROUTE}`);
+          } else if (data?.userRole?.name === UserRole.STUDENT) {
+            router.replace(`${STUDENT_ROUTE}`);
+          } else if (data?.userRole?.name === UserRole.SUPER_ADMIN) {
+            router.replace(`${PLATFORM_ROUTE}`);
+          } else if (data?.userRole?.name === UserRole.PLACEMENT) {
+            router.replace(`${PLACEMENT_ROUTE}`);
+          } else {
+            router.replace(`${UN_AUTHORIZED}`);
+          }
           setLoading(false);
         },
         onError: (err: any) => {
@@ -583,32 +533,6 @@ export default function LoginPage() {
       setLoading(false);
       // showError?.("Server error setting password.");
     }
-  }, [email, password, router]);
-
-  // fallback demo signin (keeps your original demo behavior if you click Sign In without using flow)
-  const demoSignIn = useCallback(() => {
-    setLoading(true);
-    setErrorMessage(null);
-
-    const normalizedEmail = email.trim().toLowerCase();
-    const matchedUser = ALLOWED_USERS.find(
-      (u) =>
-        u.email.toLowerCase() === normalizedEmail && u.password === password,
-    );
-
-    if (matchedUser) {
-      // success?.("Logged in (demo). Redirecting…");
-      setTimeout(() => {
-        setLoading(false);
-        router.push("/student/home");
-      }, 400);
-      return;
-    }
-
-    setLoading(false);
-    const msg = "Invalid credentials.";
-    setErrorMessage(msg);
-    // showError?.(msg);
   }, [email, password, router]);
 
   const handleGoogleLogin = () => {

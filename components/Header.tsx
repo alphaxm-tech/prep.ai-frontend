@@ -1,7 +1,10 @@
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useContext } from "react";
+import { AuthContext } from "@/app/provider";
+import { useUser } from "@/app/context/UserContext";
 
 export function Header() {
   const router = useRouter();
@@ -12,6 +15,16 @@ export function Header() {
   const isLandingPage = pathname === "/";
   const isLoginPage = pathname.startsWith("/login");
   const isInsideApp = !isLandingPage && !isLoginPage;
+
+  const userDetailsMain = useContext(AuthContext);
+
+  // useEffect(() => {
+  //   console.log("from header" + userDetailsMain);
+  // }, [userDetailsMain]);
+
+  // const user = useUser();
+  // // Now you can use user data
+  // console.log(user);
 
   const landingNav = [
     { label: "Home", href: "#home" },
