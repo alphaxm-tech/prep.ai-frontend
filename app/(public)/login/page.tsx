@@ -22,7 +22,7 @@ import {
   PLACEMENT_ROUTE,
   PLATFORM_ROUTE,
   STUDENT_ROUTE,
-  UN_AUTHORIZED,
+  UN_AUTHORIZED_ROUTE,
 } from "@/utils/CONSTANTS";
 import { UserRole } from "@/utils/enums";
 
@@ -503,7 +503,7 @@ export default function LoginPage() {
           } else if (data?.userRole?.name === UserRole.PLACEMENT) {
             router.replace(`${PLACEMENT_ROUTE}`);
           } else {
-            router.replace(`${UN_AUTHORIZED}`);
+            router.replace(`${UN_AUTHORIZED_ROUTE}`);
           }
           setLoading(false);
         },

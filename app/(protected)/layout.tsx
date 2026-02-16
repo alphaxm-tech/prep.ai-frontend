@@ -8,6 +8,7 @@ import { Providers } from "../provider";
 import { BASE_API_URL, HOME, ME } from "@/utils/api/endpoints";
 import { UserProvider } from "../context/UserContext";
 import { ProtectedHeader } from "@/components/ProtectedHeader";
+import ProtectedShell from "@/components/ProtectedShell";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -54,7 +55,7 @@ export default async function ProtectedLayout({
             <ProtectedHeader user={getMeDetails} />
             <AppBootstrap />
             <SubHeader user={getMeDetails} />
-            {children}
+            <ProtectedShell>{children}</ProtectedShell>
           </UserProvider>
         </Providers>
       </body>

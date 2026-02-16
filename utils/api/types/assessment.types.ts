@@ -1,4 +1,13 @@
 export interface GetAssessment {
+  assessments: Assessment[];
+}
+
+export interface GetAssessmentParams {
+  groups: number[];
+  assessmentType: string;
+}
+
+export interface Assessment {
   assessment_id: number;
   group_id: number;
   title: string;
@@ -6,9 +15,6 @@ export interface GetAssessment {
   duration_sec: number;
   max_attempts: number;
   created_at: string; // ISO string from backend
-}
-
-export interface GetAssessmentParams {
-  groups: number[];
-  assessmentType: string;
+  difficulty: string;
+  total_questions: number;
 }

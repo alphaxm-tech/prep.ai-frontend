@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import QuizModal, { Question } from "@/components/QuizModal";
 
 import {
@@ -10,6 +10,7 @@ import {
   wiproQuestions,
   accentureQuestions,
 } from "@/app/(protected)/student/quiz/questionBank";
+import { QUIZ_ROUTE } from "@/utils/CONSTANTS";
 
 /**
  * Convert QuestionBank question → QuizModal question
@@ -60,6 +61,10 @@ export default function QuizTestClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const company = searchParams.get("company") || "Quiz";
+  const attemptId = searchParams.get("company") || "Quiz";
+
+  const params = useParams();
+  const id = params.id;
 
   const [open, setOpen] = useState(true);
   const [result, setResult] = useState<{
@@ -95,7 +100,7 @@ export default function QuizTestClient() {
     <main className="min-h-screen bg-gray-50 p-8">
       <div className="max-w-4xl mx-auto">
         <button
-          onClick={() => router.push("/quiz")}
+          onClick={() => router.push(`${QUIZ_ROUTE}`)}
           className="mb-10 px-4 py-2 rounded-full bg-yellow-100"
         >
           ← Back to Quizzes

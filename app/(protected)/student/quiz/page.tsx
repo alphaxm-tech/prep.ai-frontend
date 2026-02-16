@@ -6,6 +6,9 @@ import { useRouter } from "next/navigation";
 import { useContext } from "react";
 import { AuthContext } from "@/app/provider";
 import { useGetAllAssessments } from "@/utils/queries/assessment.queries";
+import Loader from "@/components/Loader";
+import { QUIZ_ROUTE, QUIZ_ROUTE_MAIN, QUIZ_TEST } from "@/utils/CONSTANTS";
+import { createQuizAssessment } from "@/utils/mutations/quiz.mutation";
 
 const userStats = {
   quizzesTaken: 24,
@@ -31,113 +34,102 @@ type Quiz = {
   bestScore: number;
 };
 
-const quizzes: Quiz[] = [
-  {
-    title: "TCS Placement Aptitude Test",
-    questions: 25,
-    duration: "25 minutes",
-    difficulty: "Medium",
-    attempts: 184,
-    bestScore: 82,
-  },
-  {
-    title: "Infosys Technical Assessment",
-    questions: 25,
-    duration: "25 minutes",
-    difficulty: "Medium",
-    attempts: 163,
-    bestScore: 79,
-  },
-  {
-    title: "Wipro Written Test",
-    questions: 25,
-    duration: "25 minutes",
-    difficulty: "Medium",
-    attempts: 141,
-    bestScore: 76,
-  },
-  {
-    title: "Accenture Cognitive & Technical Test",
-    questions: 25,
-    duration: "25 minutes",
-    difficulty: "Medium",
-    attempts: 156,
-    bestScore: 80,
-  },
-];
-
 export default function Quiz() {
   const router = useRouter();
+
   const userDetailsMain = useContext(AuthContext);
-  const { data, isLoading, error } = useGetAllAssessments({
+  const {
+    data: assessmentData,
+    isLoading: getAssessmentsLoading,
+    error,
+  } = useGetAllAssessments({
     groups: [4],
-    assessmentType: "QUIZ",
+    assessmentType: "MCQ",
   });
 
-  console.log(data);
+  // console.log(assessmentData);
+
+  const startQuizMutation = createQuizAssessment();
 
   // inside Quiz component
-  const handleStartQuiz = (title: string) => {
-    router.push(`/quiz/test?company=${encodeURIComponent(title)}`);
+  const handleStartQuiz = (quiz: any) => {
+    //attempt id
+    console.log(quiz);
+    startQuizMutation.mutate(quiz.assessment_id, {
+      onSuccess: (data) => {
+        const attemptId = data.attempt.AttemptID;
+        router.push(`${QUIZ_ROUTE}${QUIZ_TEST}/${attemptId}`);
+      },
+    });
   };
 
-  useEffect(() => {
-    console.log(userDetailsMain);
-  }, [userDetailsMain]);
+  console.log(assessmentData?.assessments?.length);
+  const isPageLoading = getAssessmentsLoading || startQuizMutation.isPending;
 
   return (
-    <div className="min-h-screen bg-white px-4 md:px-8 py-8 font-sans">
-      {/* Header */}
-      <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center mb-12">
-        <div className="w-full md:w-auto">
-          <h1
-            className="text-4xl font-extrabold mb-2"
-            style={{
-              fontFamily: 'Means Web, Georgia, Times, "Times New Roman", serif',
-              WebkitFontVariantLigatures: "none",
-              fontVariantLigatures: "none",
-              letterSpacing: "-0.0625rem",
-              lineHeight: "1.2",
-              color: "#1a1a1a",
-            }}
-          >
-            Quizzes
-          </h1>
-          <p className="text-lg text-yellow-900">
-            Test your knowledge and compete with others
-          </p>
+    <>
+      <Loader
+        show={isPageLoading}
+        message={
+          startQuizMutation.isPending
+            ? "Starting your quiz..."
+            : "Loading quizzes for you"
+        }
+      />
+      <div className="min-h-screen bg-white px-4 md:px-8 py-8 font-sans">
+        {/* Header */}
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center mb-12">
+          <div className="w-full md:w-auto">
+            <h1
+              className="text-4xl font-extrabold mb-2"
+              style={{
+                fontFamily:
+                  'Means Web, Georgia, Times, "Times New Roman", serif',
+                WebkitFontVariantLigatures: "none",
+                fontVariantLigatures: "none",
+                letterSpacing: "-0.0625rem",
+                lineHeight: "1.2",
+                color: "#1a1a1a",
+              }}
+            >
+              Quizzes
+            </h1>
+            <p className="text-lg text-yellow-900">
+              Test your knowledge and compete with others
+            </p>
+          </div>
+          <button className="bg-yellow-300 hover:bg-yellow-200 transition px-6 py-3 text-yellow-900 font-semibold rounded-lg shadow-lg text-lg mt-4 md:mt-0">
+            🏆 Compete on Leaderboard
+          </button>
         </div>
-        <button className="bg-yellow-300 hover:bg-yellow-200 transition px-6 py-3 text-yellow-900 font-semibold rounded-lg shadow-lg text-lg mt-4 md:mt-0">
-          🏆 Compete on Leaderboard
-        </button>
-      </div>
 
-      {/* Stats */}
-      <section className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 mb-10">
-        <StatCard
-          label="Quizzes Taken"
-          value={userStats.quizzesTaken}
-          variant="green"
-        />
-        <StatCard
-          label="Best Score"
-          value={userStats.bestScore + "%"}
-          variant="yellow"
-        />
-        <StatCard
-          label="Total Time"
-          value={userStats.totalTime}
-          variant="purple"
-        />
-        <StatCard
-          label="Avg Score"
-          value={userStats.avgScore + "%"}
-          variant="blue"
-        />
-      </section>
+        {/* Stats */}
+        <section className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 mb-10">
+          <StatCard
+            label="Total Quizzes"
+            value={assessmentData?.assessments?.length as number}
+            variant="blue"
+          />
+          <StatCard
+            label="Quizzes Taken"
+            value={userStats.quizzesTaken}
+            variant="green"
+          />
+          <StatCard
+            label="Best Score"
+            value={userStats.bestScore + "%"}
+            variant="yellow"
+          />
 
-      {/* Category Tabs */}
-      <div className="max-w-6xl mx-auto flex flex-wrap space-x-2 mb-8">
+          <StatCard
+            label="Avg Score"
+            value={userStats.avgScore + "%"}
+            variant="purple"
+          />
+        </section>
+
+        {/* Category Tabs */}
+        {/* <div className="max-w-6xl mx-auto flex flex-wrap space-x-2 mb-8">
         <button className="bg-yellow-200 text-yellow-900 font-bold py-2 px-4 rounded shadow-md">
           All Categories
         </button>
@@ -154,139 +146,86 @@ export default function Quiz() {
         <button className="hover:bg-yellow-100 py-2 px-4 rounded">
           System Design
         </button>
-      </div>
+      </div> */}
 
-      {/* Main Content + Leaderboard */}
-      <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-6">
-        {/* Left: Quiz Section */}
-        <section className="flex-1 flex flex-col gap-6">
-          {/* <div className="bg-white rounded-2xl shadow-lg p-8 flex flex-col md:flex-row items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-semibold text-yellow-800 mb-2">
-                JavaScript Fundamentals
-              </h2>
-              <p className="text-gray-600 mb-1">
-                20 questions &nbsp;|&nbsp; 30 minutes &nbsp;|&nbsp;{" "}
-                <span className="text-green-600 font-medium">Easy</span>
-              </p>
-              <p className="text-yellow-900">
-                156 attempts{" "}
-                <span className="text-green-700 font-bold ml-1">Best: 85%</span>
-              </p>
-            </div>
-            <button className="bg-yellow-400 hover:bg-yellow-300 transition px-8 py-3 text-yellow-900 font-semibold rounded-lg shadow-lg text-lg mt-4 md:mt-0">
-              Start Quiz
-            </button>
-          </div>
-          <div className="bg-white rounded-2xl shadow-lg p-8 flex flex-col md:flex-row items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-semibold text-yellow-800 mb-2">
-                JavaScript Fundamentals
-              </h2>
-              <p className="text-gray-600 mb-1">
-                20 questions &nbsp;|&nbsp; 30 minutes &nbsp;|&nbsp;{" "}
-                <span className="text-green-600 font-medium">Easy</span>
-              </p>
-              <p className="text-yellow-900">
-                156 attempts{" "}
-                <span className="text-green-700 font-bold ml-1">Best: 85%</span>
-              </p>
-            </div>
-            <button className="bg-yellow-400 hover:bg-yellow-300 transition px-8 py-3 text-yellow-900 font-semibold rounded-lg shadow-lg text-lg mt-4 md:mt-0">
-              Start Quiz
-            </button>
-          </div>
-          <div className="bg-white rounded-2xl shadow-lg p-8 flex flex-col md:flex-row items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-semibold text-yellow-800 mb-2">
-                JavaScript Fundamentals
-              </h2>
-              <p className="text-gray-600 mb-1">
-                20 questions &nbsp;|&nbsp; 30 minutes &nbsp;|&nbsp;{" "}
-                <span className="text-green-600 font-medium">Easy</span>
-              </p>
-              <p className="text-yellow-900">
-                156 attempts{" "}
-                <span className="text-green-700 font-bold ml-1">Best: 85%</span>
-              </p>
-            </div>
-            <button className="bg-yellow-400 hover:bg-yellow-300 transition px-8 py-3 text-yellow-900 font-semibold rounded-lg shadow-lg text-lg mt-4 md:mt-0">
-              Start Quiz
-            </button>
-          </div> */}
-
-          <div className="overflow-x-auto space-y-4 max-h-[600px] p-4">
-            {quizzes.map((quiz, index) => (
-              <div
-                key={index}
-                className="bg-white rounded-2xl shadow-lg p-8 flex flex-col md:flex-row items-center justify-between min-w-[350px]"
-              >
-                <div>
-                  <h2 className="text-2xl font-semibold text-yellow-800 mb-2">
-                    {quiz.title}
-                  </h2>
-                  <p className="text-gray-600 mb-1">
-                    {quiz.questions} questions &nbsp;|&nbsp; {quiz.duration}{" "}
-                    &nbsp;|&nbsp;{" "}
-                    <span
-                      className={`font-medium ${
-                        quiz.difficulty === "Easy"
-                          ? "text-green-600"
-                          : quiz.difficulty === "Medium"
-                            ? "text-yellow-600"
-                            : "text-red-600"
-                      }`}
-                    >
-                      {quiz.difficulty}
-                    </span>
-                  </p>
-                  <p className="text-yellow-900">
-                    {quiz.attempts} attempts{" "}
-                    <span className="text-green-700 font-bold ml-1">
-                      Best: {quiz.bestScore}%
-                    </span>
-                  </p>
-                </div>
-                <button
-                  className="bg-yellow-400 hover:bg-yellow-300 transition px-8 py-3 text-yellow-900 font-semibold rounded-lg shadow-lg text-lg mt-4 md:mt-0"
-                  onClick={() => handleStartQuiz(quiz.title)}
+        {/* Main Content + Leaderboard */}
+        <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-6">
+          {/* Left: Quiz Section */}
+          <section className="flex-1 flex flex-col gap-6">
+            <div className="overflow-x-auto space-y-4 max-h-[600px] p-4">
+              {assessmentData?.assessments?.map((quiz, index) => (
+                <div
+                  key={index}
+                  className="bg-white rounded-2xl shadow-lg p-8 flex flex-col md:flex-row items-center justify-between min-w-[350px]"
                 >
-                  Start Quiz
-                </button>
-              </div>
-            ))}
-          </div>
-        </section>
+                  <div>
+                    <h2 className="text-2xl font-semibold text-yellow-800 mb-2">
+                      {quiz?.title}
+                    </h2>
+                    <p className="text-gray-600 mb-1">
+                      {quiz.total_questions} questions &nbsp;|&nbsp;{" "}
+                      {quiz.duration_sec / 60} minutes &nbsp;|&nbsp;{" "}
+                      <span
+                        className={`font-medium ${
+                          quiz.difficulty === "EASY"
+                            ? "text-green-600"
+                            : quiz.difficulty === "MEDIUM"
+                              ? "text-yellow-600"
+                              : "text-red-600"
+                        }`}
+                      >
+                        {quiz.difficulty.toLowerCase()}
+                      </span>
+                    </p>
+                    <p className="text-yellow-900">
+                      {quiz.max_attempts} attempt
+                      {quiz.max_attempts > 1 ? "s" : ""}{" "}
+                      <span className="text-green-700 font-bold ml-1">
+                        Best: {11}%
+                      </span>
+                    </p>
+                  </div>
+                  <button
+                    className="bg-yellow-400 hover:bg-yellow-300 transition px-8 py-3 text-yellow-900 font-semibold rounded-lg shadow-lg text-lg mt-4 md:mt-0"
+                    onClick={() => handleStartQuiz(quiz)}
+                  >
+                    Start Quiz
+                  </button>
+                </div>
+              ))}
+            </div>
+          </section>
 
-        {/* Right: Leaderboard */}
-        <aside className="w-full lg:w-64 bg-yellow-100 rounded-2xl shadow-xl p-6 self-start sticky top-24 ml-auto">
-          <h3 className="font-bold text-yellow-700 text-xl mb-4">
-            Leaderboard
-          </h3>
-          <ol>
-            {leaderboard.map((user, idx) => (
-              <li
-                key={user.name}
-                className={`flex justify-between items-center p-2 rounded-lg mb-2 ${
-                  user.name === "You" ? "bg-yellow-200 font-semibold" : ""
-                }`}
-              >
-                <span>
-                  {idx + 1 === 1
-                    ? "🥇 "
-                    : idx + 1 === 2
-                      ? "🥈 "
-                      : idx + 1 === 3
-                        ? "🥉 "
-                        : ""}
-                  {user.name}
-                </span>
-                <span>{user.score}</span>
-              </li>
-            ))}
-          </ol>
-        </aside>
+          {/* Right: Leaderboard */}
+          <aside className="w-full lg:w-64 bg-yellow-100 rounded-2xl shadow-xl p-6 self-start sticky top-24 ml-auto">
+            <h3 className="font-bold text-yellow-700 text-xl mb-4">
+              Leaderboard
+            </h3>
+            <ol>
+              {leaderboard.map((user, idx) => (
+                <li
+                  key={user.name}
+                  className={`flex justify-between items-center p-2 rounded-lg mb-2 ${
+                    user.name === "You" ? "bg-yellow-200 font-semibold" : ""
+                  }`}
+                >
+                  <span>
+                    {idx + 1 === 1
+                      ? "🥇 "
+                      : idx + 1 === 2
+                        ? "🥈 "
+                        : idx + 1 === 3
+                          ? "🥉 "
+                          : ""}
+                    {user.name}
+                  </span>
+                  <span>{user.score}</span>
+                </li>
+              ))}
+            </ol>
+          </aside>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

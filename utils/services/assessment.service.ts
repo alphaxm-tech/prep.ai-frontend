@@ -9,7 +9,7 @@ import qs from "qs";
 export const assessmentService = {
   getAssessments: async (
     params: GetAssessmentParams,
-  ): Promise<GetAssessment> => {
+  ): Promise<GetAssessment | undefined> => {
     const response = await api.get(
       `${BASE_API_URL}/${ASSESSMENT}/${GET_ASESSMENTS}`,
       {

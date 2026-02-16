@@ -7,6 +7,7 @@ export const AUTH = `auth`;
 export const HOME = `home`;
 export const SUPER_ADMIN = `super-admin`;
 export const ASSESSMENT = `assessment`;
+export const QUIZ = `quiz`;
 
 /// RESUME endpoints ///
 export const GET_RESUME_FORMATS = `get-resume-formats`;
@@ -35,3 +36,6 @@ export const GET_ALL_COURSES = `get-all-courses`;
 
 /// Assessments ///
 export const GET_ASESSMENTS = "get-assessments";
+
+/// Quiz  ///
+export const START_QUIZ = "start-quiz";

@@ -39,7 +39,7 @@ export function ProtectedHeader({ user }: { user: any }) {
     try {
       // await fetch("/api/logout", { method: "POST" });
     } finally {
-      router.replace("/login");
+      router.replace("/");
     }
   };
 
