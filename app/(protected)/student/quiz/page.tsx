@@ -1,60 +1,30 @@
 "use client";
 
-import React, { useEffect } from "react";
-import { StatCard } from "../../../../components/StatCard";
+import React, { useContext, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useContext } from "react";
 import { AuthContext } from "@/app/provider";
 import { useGetAllAssessments } from "@/utils/queries/assessment.queries";
 import Loader from "@/components/Loader";
-import { QUIZ_ROUTE, QUIZ_ROUTE_MAIN, QUIZ_TEST } from "@/utils/CONSTANTS";
+import { QUIZ_ROUTE, QUIZ_TEST } from "@/utils/CONSTANTS";
 import { createQuizAssessment } from "@/utils/mutations/quiz.mutation";
-
-const userStats = {
-  quizzesTaken: 24,
-  bestScore: 92,
-  totalTime: "12h",
-  avgScore: 78,
-};
-
-const leaderboard = [
-  { name: "Arjun Reddy", score: 2450 },
-  { name: "Suresh Kumar", score: 2380 },
-  { name: "Karthik", score: 2290 },
-  { name: "Ananya Iyer", score: 2180 },
-  { name: "You", score: 1950 },
-];
-
-type Quiz = {
-  title: string;
-  questions: number;
-  duration: string;
-  difficulty: "Easy" | "Medium" | "Hard";
-  attempts: number;
-  bestScore: number;
-};
+import { AssessmentResponse } from "@/utils/api/types/assessment.types";
+import { StatCard } from "../../../../components/StatCard";
+import QuizPage from "@/components/Quiz";
+import QuizRow from "@/components/QuizRow";
+import CompactQuizRow from "@/components/CompactQuizRow";
 
 export default function Quiz() {
   const router = useRouter();
-
   const userDetailsMain = useContext(AuthContext);
-  const {
-    data: assessmentData,
-    isLoading: getAssessmentsLoading,
-    error,
-  } = useGetAllAssessments({
-    groups: [4],
+
+  const { data: assessmentData, isLoading } = useGetAllAssessments({
     assessmentType: "MCQ",
   });
 
-  // console.log(assessmentData);
-
   const startQuizMutation = createQuizAssessment();
+  const [difficultyFilter, setDifficultyFilter] = useState("ALL");
 
-  // inside Quiz component
-  const handleStartQuiz = (quiz: any) => {
-    //attempt id
-    console.log(quiz);
+  const handleStartQuiz = (quiz: AssessmentResponse) => {
     startQuizMutation.mutate(quiz.assessment_id, {
       onSuccess: (data) => {
         const attemptId = data.attempt.AttemptID;
@@ -63,166 +33,112 @@ export default function Quiz() {
     });
   };
 
-  console.log(assessmentData?.assessments?.length);
-  const isPageLoading = getAssessmentsLoading || startQuizMutation.isPending;
+  const { takenQuizzes, notTakenQuizzes } = useMemo(() => {
+    const assessments = assessmentData?.assessments || [];
+    return {
+      takenQuizzes: assessments.filter((q) => q.has_taken),
+      notTakenQuizzes: assessments.filter((q) => !q.has_taken),
+    };
+  }, [assessmentData]);
+
+  const filteredQuizzes =
+    difficultyFilter === "ALL"
+      ? notTakenQuizzes
+      : notTakenQuizzes.filter((q) => q.difficulty === difficultyFilter);
+
+  const total = assessmentData?.assessments?.length || 0;
+  const completed = takenQuizzes.length;
+  const completionPercent = total ? Math.round((completed / total) * 100) : 0;
 
   return (
     <>
-      <Loader
-        show={isPageLoading}
-        message={
-          startQuizMutation.isPending
-            ? "Starting your quiz..."
-            : "Loading quizzes for you"
-        }
-      />
-      <div className="min-h-screen bg-white px-4 md:px-8 py-8 font-sans">
-        {/* Header */}
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center mb-12">
-          <div className="w-full md:w-auto">
-            <h1
-              className="text-4xl font-extrabold mb-2"
-              style={{
-                fontFamily:
-                  'Means Web, Georgia, Times, "Times New Roman", serif',
-                WebkitFontVariantLigatures: "none",
-                fontVariantLigatures: "none",
-                letterSpacing: "-0.0625rem",
-                lineHeight: "1.2",
-                color: "#1a1a1a",
-              }}
-            >
+      <Loader show={isLoading || startQuizMutation.isPending} />
+
+      <div className="min-h-screen  px-4 md:px-8 py-10">
+        {/* HEADER */}
+        <div className="max-w-6xl mx-auto flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-4xl font-bold tracking-tight text-gray-900">
               Quizzes
             </h1>
-            <p className="text-lg text-yellow-900">
-              Test your knowledge and compete with others
+            <p className="text-lg text-gray-600 mt-1">
+              Sharpen your skills. Track your growth.
             </p>
           </div>
-          <button className="bg-yellow-300 hover:bg-yellow-200 transition px-6 py-3 text-yellow-900 font-semibold rounded-lg shadow-lg text-lg mt-4 md:mt-0">
-            🏆 Compete on Leaderboard
+
+          <button className="bg-yellow-400 hover:bg-yellow-300 transition-all duration-200 px-6 py-3 text-yellow-900 font-semibold rounded-xl shadow-md hover:shadow-lg">
+            🏆 Leaderboard
           </button>
         </div>
 
-        {/* Stats */}
-        <section className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 mb-10">
-          <StatCard
-            label="Total Quizzes"
-            value={assessmentData?.assessments?.length as number}
-            variant="blue"
-          />
-          <StatCard
-            label="Quizzes Taken"
-            value={userStats.quizzesTaken}
-            variant="green"
-          />
-          <StatCard
-            label="Best Score"
-            value={userStats.bestScore + "%"}
-            variant="yellow"
-          />
-
-          <StatCard
-            label="Avg Score"
-            value={userStats.avgScore + "%"}
-            variant="purple"
-          />
+        {/* 🔥 STAT CARDS BACK AGAIN */}
+        <section className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+          <StatCard label="Total Quizzes" value={total} variant="blue" />
+          <StatCard label="Quizzes Taken" value={completed} variant="green" />
+          <StatCard label="Best Score" value={"92%"} variant="yellow" />
+          <StatCard label="Avg Score" value={"78%"} variant="purple" />
         </section>
 
-        {/* Category Tabs */}
-        {/* <div className="max-w-6xl mx-auto flex flex-wrap space-x-2 mb-8">
-        <button className="bg-yellow-200 text-yellow-900 font-bold py-2 px-4 rounded shadow-md">
-          All Categories
-        </button>
-        <button className="hover:bg-yellow-100 py-2 px-4 rounded">
-          JavaScript
-        </button>
-        <button className="hover:bg-yellow-100 py-2 px-4 rounded">React</button>
-        <button className="hover:bg-yellow-100 py-2 px-4 rounded">
-          Python
-        </button>
-        <button className="hover:bg-yellow-100 py-2 px-4 rounded">
-          Algorithms
-        </button>
-        <button className="hover:bg-yellow-100 py-2 px-4 rounded">
-          System Design
-        </button>
-      </div> */}
-
-        {/* Main Content + Leaderboard */}
-        <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-6">
-          {/* Left: Quiz Section */}
-          <section className="flex-1 flex flex-col gap-6">
-            <div className="overflow-x-auto space-y-4 max-h-[600px] p-4">
-              {assessmentData?.assessments?.map((quiz, index) => (
-                <div
-                  key={index}
-                  className="bg-white rounded-2xl shadow-lg p-8 flex flex-col md:flex-row items-center justify-between min-w-[350px]"
-                >
-                  <div>
-                    <h2 className="text-2xl font-semibold text-yellow-800 mb-2">
-                      {quiz?.title}
-                    </h2>
-                    <p className="text-gray-600 mb-1">
-                      {quiz.total_questions} questions &nbsp;|&nbsp;{" "}
-                      {quiz.duration_sec / 60} minutes &nbsp;|&nbsp;{" "}
-                      <span
-                        className={`font-medium ${
-                          quiz.difficulty === "EASY"
-                            ? "text-green-600"
-                            : quiz.difficulty === "MEDIUM"
-                              ? "text-yellow-600"
-                              : "text-red-600"
-                        }`}
-                      >
-                        {quiz.difficulty.toLowerCase()}
-                      </span>
-                    </p>
-                    <p className="text-yellow-900">
-                      {quiz.max_attempts} attempt
-                      {quiz.max_attempts > 1 ? "s" : ""}{" "}
-                      <span className="text-green-700 font-bold ml-1">
-                        Best: {11}%
-                      </span>
-                    </p>
-                  </div>
-                  <button
-                    className="bg-yellow-400 hover:bg-yellow-300 transition px-8 py-3 text-yellow-900 font-semibold rounded-lg shadow-lg text-lg mt-4 md:mt-0"
-                    onClick={() => handleStartQuiz(quiz)}
-                  >
-                    Start Quiz
-                  </button>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          {/* Right: Leaderboard */}
-          <aside className="w-full lg:w-64 bg-yellow-100 rounded-2xl shadow-xl p-6 self-start sticky top-24 ml-auto">
-            <h3 className="font-bold text-yellow-700 text-xl mb-4">
-              Leaderboard
-            </h3>
-            <ol>
-              {leaderboard.map((user, idx) => (
-                <li
-                  key={user.name}
-                  className={`flex justify-between items-center p-2 rounded-lg mb-2 ${
-                    user.name === "You" ? "bg-yellow-200 font-semibold" : ""
+        {/* PROGRESS + FILTER BAR */}
+        <div className="max-w-6xl mx-auto mb-8">
+          <div
+            className="
+              flex flex-col lg:flex-row
+              lg:items-center lg:justify-between
+              gap-6
+              bg-white/70 backdrop-blur-md
+              border border-white/40
+              rounded-2xl
+              px-6 py-4
+              shadow-sm
+            "
+          >
+            {/* LEFT SIDE — Filters */}
+            <div className="flex flex-wrap gap-3">
+              {["ALL", "EASY", "MEDIUM", "HARD"].map((level) => (
+                <button
+                  key={level}
+                  onClick={() => setDifficultyFilter(level)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                    difficultyFilter === level
+                      ? "bg-yellow-400 text-yellow-900 shadow-md"
+                      : "bg-white border border-gray-200 hover:bg-gray-50"
                   }`}
                 >
-                  <span>
-                    {idx + 1 === 1
-                      ? "🥇 "
-                      : idx + 1 === 2
-                        ? "🥈 "
-                        : idx + 1 === 3
-                          ? "🥉 "
-                          : ""}
-                    {user.name}
-                  </span>
-                  <span>{user.score}</span>
-                </li>
+                  {level}
+                </button>
               ))}
-            </ol>
+            </div>
+          </div>
+        </div>
+        {/* MAIN GRID */}
+        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* LEFT SIDE — EXPLORE */}
+          <section className="lg:col-span-2 space-y-6">
+            {filteredQuizzes.map((quiz) => (
+              <QuizRow
+                quiz={quiz}
+                index={quiz.assessment_id}
+                onStartQuiz={handleStartQuiz}
+              ></QuizRow>
+            ))}
+          </section>
+
+          {/* RIGHT SIDE — GLASS PANEL */}
+          <aside className="bg-white/60 backdrop-blur-xl border border-white/40 rounded-3xl p-6 shadow-xl sticky top-24 h-fit max-h-[650px] overflow-y-auto">
+            <h3 className="text-xl font-semibold text-gray-900 mb-6">
+              Your Progress
+            </h3>
+
+            {takenQuizzes.length === 0 ? (
+              <p className="text-sm text-gray-500">No quizzes attempted yet.</p>
+            ) : (
+              <div className="space-y-5">
+                {takenQuizzes.map((quiz) => (
+                  <CompactQuizRow quiz={quiz}></CompactQuizRow>
+                ))}
+              </div>
+            )}
           </aside>
         </div>
       </div>

@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { PlayIcon, CheckCircleIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/navigation";
+import { useGetAllAssessments } from "@/utils/queries/assessment.queries";
+import Loader from "@/components/Loader";
 
 type InterviewType = {
   id: string; // NEW: stable identifier
@@ -37,6 +39,11 @@ export default function AIInterviewPage() {
   const router = useRouter();
 
   const [selected, setSelected] = useState<InterviewType | null>(null);
+  const { data: assessmentData, isLoading: getAssessmentsLoading } =
+    useGetAllAssessments({
+      // groups: [4, 5],
+      assessmentType: "DESCRIPTIVE",
+    });
 
   // Sample past interviews (dummy data) — replace with real data from your backend
   const [pastInterviews] = useState<PastInterview[]>([
@@ -72,7 +79,7 @@ export default function AIInterviewPage() {
     },
   ]);
 
-  const interviewTypes: InterviewType[] = [
+  const fallbackInterviewTypes: InterviewType[] = [
     // 🔴 Interview 1 -> 7 questions from Excel (set 1)
     {
       id: "interview-1",
@@ -129,253 +136,287 @@ export default function AIInterviewPage() {
     // },
   ];
 
+  const assessments = assessmentData?.assessments ?? [];
+
+  const interviewTypes: InterviewType[] =
+    assessments.length > 0
+      ? assessments.map((assessment) => ({
+          id: String(assessment.assessment_id),
+          company: "Prep Buddy AI",
+          title: assessment.title,
+          description: `${assessment.total_questions} questions, ${
+            assessment.duration_sec / 60
+          } minutes`,
+          time: `${assessment.duration_sec / 60} min`,
+          difficulty:
+            assessment.difficulty.charAt(0).toUpperCase() +
+            assessment.difficulty.slice(1).toLowerCase(),
+          difficultyColor:
+            assessment.difficulty === "EASY"
+              ? "bg-green-100 text-green-800"
+              : assessment.difficulty === "MEDIUM"
+                ? "bg-yellow-100 text-yellow-800"
+                : "bg-red-100 text-red-800",
+          iconColor: "bg-blue-100 text-blue-600",
+        }))
+      : fallbackInterviewTypes;
+
+  const isPageLoading = getAssessmentsLoading;
+
   const handleStart = () => {
     if (!selected) return;
     const qs = `?interviewId=${encodeURIComponent(
-      selected.id
+      selected.id,
     )}&company=${encodeURIComponent(
-      selected.company
+      selected.company,
     )}&title=${encodeURIComponent(selected.title)}`;
     router.push(`/ai-interview/interview${qs}`);
   };
 
   const handleReplay = (p: PastInterview) => {
     const qs = `?interviewId=${encodeURIComponent(
-      p.interviewId ?? ""
+      p.interviewId ?? "",
     )}&company=${encodeURIComponent(p.company)}&title=${encodeURIComponent(
-      p.title
+      p.title,
     )}`;
     router.push(`/ai-interview/interview${qs}`);
   };
 
   return (
-    <div className="min-h-screen bg-white px-12 py-8">
-      {/* Page Header */}
-      <div className="flex flex-col items-start justify-start gap-2 pb-6">
-        <h1 className="text-3xl font-bold text-gray-800">
-          Smart Interview Coach
-        </h1>
-        <p className="text-lg text-yellow-900">
-          Practice, improve, and ace every interview with AI guidance
-        </p>
-      </div>
+    <>
+      <Loader show={isPageLoading} message="Loading interviews for you" />
+      <div className="min-h-screen bg-white px-12 py-8">
+        {/* Page Header */}
+        <div className="flex flex-col items-start justify-start gap-2 pb-6">
+          <h1 className="text-3xl font-bold text-gray-800">
+            Smart Interview Coach
+          </h1>
+          <p className="text-lg text-yellow-900">
+            Practice, improve, and ace every interview with AI guidance
+          </p>
+        </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Start Interview Section */}
-        <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-          <h2 className="text-xl font-semibold mb-4">Start New Interview</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Start Interview Section */}
+          <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+            <h2 className="text-xl font-semibold mb-4">Start New Interview</h2>
 
-          <div className="flex flex-col md:flex-row gap-4 mb-6 items-center">
-            {/* Left hint */}
-            <span className="text-gray-700 font-medium">
-              Start by choosing an interview from your assigned sessions.
-            </span>
+            <div className="flex flex-col md:flex-row gap-4 mb-6 items-center">
+              {/* Left hint */}
+              <span className="text-gray-700 font-medium">
+                Start by choosing an interview from your assigned sessions.
+              </span>
 
-            {/* Show selected label (if any) */}
-            <div className="ml-auto">
-              {selected ? (
-                <div className="text-sm text-gray-600">
-                  Selected:&nbsp;
-                  <span className="font-semibold text-gray-800">
-                    {selected.company} — {selected.title}
-                  </span>
-                </div>
-              ) : (
-                <div className="text-sm text-gray-400">
-                  No interview selected
-                </div>
-              )}
+              {/* Show selected label (if any) */}
+              <div className="ml-auto">
+                {selected ? (
+                  <div className="text-sm text-gray-600">
+                    Selected:&nbsp;
+                    <span className="font-semibold text-gray-800">
+                      {selected.company} — {selected.title}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="text-sm text-gray-400">
+                    No interview selected
+                  </div>
+                )}
+              </div>
             </div>
+
+            {/* Interview Types */}
+            <div className="overflow-x-auto -mx-2 px-2 mb-6">
+              <div className="flex gap-4 snap-x snap-mandatory pb-2">
+                {interviewTypes.map((type) => {
+                  const isSelected = selected?.id === type.id;
+
+                  return (
+                    <div
+                      key={type.id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => setSelected(type)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          setSelected(type);
+                        }
+                      }}
+                      aria-pressed={isSelected}
+                      className={`relative min-w-[260px] snap-start bg-white rounded-xl p-5 border transition cursor-pointer ${
+                        isSelected
+                          ? "border-yellow-300 shadow-xl ring-2 ring-yellow-200"
+                          : "border-gray-100 shadow-sm hover:shadow-lg"
+                      }`}
+                    >
+                      {/* Selected check badge */}
+                      {isSelected && (
+                        <div className="absolute top-3 right-3 bg-white rounded-full p-1 shadow">
+                          <CheckCircleIcon className="w-5 h-5 text-yellow-500" />
+                        </div>
+                      )}
+
+                      {/* Company Logo Bubble */}
+                      <div
+                        className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${type.iconColor}`}
+                      >
+                        <PlayIcon className="w-6 h-6" />
+                      </div>
+
+                      {/* Company Name */}
+                      <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
+                        {type.company}
+                      </span>
+
+                      {/* Title */}
+                      <h3 className="font-semibold text-gray-800 mt-1">
+                        {type.title}
+                      </h3>
+
+                      {/* Description */}
+                      <p className="text-sm text-gray-600 mt-1">
+                        {type.description}
+                      </p>
+
+                      {/* Footer: Time + Difficulty */}
+                      <div className="flex items-center justify-between mt-4">
+                        <span className="text-xs text-gray-500">
+                          {type.time}
+                        </span>
+                        <span
+                          className={`text-xs font-medium px-2 py-0.5 rounded-full ${type.difficultyColor}`}
+                        >
+                          {type.difficulty}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Start Interview Button */}
+            <button
+              onClick={handleStart}
+              disabled={!selected}
+              aria-disabled={!selected}
+              className={`w-full transition text-white py-3 rounded-lg font-medium flex items-center justify-center gap-2 ${
+                selected
+                  ? "bg-yellow-400 hover:bg-yellow-500"
+                  : "bg-gray-100 text-gray-400 cursor-not-allowed"
+              }`}
+            >
+              <PlayIcon className={`w-5 h-5 ${selected ? "" : "opacity-60"}`} />
+              {selected ? "Start Interview" : "Select an interview to start"}
+            </button>
           </div>
 
-          {/* Interview Types */}
-          <div className="overflow-x-auto -mx-2 px-2 mb-6">
-            <div className="flex gap-4 snap-x snap-mandatory pb-2">
-              {interviewTypes.map((type) => {
-                const isSelected = selected?.id === type.id;
+          {/* Performance + Tips */}
+          <div className="space-y-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <h3 className="font-semibold mb-4">Performance</h3>
+              <ul className="space-y-2 text-gray-700">
+                <li className="flex justify-between">
+                  <span>Average Score</span>
+                  <span className="font-semibold">85%</span>
+                </li>
+                <li className="flex justify-between">
+                  <span>Interviews Taken</span>
+                  <span className="font-semibold">12</span>
+                </li>
+                <li className="flex justify-between">
+                  <span>Total Time</span>
+                  <span className="font-semibold">8h 45m</span>
+                </li>
+                <li className="flex justify-between">
+                  <span>Improvement</span>
+                  <span className="font-semibold text-green-500">+15%</span>
+                </li>
+              </ul>
+            </div>
 
-                return (
-                  <div
-                    key={type.id}
-                    role="button"
-                    tabIndex={0}
-                    onClick={() => setSelected(type)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        setSelected(type);
-                      }
-                    }}
-                    aria-pressed={isSelected}
-                    className={`relative min-w-[260px] snap-start bg-white rounded-xl p-5 border transition cursor-pointer ${
-                      isSelected
-                        ? "border-yellow-300 shadow-xl ring-2 ring-yellow-200"
-                        : "border-gray-100 shadow-sm hover:shadow-lg"
-                    }`}
-                  >
-                    {/* Selected check badge */}
-                    {isSelected && (
-                      <div className="absolute top-3 right-3 bg-white rounded-full p-1 shadow">
-                        <CheckCircleIcon className="w-5 h-5 text-yellow-500" />
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <h3 className="font-semibold mb-4">Interview Tips</h3>
+              <div className="space-y-3 text-sm h-48 overflow-y-auto pr-2">
+                <div className="bg-blue-50 p-3 rounded-lg">
+                  Practice the STAR method for behavioral questions
+                </div>
+                <div className="bg-green-50 p-3 rounded-lg">
+                  Research the company before starting
+                </div>
+                <div className="bg-pink-50 p-3 rounded-lg">
+                  Think out loud during technical problems
+                </div>
+                <div className="bg-yellow-50 p-3 rounded-lg">
+                  Manage your time effectively during coding rounds
+                </div>
+                <div className="bg-purple-50 p-3 rounded-lg">
+                  Ask clarifying questions before solving problems
+                </div>
+                <div className="bg-orange-50 p-3 rounded-lg">
+                  Review your past interview mistakes and improve
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Interviews */}
+        <div className="mt-8 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 max-w-screen-xl mx-auto">
+          <h2 className="text-xl font-semibold mb-4">Recent Interviews</h2>
+          <div className="space-y-3">
+            {pastInterviews.map((p) => (
+              <div
+                key={p.id}
+                className="flex items-center justify-between gap-4 bg-white border border-gray-100 rounded-lg p-3 shadow-sm"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-md bg-gray-50 flex items-center justify-center border border-gray-100">
+                    <span className="text-xs font-semibold text-gray-600 uppercase">
+                      {p.company[0]}
+                    </span>
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-gray-800">
+                      {p.company} — {p.title}
+                    </div>
+                    <div className="text-xs text-gray-500 mt-1">
+                      {new Date(p.date).toLocaleDateString()} • {p.duration}
+                    </div>
+                    {p.notes && (
+                      <div className="text-xs text-gray-600 mt-1">
+                        {p.notes}
                       </div>
                     )}
+                  </div>
+                </div>
 
-                    {/* Company Logo Bubble */}
-                    <div
-                      className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${type.iconColor}`}
+                <div className="flex items-center gap-4">
+                  <div className="text-right">
+                    <div className="text-sm font-semibold">{p.scorePct}%</div>
+                    <div className="text-xs text-gray-500">Score</div>
+                  </div>
+                  <div>
+                    <button
+                      onClick={() => handleReplay(p)}
+                      className="inline-flex items-center gap-2 px-3 py-1.5 bg-yellow-400 hover:bg-yellow-500 text-white rounded-md text-sm"
                     >
-                      <PlayIcon className="w-6 h-6" />
-                    </div>
-
-                    {/* Company Name */}
-                    <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                      {type.company}
-                    </span>
-
-                    {/* Title */}
-                    <h3 className="font-semibold text-gray-800 mt-1">
-                      {type.title}
-                    </h3>
-
-                    {/* Description */}
-                    <p className="text-sm text-gray-600 mt-1">
-                      {type.description}
-                    </p>
-
-                    {/* Footer: Time + Difficulty */}
-                    <div className="flex items-center justify-between mt-4">
-                      <span className="text-xs text-gray-500">{type.time}</span>
-                      <span
-                        className={`text-xs font-medium px-2 py-0.5 rounded-full ${type.difficultyColor}`}
-                      >
-                        {type.difficulty}
-                      </span>
-                    </div>
+                      <PlayIcon className="w-4 h-4" />
+                      Replay
+                    </button>
                   </div>
-                );
-              })}
-            </div>
-          </div>
+                </div>
+              </div>
+            ))}
 
-          {/* Start Interview Button */}
-          <button
-            onClick={handleStart}
-            disabled={!selected}
-            aria-disabled={!selected}
-            className={`w-full transition text-white py-3 rounded-lg font-medium flex items-center justify-center gap-2 ${
-              selected
-                ? "bg-yellow-400 hover:bg-yellow-500"
-                : "bg-gray-100 text-gray-400 cursor-not-allowed"
-            }`}
-          >
-            <PlayIcon className={`w-5 h-5 ${selected ? "" : "opacity-60"}`} />
-            {selected ? "Start Interview" : "Select an interview to start"}
-          </button>
-        </div>
-
-        {/* Performance + Tips */}
-        <div className="space-y-6">
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h3 className="font-semibold mb-4">Performance</h3>
-            <ul className="space-y-2 text-gray-700">
-              <li className="flex justify-between">
-                <span>Average Score</span>
-                <span className="font-semibold">85%</span>
-              </li>
-              <li className="flex justify-between">
-                <span>Interviews Taken</span>
-                <span className="font-semibold">12</span>
-              </li>
-              <li className="flex justify-between">
-                <span>Total Time</span>
-                <span className="font-semibold">8h 45m</span>
-              </li>
-              <li className="flex justify-between">
-                <span>Improvement</span>
-                <span className="font-semibold text-green-500">+15%</span>
-              </li>
-            </ul>
-          </div>
-
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h3 className="font-semibold mb-4">Interview Tips</h3>
-            <div className="space-y-3 text-sm h-48 overflow-y-auto pr-2">
-              <div className="bg-blue-50 p-3 rounded-lg">
-                Practice the STAR method for behavioral questions
+            {pastInterviews.length === 0 && (
+              <div className="text-gray-500 text-sm">
+                No recent interviews found.
               </div>
-              <div className="bg-green-50 p-3 rounded-lg">
-                Research the company before starting
-              </div>
-              <div className="bg-pink-50 p-3 rounded-lg">
-                Think out loud during technical problems
-              </div>
-              <div className="bg-yellow-50 p-3 rounded-lg">
-                Manage your time effectively during coding rounds
-              </div>
-              <div className="bg-purple-50 p-3 rounded-lg">
-                Ask clarifying questions before solving problems
-              </div>
-              <div className="bg-orange-50 p-3 rounded-lg">
-                Review your past interview mistakes and improve
-              </div>
-            </div>
+            )}
           </div>
         </div>
       </div>
-
-      {/* Recent Interviews */}
-      <div className="mt-8 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 max-w-screen-xl mx-auto">
-        <h2 className="text-xl font-semibold mb-4">Recent Interviews</h2>
-        <div className="space-y-3">
-          {pastInterviews.map((p) => (
-            <div
-              key={p.id}
-              className="flex items-center justify-between gap-4 bg-white border border-gray-100 rounded-lg p-3 shadow-sm"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 rounded-md bg-gray-50 flex items-center justify-center border border-gray-100">
-                  <span className="text-xs font-semibold text-gray-600 uppercase">
-                    {p.company[0]}
-                  </span>
-                </div>
-                <div>
-                  <div className="text-sm font-medium text-gray-800">
-                    {p.company} — {p.title}
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1">
-                    {new Date(p.date).toLocaleDateString()} • {p.duration}
-                  </div>
-                  {p.notes && (
-                    <div className="text-xs text-gray-600 mt-1">{p.notes}</div>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <div className="text-right">
-                  <div className="text-sm font-semibold">{p.scorePct}%</div>
-                  <div className="text-xs text-gray-500">Score</div>
-                </div>
-                <div>
-                  <button
-                    onClick={() => handleReplay(p)}
-                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-yellow-400 hover:bg-yellow-500 text-white rounded-md text-sm"
-                  >
-                    <PlayIcon className="w-4 h-4" />
-                    Replay
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-
-          {pastInterviews.length === 0 && (
-            <div className="text-gray-500 text-sm">
-              No recent interviews found.
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
+    </>
   );
 }

@@ -13,3 +13,8 @@ export interface AssessmentAttempt {
 export interface StartAssessmentResponse {
   attempt: AssessmentAttempt;
 }
+
+export interface GetAttemptQuestion {
+  AttemptID: number;
+  Index: number;
+}

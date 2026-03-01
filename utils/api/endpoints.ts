@@ -8,6 +8,7 @@ export const HOME = `home`;
 export const SUPER_ADMIN = `super-admin`;
 export const ASSESSMENT = `assessment`;
 export const QUIZ = `quiz`;
+export const CCG = `ccg`;
 
 /// RESUME endpoints ///
 export const GET_RESUME_FORMATS = `get-resume-formats`;
@@ -30,7 +31,7 @@ export const GET_USER_DETAILS_ALL = `get-user-details-all`;
 export const ME = `me`;
 
 /// Super Admin endpoints ///
-export const ADD_COLLEGE = `add-college`;
+export const CREATE_NEW_COLLEGE = `create-new-college`;
 export const CREARE_NEW_COURSE = `create-new-course`;
 export const GET_ALL_COURSES = `get-all-courses`;
 
@@ -38,4 +39,6 @@ export const GET_ALL_COURSES = `get-all-courses`;
 export const GET_ASESSMENTS = "get-assessments";
 
 /// Quiz  ///
+export const ATTEMPTS = "attempts";
 export const START_QUIZ = "start-quiz";
+export const GET_ATTEMPT_QUESTION = "questions";

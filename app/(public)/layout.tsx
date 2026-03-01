@@ -28,27 +28,27 @@ export default async function PublicLayout({
   const cookieStore = await cookies();
   const token = cookieStore.get("access_token")?.value;
 
-  const res = await fetch(`${BASE_API_URL}/${HOME}/${ME}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    cache: "no-store",
-  });
+  // const res = await fetch(`${BASE_API_URL}/${HOME}/${ME}`, {
+  //   headers: {
+  //     Authorization: `Bearer ${token}`,
+  //   },
+  //   cache: "no-store",
+  // });
 
   // if (!res.ok) {
   //   redirect("/login");
   // }
 
-  const getMeDetails = await res.json();
-  console.log(getMeDetails?.role?.name);
+  // const getMeDetails = await res.json();
+  // console.log(getMeDetails?.role?.name);
 
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Providers user={getMeDetails}>
-          <UserProvider user={getMeDetails}>
+        <Providers>
+          <UserProvider>
             <Header />
             <AppBootstrap />
             {children}

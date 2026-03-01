@@ -14,7 +14,6 @@ export const assessmentService = {
       `${BASE_API_URL}/${ASSESSMENT}/${GET_ASESSMENTS}`,
       {
         params: {
-          groups: params.groups,
           assessment_type: params.assessmentType,
         },
         paramsSerializer: (params) =>

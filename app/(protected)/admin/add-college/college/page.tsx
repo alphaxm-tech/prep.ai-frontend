@@ -3,8 +3,8 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { addCollege } from "@/utils/mutations/super-admin.mutations";
-import { AddCollegeRequest } from "@/utils/api/types/super-admin.types";
+import { addCollege } from "@/utils/mutations/ccg.mutations";
+import { AddCollegeRequest } from "@/utils/api/types/ccg.types";
 import Loader from "@/components/Loader";
 import { useToast } from "@/components/toast/ToastContext";
 

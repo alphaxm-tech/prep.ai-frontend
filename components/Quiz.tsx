@@ -2,6 +2,7 @@
 
 import React, { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useGetAttemptQuestion } from "@/utils/queries/quiz.queries";
 
 export type Option = { id: string; text: string };
 
@@ -13,15 +14,73 @@ export type Question = {
 };
 
 type QuizPageProps = {
-  questions?: Question[];
   durationMinutes?: number;
   title?: string;
+  attemptId: number;
 };
 
+const questions: Question[] = [
+  {
+    id: "q1",
+    text: "What is the time complexity of binary search?",
+    correctOptionId: "o2",
+    options: [
+      { id: "o1", text: "O(n)" },
+      { id: "o2", text: "O(log n)" },
+      { id: "o3", text: "O(n log n)" },
+      { id: "o4", text: "O(1)" },
+    ],
+  },
+  {
+    id: "q2",
+    text: "Which of the following is NOT a JavaScript data type?",
+    correctOptionId: "o3",
+    options: [
+      { id: "o1", text: "string" },
+      { id: "o2", text: "boolean" },
+      { id: "o3", text: "character" },
+      { id: "o4", text: "undefined" },
+    ],
+  },
+  {
+    id: "q3",
+    text: "In Golang, which keyword is used to define a struct?",
+    correctOptionId: "o1",
+    options: [
+      { id: "o1", text: "type" },
+      { id: "o2", text: "class" },
+      { id: "o3", text: "struct" },
+      { id: "o4", text: "define" },
+    ],
+  },
+  {
+    id: "q4",
+    text: "Which HTTP status code means 'Unauthorized'?",
+    correctOptionId: "o2",
+    options: [
+      { id: "o1", text: "200" },
+      { id: "o2", text: "401" },
+      { id: "o3", text: "403" },
+      { id: "o4", text: "500" },
+    ],
+  },
+  {
+    id: "q5",
+    text: "What does ACID stand for in databases?",
+    correctOptionId: "o4",
+    options: [
+      { id: "o1", text: "Atomicity, Consistency, Isolation, Durability" },
+      { id: "o2", text: "Accuracy, Clarity, Isolation, Dependency" },
+      { id: "o3", text: "Atomicity, Concurrency, Integrity, Durability" },
+      { id: "o4", text: "Atomicity, Consistency, Isolation, Durability" },
+    ],
+  },
+];
+
 export default function QuizPage({
-  questions = [],
   durationMinutes = 20,
   title = "Quiz",
+  attemptId,
 }: QuizPageProps) {
   const router = useRouter();
 
@@ -31,24 +90,24 @@ export default function QuizPage({
   const [isRunning, setIsRunning] = useState(true);
   const [showSummary, setShowSummary] = useState(false);
 
-  useEffect(() => {
-    if (!isRunning) return;
+  // useEffect(() => {
+  //   if (!isRunning) return;
 
-    if (timeLeft <= 0) {
-      handleSubmit();
-      return;
-    }
+  //   if (timeLeft <= 0) {
+  //     handleSubmit();
+  //     return;
+  //   }
 
-    const t = window.setInterval(() => {
-      setTimeLeft((s) => s - 1);
-    }, 1000);
+  //   const t = window.setInterval(() => {
+  //     setTimeLeft((s) => s - 1);
+  //   }, 1000);
 
-    return () => clearInterval(t);
-  }, [isRunning, timeLeft]);
+  //   return () => clearInterval(t);
+  // }, [isRunning, timeLeft]);
 
   const score = useMemo(() => {
     let correct = 0;
-    questions.forEach((q) => {
+    questions.forEach((q: any) => {
       if (answers[q.id] === q.correctOptionId) correct++;
     });
 
@@ -86,6 +145,20 @@ export default function QuizPage({
       </div>
     );
   }
+
+  /// API calls
+  const {
+    data: questionData,
+    isLoading: questionLoading,
+    isError,
+    error,
+    refetch,
+  } = useGetAttemptQuestion({
+    AttemptID: attemptId,
+    Index: 2,
+  });
+
+  console.log(isError, error);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 via-white to-gray-200 p-6">
@@ -140,7 +213,7 @@ export default function QuizPage({
               </div>
 
               <div className="space-y-3">
-                {questions[currentIndex]?.options?.map((opt) => {
+                {questions[currentIndex]?.options?.map((opt: any) => {
                   const selected =
                     answers[questions[currentIndex].id] === opt.id;
 
@@ -195,7 +268,7 @@ export default function QuizPage({
               </h3>
 
               <div className="grid grid-cols-5 gap-3">
-                {questions.map((q, i) => {
+                {questions.map((q: any, i: any) => {
                   const attempted = !!answers[q.id];
                   const isCurrent = i === currentIndex;
 
