@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  PLACEMENT_ROUTE,
-  PLATFORM_ROUTE,
-  STUDENT_ROUTE,
-} from "@/utils/CONSTANTS";
+import { PLATFORM_ROUTE, STUDENT_ROUTE } from "@/utils/CONSTANTS";
 import { UserRole } from "@/utils/enums";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
@@ -82,10 +78,6 @@ export function ProtectedHeader({ user }: { user: any }) {
         action: () => router.push("/super-admin/reports"),
       },
       {
-        label: "Placement",
-        action: () => router.push(`${PLACEMENT_ROUTE}`),
-      },
-      {
         label: "Platform",
         action: () => router.push(`${PLATFORM_ROUTE}`),
       },
@@ -99,15 +91,6 @@ export function ProtectedHeader({ user }: { user: any }) {
       { label: "Admin Dashboard", action: () => router.push("/admin/home") },
       { label: "Manage Users", action: () => router.push("/admin/users") },
       { label: "Reports", action: () => router.push("/admin/reports") },
-    ],
-
-    [UserRole.PLACEMENT]: [
-      {
-        label: "Placement Dashboard",
-        action: () => router.push("/placement/dashboard"),
-      },
-      { label: "Drives", action: () => router.push("/placement/drives") },
-      { label: "Students", action: () => router.push("/placement/students") },
     ],
 
     [UserRole.STUDENT]: [

@@ -19,7 +19,7 @@ import {
 import { useToast } from "@/components/toast/ToastContext";
 import {
   ADMIN_ROUTE,
-  PLACEMENT_ROUTE,
+  COLLEGE,
   PLATFORM_ROUTE,
   STUDENT_ROUTE,
   UN_AUTHORIZED_ROUTE,
@@ -495,13 +495,11 @@ export default function LoginPage() {
         onSuccess: (data: any) => {
           // routing based on user roles
           if (data?.userRole?.name === UserRole.ADMIN) {
-            router.replace(`${ADMIN_ROUTE}`);
+            router.replace(`${COLLEGE}/1`);
           } else if (data?.userRole?.name === UserRole.STUDENT) {
             router.replace(`${STUDENT_ROUTE}`);
           } else if (data?.userRole?.name === UserRole.SUPER_ADMIN) {
             router.replace(`${PLATFORM_ROUTE}`);
-          } else if (data?.userRole?.name === UserRole.PLACEMENT) {
-            router.replace(`${PLACEMENT_ROUTE}`);
           } else {
             router.replace(`${UN_AUTHORIZED_ROUTE}`);
           }

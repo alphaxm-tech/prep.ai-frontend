@@ -31,17 +31,23 @@ export function SubHeader({ user }: { user: any }) {
       { label: "Code Editor", route: CODE_EDITOR_ROUTE },
     ],
 
-    PLACEMENT: [
-      { label: "Dashboard", route: "/placement/dashboard" },
-      { label: "Drives", route: "/placement/drives" },
+    ADMIN: [
+      {
+        label: "Home",
+        route: "/college/1",
+      },
+      {
+        label: "Placement",
+        route: "/college/1/placement",
+      },
       { label: "Students", route: "/placement/students" },
       { label: "Applications", route: "/placement/applications" },
       { label: "Assessments", route: "/placement/assessments" },
       { label: "Interviews", route: "/placement/interviews" },
-      { label: "Offers", route: "/placement/offers" },
+
       { label: "Reports", route: "/placement/reports" },
-      { label: "Audit", route: "/placement/audit" },
-      { label: "Settings", route: "/placement/settings" },
+      { label: "Role", route: "/placement/role" },
+      { label: "Communication", route: "/college/communication" },
     ],
 
     SUPER_ADMIN: [
