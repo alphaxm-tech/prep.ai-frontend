@@ -18,3 +18,24 @@ export interface GetAttemptQuestion {
   AttemptID: number;
   Index: number;
 }
+
+export interface GetAttemptStatusResposne {
+  AttemptID: number;
+  AssessmentID: number;
+  Status: string;
+  StartedAt: string;
+  ExpiredAt: string;
+  SubmittedAt: string;
+  TotalQuestions: number;
+  Answered: number;
+  Remaining: number;
+  TotalScore: number;
+}
+
+export interface GetLeaderboardResponse {
+  Rank: number;
+  UserID: number;
+  AttemptID: number;
+  Score: number;
+  SubmittedAt: string;
+}

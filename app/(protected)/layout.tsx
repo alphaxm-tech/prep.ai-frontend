@@ -9,6 +9,7 @@ import { BASE_API_URL, HOME, ME } from "@/utils/api/endpoints";
 import { UserProvider } from "../context/UserContext";
 import { ProtectedHeader } from "@/components/ProtectedHeader";
 import ProtectedShell from "@/components/ProtectedShell";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],

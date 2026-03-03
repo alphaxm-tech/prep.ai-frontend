@@ -55,6 +55,8 @@ export function SubHeader({ user }: { user: any }) {
 
   const navLinks = SUBHEADER_NAVIGATION_BY_ROLE[user?.role?.name] || [];
 
+  console.log(user?.role?.name);
+
   const handleSubHeaderClick = (route: string) => {
     if (route === pathname) return; // avoid unnecessary navigation
     setPendingRoute(route);

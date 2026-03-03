@@ -39,6 +39,10 @@ export const GET_ALL_COURSES = `get-all-courses`;
 export const GET_ASESSMENTS = "get-assessments";
 
 /// Quiz  ///
-export const ATTEMPTS = "attempts";
 export const START_QUIZ = "start-quiz";
+export const ATTEMPTS = "attempts";
 export const GET_ATTEMPT_QUESTION = "questions";
+export const SUBMIT = "submit";
+export const ASSESSMENTS = "assessments";
+export const LEADERBOARD = "leaderboard";
+export const GET_QUIZ_SESSION = "get-quiz-session";
