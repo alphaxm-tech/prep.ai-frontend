@@ -1,10 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { superAdminService } from "@/utils/services/super-admin.service";
-import { Course } from "@/utils/api/types/super-admin.types";
-
-export type GetAllCoursesResponse = {
-  Courses: Course[];
-};
+import { GetAllCoursesResponse } from "@/utils/api/types/super-admin.types";
 
 export const useGetAllCourses = () => {
   return useQuery<GetAllCoursesResponse>({

@@ -18,7 +18,7 @@ type QuizModalProps = {
   title?: string;
   onSubmit?: (
     answers: Record<string, string>,
-    score?: { correct: number; total: number; percent: number }
+    score?: { correct: number; total: number; percent: number },
   ) => void;
 };
 
@@ -74,7 +74,7 @@ export default function QuizModal({
   const fmt = (s: number) =>
     `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(
       2,
-      "0"
+      "0",
     )}`;
 
   const selectOption = (qid: string, oid: string) =>
@@ -89,13 +89,7 @@ export default function QuizModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-lg"
-        onClick={onClose}
-      />
-
+    <div className="min-h-screen bg-gray-50 p-8">
       {/* Modal */}
       <div className="relative w-full max-w-7xl bg-white rounded-3xl shadow-2xl overflow-hidden z-10">
         {/* Header */}
@@ -191,7 +185,7 @@ export default function QuizModal({
                 <button
                   onClick={() =>
                     setCurrentIndex((i) =>
-                      Math.min(questions.length - 1, i + 1)
+                      Math.min(questions.length - 1, i + 1),
                     )
                   }
                   disabled={currentIndex === questions.length - 1}
@@ -217,8 +211,8 @@ export default function QuizModal({
                         i === currentIndex
                           ? "bg-yellow-400 text-white"
                           : answers[questions[i].id]
-                          ? "bg-green-100 text-green-700"
-                          : "bg-gray-100"
+                            ? "bg-green-100 text-green-700"
+                            : "bg-gray-100"
                       }
                     `}
                   >

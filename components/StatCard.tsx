@@ -37,7 +37,7 @@ export function StatCard({ label, value, variant = "yellow" }: StatCardProps) {
 
   return (
     <div
-      className={`${styles.bg} ${styles.border} border rounded-lg text-center py-6`}
+      className={`${styles.bg} ${styles.border} border rounded-lg text-center py-4`}
     >
       <div className={`text-3xl font-bold ${styles.text}`}>{value}</div>
       <div className={`mt-2 ${styles.text}`}>{label}</div>

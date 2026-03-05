@@ -4,7 +4,7 @@
 import { useState } from "react";
 import { SparklesIcon } from "@heroicons/react/24/outline";
 import Loader from "../Loader";
-import { capitalizeFullName } from "@/app/(auth)/resume-builder/page";
+import { capitalizeFullName } from "@/app/(protected)/student/resume-builder/page";
 
 type Props = {
   isDefault: boolean;

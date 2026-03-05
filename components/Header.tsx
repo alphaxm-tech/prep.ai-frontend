@@ -1,7 +1,10 @@
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useContext } from "react";
+import { AuthContext } from "@/app/provider";
+import { useUser } from "@/app/context/UserContext";
 
 export function Header() {
   const router = useRouter();
@@ -12,6 +15,16 @@ export function Header() {
   const isLandingPage = pathname === "/";
   const isLoginPage = pathname.startsWith("/login");
   const isInsideApp = !isLandingPage && !isLoginPage;
+
+  const userDetailsMain = useContext(AuthContext);
+
+  // useEffect(() => {
+  //   console.log("from header" + userDetailsMain);
+  // }, [userDetailsMain]);
+
+  // const user = useUser();
+  // // Now you can use user data
+  // console.log(user);
 
   const landingNav = [
     { label: "Home", href: "#home" },
@@ -62,11 +75,6 @@ export function Header() {
             onClick={() => router.push("/")}
             className="cursor-pointer select-none flex flex-col leading-none"
           >
-            {/* Endorsement line */}
-            <span className="text-[11px] font-semibold tracking-wide text-gray-700 uppercase mb-0.5">
-              Raghu College
-            </span>
-
             {/* Main Brand */}
             <div className="flex items-center gap-0.5 font-extrabold tracking-tight">
               <span className="text-gray-900 text-3xl">Prep</span>
@@ -134,8 +142,8 @@ export function Header() {
                   onClick={() => router.push("/admin/home")}
                   className="
           px-5 py-2 text-sm font-semibold
-          rounded-full bg-yellow-600 text-white
-          shadow-sm hover:shadow-md hover:bg-yellow-700
+          rounded-full bg-yellow-500 text-white
+          shadow-sm hover:shadow-md hover:bg-yellow-600
           transition-all
         "
                 >

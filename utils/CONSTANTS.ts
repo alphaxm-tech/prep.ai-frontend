@@ -1,19 +1,23 @@
-// export const BASE_API_URL = () => `http://localhost:8080/api/v1`;
+// ===============================
+// UI ROUTES (ALWAYS ABSOLUTE)
+// ===============================
 
-// export const RESUME = () => `resume`;
-// export const AIINTERVIEW = () => `ai-interview`;
-// export const AUTH = () => `auth`;
-// export const HOME = () => `home`;
+// Base Routes
+export const STUDENT_ROUTE = "/student";
+export const ADMIN_ROUTE = "/admin";
+export const COLLEGE = "/college";
+export const PLATFORM_ROUTE = "/platform";
+// export const PLACEMENT_ROUTE = "/placement";
+export const UN_AUTHORIZED_ROUTE = "/unauthorized";
+export const QUIZ_ROUTE_MAIN = "/quiz";
+export const QUIZ_TEST = "/test";
 
-// export const GET_RESUME_FORMATS = () => `get-resume-formats`;
+// Student Routes
+export const HOME_ROUTE = "/"; // root home
+export const AI_INTERVIEW_ROUTE = "/student/ai-interview";
+export const RESUME_BUILDER_ROUTE = "/student/resume-builder";
+export const QUIZ_ROUTE = "/student/quiz";
+export const STUDY_MATERIAL_ROUTE = "/student/study-material";
+export const CODE_EDITOR_ROUTE = "/student/code-editor";
 
-// /// AUTH endpoints ///
-// export const REGISTER = () => `register`;
-// export const LOGIN_WITH_PASSWORD = () => `login`;
-// export const LOGIN_WITH_OTP = () => `auth/login-with-otp`;
-// export const VERIFY_LOGIN_OTP = () => `auth/verify-login-otp`;
-
-// /// HOME endpoints ///
-// export const GET_USER_DETAILS = () => `get-user-details`;
-// export const GET_USER_SERVICES = () => `get-user-services`;
-// export const GET_USER_LEARNING_PATH = () => `get-user-learningpath`;
+export const staleTime = 5 * 60 * 1000;
