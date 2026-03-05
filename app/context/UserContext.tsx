@@ -3,7 +3,7 @@
 import React, { createContext, useContext } from "react";
 
 interface UserContextType {
-  user: any; // Replace 'any' with your actual user type
+  user?: any; // Replace 'any' with your actual user type
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -13,7 +13,7 @@ export function UserProvider({
   user,
 }: {
   children: React.ReactNode;
-  user: any;
+  user?: any;
 }) {
   return (
     <UserContext.Provider value={{ user }}>{children}</UserContext.Provider>

@@ -26,6 +26,10 @@ import {
 } from "@/utils/CONSTANTS";
 import { UserRole } from "@/utils/enums";
 
+// UI-only demo credentials (no backend required)
+const DEMO_EMAIL = "vm.prepai@gmail.com";
+const DEMO_PASSWORD = "admin@12345";
+
 /**
  * InputWithIcon must be declared at module top-level to keep identity stable.
  */
@@ -288,6 +292,15 @@ export default function LoginPage() {
       return;
     }
 
+    // UI-only demo short-circuit — no backend call
+    if (trimmed === DEMO_EMAIL) {
+      setHasPassword(true);
+      setEmailVerified(true);
+      setUserID(-1);
+      setStep("password");
+      return;
+    }
+
     setLoading(true);
     setErrorMessage(null);
     setLoadingMessage("Verifying your email id");
@@ -483,6 +496,33 @@ export default function LoginPage() {
 
     const normalizedEmail = email.trim().toLowerCase();
     const normalizedPassword = password.trim();
+
+    // UI-only demo short-circuit — no backend call
+    if (normalizedEmail === DEMO_EMAIL) {
+      if (normalizedPassword !== DEMO_PASSWORD) {
+        showToast("error", "Incorrect password");
+        return;
+      }
+      setLoading(true);
+      setLoadingMessage("Logging you in....");
+      try {
+        const res = await fetch("/api/auth/demo-login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: normalizedEmail, password: normalizedPassword }),
+        });
+        if (res.ok) {
+          router.replace("/college/1");
+          return;
+        }
+        showToast("error", "Demo login failed. Please try again.");
+      } catch {
+        showToast("error", "Something went wrong. Please try again.");
+      }
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     setLoadingMessage("Logging you in....");
 

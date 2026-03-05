@@ -12,7 +12,7 @@ type User = {
 
 type ProvidersProps = {
   children: ReactNode;
-  user: User;
+  user?: User;
 };
 
 export const AuthContext = createContext<any | null>(null);

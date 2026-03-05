@@ -20,6 +20,14 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// Fake user data for UI-only demo session
+const DEMO_USER = {
+  full_name: "VM PrepAI",
+  role: { name: "ADMIN" },
+  user: { full_name: "VM PrepAI" },
+  college: { code: "VM" },
+};
+
 export default async function ProtectedLayout({
   children,
 }: {
@@ -32,18 +40,29 @@ export default async function ProtectedLayout({
     redirect("/login");
   }
 
-  const res = await fetch(`${BASE_API_URL}/${HOME}/${ME}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    cache: "no-store",
-  });
+  // Demo mode: skip backend call and use hardcoded user data
+  const isDemoMode =
+    token === "demo_session" &&
+    cookieStore.get("demo_mode")?.value === "true";
 
-  // if (!res.ok) {
-  //   redirect("/login");
-  // }
+  let getMeDetails: any;
 
-  const getMeDetails = await res.json();
+  if (isDemoMode) {
+    getMeDetails = DEMO_USER;
+  } else {
+    const res = await fetch(`${BASE_API_URL}/${HOME}/${ME}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      cache: "no-store",
+    });
+
+    // if (!res.ok) {
+    //   redirect("/login");
+    // }
+
+    getMeDetails = await res.json();
+  }
   // console.log(getMeDetails?.role?.name);
 
   return (
