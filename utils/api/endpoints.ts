@@ -9,6 +9,7 @@ export const SUPER_ADMIN = `super-admin`;
 export const ASSESSMENT = `assessment`;
 export const QUIZ = `quiz`;
 export const CCG = `ccg`;
+export const CODEEDITOR = "code-editor";
 
 /// RESUME endpoints ///
 export const GET_RESUME_FORMATS = `get-resume-formats`;
@@ -46,3 +47,7 @@ export const SUBMIT = "submit";
 export const ASSESSMENTS = "assessments";
 export const LEADERBOARD = "leaderboard";
 export const GET_QUIZ_SESSION = "get-quiz-session";
+
+/// Code editor ///
+export const GET_CODING_QUESTIONS = "questions";
+export const SUBMIT_CODE = "submit";

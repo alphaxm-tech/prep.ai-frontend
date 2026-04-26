@@ -2,117 +2,21 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import CodeEditor from "@/components/CodeEditor";
+import { StatCard } from "@/components/StatCard";
+import { Funnel } from "lucide-react";
+import { useGetCodingQuestions } from "@/utils/queries/code-editor.queries";
+import Loader from "@/components/Loader";
 
 type Difficulty = "Easy" | "Medium" | "Hard";
 
 type Problem = {
-  id: number;
+  question_id: number;
   title: string;
   difficulty: Difficulty;
   tags: string[];
   acceptance: string;
 };
-
-const PROBLEMS: Problem[] = [
-  {
-    id: 1,
-    title: "Two Sum",
-    difficulty: "Easy",
-    tags: ["Array", "Hash Table"],
-    acceptance: "56.9%",
-  },
-  {
-    id: 2,
-    title: "Add Two Numbers",
-    difficulty: "Medium",
-    tags: ["Linked List", "Math"],
-    acceptance: "47.7%",
-  },
-  {
-    id: 3,
-    title: "Longest Substring Without Repeating Characters",
-    difficulty: "Medium",
-    tags: ["String", "Sliding Window"],
-    acceptance: "38.3%",
-  },
-  {
-    id: 4,
-    title: "Median of Two Sorted Arrays",
-    difficulty: "Hard",
-    tags: ["Array", "Binary Search"],
-    acceptance: "45.7%",
-  },
-  {
-    id: 5,
-    title: "Valid Parentheses",
-    difficulty: "Easy",
-    tags: ["Stack"],
-    acceptance: "41.5%",
-  },
-  {
-    id: 6,
-    title: "Container With Most Water",
-    difficulty: "Medium",
-    tags: ["Two Pointers"],
-    acceptance: "54.2%",
-  },
-  {
-    id: 7,
-    title: "Trapping Rain Water",
-    difficulty: "Hard",
-    tags: ["Stack", "Two Pointers"],
-    acceptance: "59.3%",
-  },
-  {
-    id: 8,
-    title: "Two Sum",
-    difficulty: "Easy",
-    tags: ["Array", "Hash Table"],
-    acceptance: "56.9%",
-  },
-  {
-    id: 9,
-    title: "Add Two Numbers",
-    difficulty: "Medium",
-    tags: ["Linked List", "Math"],
-    acceptance: "47.7%",
-  },
-  {
-    id: 9,
-    title: "Longest Substring Without Repeating Characters",
-    difficulty: "Medium",
-    tags: ["String", "Sliding Window"],
-    acceptance: "38.3%",
-  },
-  {
-    id: 10,
-    title: "Median of Two Sorted Arrays",
-    difficulty: "Hard",
-    tags: ["Array", "Binary Search"],
-    acceptance: "45.7%",
-  },
-  {
-    id: 11,
-    title: "Valid Parentheses",
-    difficulty: "Easy",
-    tags: ["Stack"],
-    acceptance: "41.5%",
-  },
-  {
-    id: 12,
-    title: "Container With Most Water",
-    difficulty: "Medium",
-    tags: ["Two Pointers"],
-    acceptance: "54.2%",
-  },
-  {
-    id: 13,
-    title: "Trapping Rain Water",
-    difficulty: "Hard",
-    tags: ["Stack", "Two Pointers"],
-    acceptance: "59.3%",
-  },
-];
 
 const CATEGORIES = [
   "All",
@@ -130,163 +34,238 @@ export default function ProblemsPage() {
     "All",
   );
   const [category, setCategory] = useState("All");
+  const [showFilter, setShowFilter] = useState(false);
 
-  const filteredProblems = PROBLEMS.filter((p) => {
-    if (difficultyFilter !== "All" && p.difficulty !== difficultyFilter)
-      return false;
-    if (category !== "All" && !p.tags.includes(category)) return false;
-    return true;
-  });
+  const {
+    data: codingQuestionData,
+    isLoading: codingQuestionLoading,
+    isError,
+    error,
+    refetch,
+  } = useGetCodingQuestions();
+
+  const allQuestions =
+    codingQuestionData?.response?.assessments?.flatMap(
+      (assessment: any) => assessment.questions,
+    ) || [];
+
+  console.log(allQuestions);
+
+  const CATEGORIES = ["Arrays", "Graphs", "DP", "Strings"];
+
+  // Temporary static counts (replace with dynamic later)
+  const CATEGORY_COUNT: Record<string, number> = {
+    Arrays: 120,
+    Graphs: 45,
+    DP: 32,
+    Strings: 28,
+  };
+
+  function slugify(title: string) {
+    return title
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .trim()
+      .replace(/\s+/g, "-");
+  }
+
+  function handleProblemClick(problem: Problem) {
+    const slug = slugify(problem.title);
+    router.push(`/student/code-editor/${slug}/${problem.question_id}`);
+  }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
-      <div className="max-w-7xl mx-auto px-6 py-10">
-        {/* Header */}
-        <div className="mb-10">
-          <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-            Coding Problems
-          </h1>
-          <p className="text-sm text-gray-500 mt-2">
-            Practice interview-style problems and track your progress
-          </p>
-        </div>
-
-        {/* Stats (Quiz-style) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-          <StatCard title="Solved" value="23" color="green" />
-          <StatCard title="Accuracy" value="74%" color="blue" />
-          <StatCard title="Total Time" value="16h" color="purple" />
-          <StatCard title="Current Streak" value="6 days" color="orange" />
-        </div>
-
-        {/* Difficulty Filters */}
-        <div className="flex flex-wrap items-center gap-3 mb-6">
-          {["All", "Easy", "Medium", "Hard"].map((level) => (
-            <button
-              key={level}
-              onClick={() => setDifficultyFilter(level as any)}
-              className={`
-                px-4 py-1.5 rounded-full text-sm font-semibold transition
-                ${
-                  difficultyFilter === level
-                    ? "bg-gray-900 text-white shadow-sm"
-                    : "bg-white text-gray-600 hover:bg-gray-100"
-                }
-              `}
-            >
-              {level}
-            </button>
-          ))}
-        </div>
-
-        {/* Category Pills (Quiz-style) */}
-        <div className="flex flex-wrap gap-3 mb-8">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setCategory(cat)}
-              className={`
-                px-4 py-1.5 rounded-full text-sm font-medium transition
-                ${
-                  category === cat
-                    ? "bg-yellow-400 text-gray-900 shadow-sm"
-                    : "bg-white text-gray-600 hover:bg-gray-100"
-                }
-              `}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
-
-        {/* Problems List */}
-        <div className="bg-white rounded-2xl shadow-[0_8px_30px_rgba(0,0,0,0.06)] overflow-hidden">
-          {/* Header Row */}
-          <div className="grid grid-cols-[70px_1fr_160px_120px] px-6 py-4 text-xs font-semibold uppercase tracking-wide text-gray-500 bg-gray-50/70">
-            <div>#</div>
-            <div>Problem</div>
-            <div>Difficulty</div>
-            <div>Acceptance</div>
+    <>
+      <Loader show={codingQuestionLoading} />
+      <div className="min-h-screen">
+        <div className="max-w-7xl mx-auto px-6 py-10">
+          {/* Header */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-extrabold tracking-tight bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+              Coding Problems
+            </h1>
+            <p className="text-sm text-gray-500 mt-2">
+              Practice interview-style problems and track your progress
+            </p>
           </div>
 
-          {/* Rows */}
-          <div className="divide-y divide-gray-100/60">
-            {filteredProblems.map((problem) => (
-              <div
-                key={problem.id}
-                onClick={() => router.push(`/problems/${problem.id}`)}
-                className="
-                  group grid grid-cols-[70px_1fr_160px_120px]
-                  px-6 py-4 items-center
-                  text-sm cursor-pointer
-                  transition-all duration-200
-                  hover:bg-gray-50/70 hover:-translate-y-[1px]
-                "
-              >
-                <div className="text-gray-400 font-medium">{problem.id}</div>
+          {/* Stats (Quiz-style) */}
+          {/* <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+            <StatCard label="Solved" value="23" variant="blue" />
+            <StatCard label="Accuracy" value="74%" variant="green" />
+            <StatCard label="Total Time" value="16h" variant="yellow" />
+            <StatCard label="Current Streak" value="6 days" variant="purple" />
+          </div> */}
 
-                <div>
-                  <div className="font-semibold text-gray-900 group-hover:underline">
-                    {problem.title}
+          {/* CATEGORY / TOPICS CONTAINER */}
+          <div className="mb-4 px-4 py-3 rounded-lg border border-gray-200/70 bg-white/50 backdrop-blur-md shadow-sm">
+            {/* 🔹 HEADER */}
+            <div className="flex items-center justify-between mb-3">
+              {/* LEFT: Title */}
+              <h2 className="text-s font-semibold tracking-wide text-gray-600 uppercase">
+                Topics
+              </h2>
+
+              {/* RIGHT: Filter */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowFilter(!showFilter)}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-md border border-gray-200/70 bg-white/60 hover:bg-gray-100/70 transition text-s font-medium text-gray-600"
+                >
+                  <Funnel size={14} />
+                  <span>
+                    {difficultyFilter !== "All" ? difficultyFilter : "Filter"}
+                  </span>
+                </button>
+
+                {showFilter && (
+                  <div className="absolute right-0 mt-2 w-36 rounded-lg border border-gray-200 bg-white shadow-md p-1.5 z-10">
+                    {["All", "Easy", "Medium", "Hard"].map((level) => {
+                      const isActive = difficultyFilter === level;
+
+                      return (
+                        <button
+                          key={level}
+                          onClick={() => {
+                            setDifficultyFilter(level as any);
+                            setShowFilter(false);
+                          }}
+                          className={`
+                  w-full text-left px-2.5 py-1.5 rounded-md text-s transition
+                  ${
+                    isActive
+                      ? "bg-gray-900 text-white"
+                      : "text-gray-600 hover:bg-gray-100"
+                  }
+                `}
+                        >
+                          {level}
+                        </button>
+                      );
+                    })}
                   </div>
-                  <div className="flex gap-2 mt-1.5 flex-wrap">
+                )}
+              </div>
+            </div>
+
+            {/* 🔹 TOPICS */}
+            <div className="flex flex-wrap gap-2">
+              {CATEGORIES.map((cat) => {
+                const isActive = category === cat;
+                const count = CATEGORY_COUNT[cat] || 0;
+
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => setCategory(cat)}
+                    className={`
+            flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium
+            border transition-all duration-150
+
+            ${
+              isActive
+                ? "bg-yellow-400/90 text-gray-900 border-yellow-400 shadow-sm"
+                : "bg-white/60 text-gray-600 border-gray-200 hover:bg-yellow-50 hover:border-yellow-300 hover:text-gray-900"
+            }
+          `}
+                  >
+                    <span>{cat}</span>
+
+                    {/* COUNT */}
+                    <span
+                      className={`
+              text-[10px] px-1.5 py-[1px] rounded-full
+              ${
+                isActive
+                  ? "bg-yellow-200 text-gray-900"
+                  : "bg-gray-100 text-gray-500"
+              }
+            `}
+                    >
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          {/* Problems List */}
+          <div className="bg-white rounded-xl border border-gray-200/70 shadow-sm overflow-hidden">
+            {/* Header Row */}
+            <div className="grid grid-cols-[60px_1fr_140px_110px] px-5 py-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500 bg-gray-50/70">
+              {/* <div>#</div> */}
+              <div>Problem</div>
+              <div>Difficulty</div>
+              <div>Acceptance</div>
+            </div>
+
+            {/* Rows */}
+            <div>
+              {allQuestions.map((problem, index) => (
+                <div
+                  key={problem.id}
+                  onClick={() => handleProblemClick(problem)}
+                  className={`
+                          group grid grid-cols-[60px_1fr_140px_110px]
+                          px-5 py-3 items-center
+                          text-sm cursor-pointer
+                          transition-all duration-150
+
+                          ${index % 2 === 0 ? "bg-white" : "bg-gray-100"}
+                          hover:bg-gray-100/60
+                        `}
+                >
+                  {/* ID */}
+                  <div className="text-gray-400 text-xs font-medium">
+                    {problem.id}
+                  </div>
+
+                  {/* Problem Title + Tags */}
+                  <div>
+                    <div className="font-semibold text-[14px] text-gray-900 group-hover:underline">
+                      {problem.title}
+                    </div>
+
+                    {/* <div className="flex gap-1.5 mt-1 flex-wrap">
                     {problem.tags.map((tag) => (
                       <span
                         key={tag}
-                        className="text-[11px] px-2 py-0.5 rounded-md bg-gray-100 text-gray-700"
+                        className="text-[10px] px-1.5 py-[1px] rounded-md bg-gray-100 text-gray-600"
                       >
                         {tag}
                       </span>
                     ))}
+                  </div> */}
+                  </div>
+
+                  {/* Difficulty */}
+                  <div>
+                    <span
+                      className={`
+              inline-flex px-2.5 py-[3px] rounded-full text-[11px] font-semibold
+              ${
+                problem.difficulty === "easy"
+                  ? "bg-green-100 text-green-700"
+                  : problem.difficulty === "medium"
+                    ? "bg-yellow-100 text-yellow-700"
+                    : "bg-red-100 text-red-700"
+              }
+            `}
+                    >
+                      {problem.difficulty}
+                    </span>
+                  </div>
+
+                  {/* Acceptance */}
+                  <div className="text-gray-500 text-xs font-semibold">
+                    {problem.acceptance}
                   </div>
                 </div>
-
-                <div>
-                  <span
-                    className={`
-                      inline-flex px-3 py-1 rounded-full text-xs font-bold
-                      ${
-                        problem.difficulty === "Easy"
-                          ? "bg-green-100 text-green-800"
-                          : problem.difficulty === "Medium"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : "bg-red-100 text-red-800"
-                      }
-                    `}
-                  >
-                    {problem.difficulty}
-                  </span>
-                </div>
-
-                <div className="text-gray-500 font-semibold">
-                  {problem.acceptance}
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
-}
-
-/* ---------- Small helper ---------- */
-
-function StatCard({
-  title,
-  value,
-  color,
-}: {
-  title: string;
-  value: string;
-  color: "green" | "blue" | "purple" | "orange";
-}) {
-  return (
-    <div
-      className={`rounded-2xl p-6 bg-${color}-50 text-${color}-700 shadow-sm`}
-    >
-      <div className="text-2xl font-extrabold">{value}</div>
-      <div className="text-sm font-medium mt-1">{title}</div>
-    </div>
+    </>
   );
 }
