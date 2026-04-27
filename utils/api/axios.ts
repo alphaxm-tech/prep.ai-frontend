@@ -35,7 +35,8 @@ const api = axios.create({
   baseURL:
     process.env.NEXT_PUBLIC_API_URL ||
     // "https://prep-ai-backend-zcbs.onrender.com",
-    `http://localhost:8080/api/v1`,
+    // `http://localhost:8080/api/v1`,
+    `http://43.205.142.104:8080/api/v1`,
   withCredentials: true, // REQUIRED for cookies
 });
 
