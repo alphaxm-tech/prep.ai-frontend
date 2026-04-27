@@ -12,5 +12,14 @@ export const useGetCodingQuestionDetails = (questionId: number) => {
   return useQuery({
     queryKey: ["code-editor", "get-question-detail", questionId],
     queryFn: () => codeEditorService.getCodingQuestionDetails(questionId),
+    enabled: questionId > 0,
+  });
+};
+
+export const useGetAssessmentResult = (assessmentId: number) => {
+  return useQuery({
+    queryKey: ["code-editor", "assessment-result", assessmentId],
+    queryFn: () => codeEditorService.getAssessmentResult(assessmentId),
+    enabled: assessmentId > 0,
   });
 };
