@@ -8,6 +8,7 @@ import Loader from "@/components/Loader";
 import { QUIZ_ROUTE, QUIZ_TEST } from "@/utils/CONSTANTS";
 import { createQuizAssessment } from "@/utils/mutations/quiz.mutation";
 import { AssessmentResponse } from "@/utils/api/types/assessment.types";
+import WorkInProgressBanner from "@/components/WorkInProgressBanner";
 import { StatCard } from "../../../../components/StatCard";
 import QuizPage from "@/components/Quiz";
 import QuizRow from "@/components/QuizRow";
@@ -52,6 +53,7 @@ export default function Quiz() {
 
   return (
     <>
+      <WorkInProgressBanner />
       <Loader show={isLoading || startQuizMutation.isPending} />
 
       <div className="min-h-screen  px-4 md:px-8 py-10">

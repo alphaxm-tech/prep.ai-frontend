@@ -5,6 +5,7 @@ import { PlayIcon, CheckCircleIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/navigation";
 import { useGetAllAssessments } from "@/utils/queries/assessment.queries";
 import Loader from "@/components/Loader";
+import WorkInProgressBanner from "@/components/WorkInProgressBanner";
 
 type InterviewType = {
   id: string; // NEW: stable identifier
@@ -184,6 +185,7 @@ export default function AIInterviewPage() {
 
   return (
     <>
+      <WorkInProgressBanner />
       <Loader show={isPageLoading} message="Loading interviews for you" />
       <div className="min-h-screen bg-white px-12 py-8">
         {/* Page Header */}
