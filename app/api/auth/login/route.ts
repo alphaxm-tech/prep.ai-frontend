@@ -23,6 +23,8 @@ export async function POST(request: Request) {
 
   const isProduction = process.env.NODE_ENV === "production";
 
+  const cookieDomain = isProduction ? ".aiprepbuddy.com" : undefined;
+
   if (data.accessToken) {
     response.cookies.set("access_token", data.accessToken, {
       httpOnly: true,
@@ -30,6 +32,7 @@ export async function POST(request: Request) {
       maxAge: 30 * 60, // 30 minutes
       sameSite: "lax",
       secure: isProduction,
+      domain: cookieDomain,
     });
   }
 
@@ -40,6 +43,7 @@ export async function POST(request: Request) {
       maxAge: 7 * 24 * 60 * 60, // 7 days
       sameSite: "lax",
       secure: isProduction,
+      domain: cookieDomain,
     });
   }
 
