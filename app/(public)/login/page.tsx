@@ -610,16 +610,15 @@ export default function LoginPage() {
       },
       {
         onSuccess: (data: any) => {
-          console.log("LOGIN SUCCESS:", data);
-
-          const role = data?.userRole?.name;
-
-          if (role === UserRole.ADMIN) {
-            window.location.href = "/college/1";
-          } else if (role === UserRole.STUDENT) {
-            window.location.href = "/student/home"; // ✅ FIXED
-          } else if (role === UserRole.SUPER_ADMIN) {
-            window.location.href = PLATFORM_ROUTE;
+          console.log(data);
+          // routing based on user roles — hard reload ensures cookies are sent with the SSR request
+          if (data?.userRole?.name === UserRole.ADMIN) {
+            window.location.replace(`${COLLEGE}/1`);
+          } else if (data?.userRole?.name === UserRole.STUDENT) {
+            // window.location.replace(`${STUDENT_ROUTE}`);
+            
+          } else if (data?.userRole?.name === UserRole.SUPER_ADMIN) {
+            window.location.replace(`${PLATFORM_ROUTE}`);
           } else {
             window.location.href = UN_AUTHORIZED_ROUTE;
           }
