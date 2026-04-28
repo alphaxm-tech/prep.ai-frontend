@@ -3,6 +3,7 @@
 
 import { useState } from "react";
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
+import WorkInProgressBanner from "@/components/WorkInProgressBanner";
 
 type LearningPath = {
   title: string;
@@ -96,6 +97,7 @@ export default function AIInterviewPage() {
 
   return (
     <div className="min-h-screen bg-white p-6">
+      <WorkInProgressBanner />
       <div className="max-w-7xl mx-auto">
         {/* Page Header */}
         <div className="flex flex-col items-start justify-start gap-2 pb-6">

@@ -157,55 +157,6 @@ export default function Dashboard() {
           </div>
         </section>
 
-        {/* ================= SERVICES ================= */}
-        <section className="py-12">
-          <h3 className="text-2xl font-semibold mb-6">Your Active Services</h3>
-
-          {services.length === 0 ? (
-            <p className="text-gray-500">No services assigned yet.</p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {services.map((service: any) => (
-                <div
-                  key={service.key}
-                  className="border rounded-xl p-6 bg-gray-50"
-                >
-                  <h4 className="text-lg font-semibold mb-1">
-                    Service #{service.service_id}
-                  </h4>
-
-                  <p className="text-sm text-gray-600 mb-3">{service.notes}</p>
-
-                  <div className="text-sm space-y-1">
-                    <p>
-                      <strong>Status:</strong>{" "}
-                      {service.is_active ? "Active" : "Inactive"}
-                    </p>
-                    <p>
-                      <strong>Start Date:</strong>{" "}
-                      {new Date(service.start_date).toDateString()}
-                    </p>
-                  </div>
-
-                  {/* <div className="mt-4">
-                    <p className="text-sm font-medium mb-2">Configuration</p>
-                    <ul className="list-disc list-inside text-sm text-gray-600">
-                      {Object.entries(service.services_config).map(
-                        ([key, value]) => (
-                          <li key={key}>
-                            {key.replaceAll("_", " ")}:{" "}
-                            <strong>{String(value)}</strong>
-                          </li>
-                        ),
-                      )}
-                    </ul>
-                  </div> */}
-                </div>
-              ))}
-            </div>
-          )}
-        </section>
-
         {/* ================= FEATURES (UNCHANGED CONTENT, ALIGNED) ================= */}
         <section className="bg-gray-50 py-14 px-6 -mx-6">
           <h3 className="text-2xl md:text-3xl font-semibold text-center mb-10">

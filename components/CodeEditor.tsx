@@ -1,13 +1,13 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 const Editor = dynamic(() => import("@monaco-editor/react"), {
   ssr: false,
 });
 
-const templates: Record<string, string> = {
+const defaultTemplates: Record<string, string> = {
   javascript: `// JavaScript
 function main() {
   console.log("Hello World");
@@ -41,22 +41,42 @@ int main() {
 }`,
 };
 
-const languageMap: Record<string, string> = {
-  javascript: "javascript",
-  python: "python",
-  java: "java",
-  cpp: "cpp",
-};
+const ALL_LANGUAGES = ["javascript", "python", "java", "cpp"];
 
 interface CodeEditorProps {
   onCodeChange?: (code: string, language: string) => void;
+  starterCode?: Record<string, string>;
+  allowedLanguages?: string[];
 }
 
-export default function CodeEditor({ onCodeChange }: CodeEditorProps) {
-  const [language, setLanguage] = useState("javascript");
-  const [codeMap, setCodeMap] = useState(templates);
+export default function CodeEditor({
+  onCodeChange,
+  starterCode,
+  allowedLanguages,
+}: CodeEditorProps) {
+  const languages = allowedLanguages?.length ? allowedLanguages : ALL_LANGUAGES;
+  const [language, setLanguage] = useState(languages[0]);
 
-  const currentCode = codeMap[language];
+  const getInitialCode = (lang: string) =>
+    starterCode?.[lang] ?? defaultTemplates[lang] ?? "";
+
+  const [codeMap, setCodeMap] = useState<Record<string, string>>(() =>
+    Object.fromEntries(languages.map((lang) => [lang, getInitialCode(lang)])),
+  );
+
+  // When starterCode or allowedLanguages change (question loaded), reset the editor
+  useEffect(() => {
+    const initial = languages[0];
+    const newMap = Object.fromEntries(
+      languages.map((lang) => [lang, getInitialCode(lang)]),
+    );
+    setCodeMap(newMap);
+    setLanguage(initial);
+    onCodeChange?.(newMap[initial] ?? "", initial);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [starterCode, allowedLanguages?.join(",")]);
+
+  const currentCode = codeMap[language] ?? "";
 
   const handleLanguageChange = (lang: string) => {
     setLanguage(lang);
@@ -64,41 +84,45 @@ export default function CodeEditor({ onCodeChange }: CodeEditorProps) {
   };
 
   const handleCodeChange = (value: string | undefined) => {
-    const code = value || "";
+    const code = value ?? "";
     setCodeMap((prev) => ({ ...prev, [language]: code }));
     onCodeChange?.(code, language);
   };
 
+  const languageLabel: Record<string, string> = {
+    javascript: "JavaScript",
+    python: "Python",
+    java: "Java",
+    cpp: "C++",
+  };
+
   return (
     <div className="h-full flex flex-col bg-white">
-      {/* 🔹 HEADER (Aligned + Clean) */}
+      {/* HEADER */}
       <div className="h-10 flex items-center justify-between px-3 bg-gray-50/70 text-xs text-gray-600">
-        {/* LEFT */}
         <span className="font-medium text-gray-700">
-          {language.toUpperCase()}
+          {languageLabel[language] ?? language.toUpperCase()}
         </span>
 
-        {/* RIGHT */}
         <select
           value={language}
           onChange={(e) => handleLanguageChange(e.target.value)}
           className="text-xs bg-transparent outline-none cursor-pointer text-gray-600 hover:text-gray-900 transition"
         >
-          <option value="javascript">JavaScript</option>
-          <option value="python">Python</option>
-          <option value="java">Java</option>
-          <option value="cpp">C++</option>
+          {languages.map((lang) => (
+            <option key={lang} value={lang}>
+              {languageLabel[lang] ?? lang}
+            </option>
+          ))}
         </select>
       </div>
 
-      {/* 🔥 DIVIDER */}
       <div className="h-px w-full bg-gray-200/70" />
 
-      {/* 🔹 MONACO EDITOR (FULL HEIGHT, NO PADDING) */}
       <div className="flex-1 overflow-hidden">
         <Editor
           height="100%"
-          language={languageMap[language]}
+          language={language === "cpp" ? "cpp" : language}
           value={currentCode}
           onChange={handleCodeChange}
           theme="vs-light"

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo, useRef, useEffect } from "react";
+import WorkInProgressBanner from "@/components/WorkInProgressBanner";
 import { resumeService } from "@/utils/services/resume.service";
 import { SkillsPanel, Tag as SkillTag } from "@/components/resume/SkillsPanel";
 import EducationForm from "@/components/resume/EducationForm";
@@ -833,6 +834,7 @@ export default function ResumeBuilderPage() {
 
   return (
     <div className="min-h-screen bg-white py-8 px-3 sm:px-4 md:px-6 lg:px-8">
+      <WorkInProgressBanner />
       <main className="w-full">
         {/* Heading + Dropdown */}
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-6 max-w-[1550px] mx-auto">

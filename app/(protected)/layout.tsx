@@ -1,6 +1,6 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "../globals.css";
-import { SubHeader } from "@/components/SubHeader";
+import SubHeaderWrapper from "@/components/SubHeaderWrapper";
 import AppBootstrap from "@/components/AppBootstrap";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
@@ -74,7 +74,7 @@ export default async function ProtectedLayout({
           <UserProvider user={getMeDetails}>
             <ProtectedHeader user={getMeDetails} />
             <AppBootstrap />
-            <SubHeader user={getMeDetails} />
+            <SubHeaderWrapper user={getMeDetails} />
             <ProtectedShell>{children}</ProtectedShell>
           </UserProvider>
         </Providers>

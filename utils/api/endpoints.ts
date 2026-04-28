@@ -1,6 +1,4 @@
-// export const BASE_API_URL = `http://localhost:8080/api/v1`;
-// export const BASE_API_URL = `https://prep-ai-backend-zcbs.onrender.com/api/v1`;
-export const BASE_API_URL = `http://43.205.142.104:8080/api/v1`;
+export const BASE_API_URL = `https://43.205.142.104:8080/api/v1`;
 
 export const RESUME = `resume`;
 export const AIINTERVIEW = `ai-interview`;
@@ -51,4 +49,6 @@ export const GET_QUIZ_SESSION = "get-quiz-session";
 
 /// Code editor ///
 export const GET_CODING_QUESTIONS = "questions";
-export const SUBMIT_CODE = "submit";
+export const RUN_JOBS = "run-jobs";
+export const SUBMISSIONS = "submissions";
+export const CODE_EDITOR_ASSESSMENTS = "assessments";
