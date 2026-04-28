@@ -32,9 +32,8 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL:
-    process.env.NEXT_PUBLIC_API_URL ||
-    `https://43.205.142.104:8080/api/v1`,
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "https://api.aiprepbuddy.com",
+
   withCredentials: true, // REQUIRED for cookies
 });
 
