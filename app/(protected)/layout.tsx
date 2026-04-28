@@ -50,18 +50,22 @@ export default async function ProtectedLayout({
   if (isDemoMode) {
     getMeDetails = DEMO_USER;
   } else {
-    const res = await fetch(`${BASE_API_URL}/${HOME}/${ME}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      cache: "no-store",
-    });
+    try {
+      const res = await fetch(`${BASE_API_URL}/${HOME}/${ME}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        cache: "no-store",
+      });
 
-    // if (!res.ok) {
-    //   redirect("/login");
-    // }
+      if (!res.ok) {
+        redirect("/login");
+      }
 
-    getMeDetails = await res.json();
+      getMeDetails = await res.json();
+    } catch {
+      redirect("/login");
+    }
   }
   // console.log(getMeDetails?.role?.name);
 
