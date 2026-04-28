@@ -533,11 +533,13 @@ export default function LoginPage() {
       },
       {
         onSuccess: (data: any) => {
+          console.log(data);
           // routing based on user roles — hard reload ensures cookies are sent with the SSR request
           if (data?.userRole?.name === UserRole.ADMIN) {
             window.location.replace(`${COLLEGE}/1`);
           } else if (data?.userRole?.name === UserRole.STUDENT) {
-            window.location.replace(`${STUDENT_ROUTE}`);
+            // window.location.replace(`${STUDENT_ROUTE}`);
+            
           } else if (data?.userRole?.name === UserRole.SUPER_ADMIN) {
             window.location.replace(`${PLATFORM_ROUTE}`);
           } else {
