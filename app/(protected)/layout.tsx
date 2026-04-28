@@ -50,20 +50,26 @@ export default async function ProtectedLayout({
   if (isDemoMode) {
     getMeDetails = DEMO_USER;
   } else {
+    let fetchFailed = false;
+
     try {
       const res = await fetch(`${BASE_API_URL}/${HOME}/${ME}`, {
         headers: {
-          Authorization: `Bearer ${token}`,
+          Cookie: `access_token=${token}`,
         },
         cache: "no-store",
       });
 
       if (!res.ok) {
-        redirect("/login");
+        fetchFailed = true;
+      } else {
+        getMeDetails = await res.json();
       }
-
-      getMeDetails = await res.json();
     } catch {
+      fetchFailed = true;
+    }
+
+    if (fetchFailed || !getMeDetails) {
       redirect("/login");
     }
   }
