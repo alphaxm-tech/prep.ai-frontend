@@ -533,15 +533,15 @@ export default function LoginPage() {
       },
       {
         onSuccess: (data: any) => {
-          // routing based on user roles
+          // routing based on user roles — hard reload ensures cookies are sent with the SSR request
           if (data?.userRole?.name === UserRole.ADMIN) {
-            router.replace(`${COLLEGE}/1`);
+            window.location.replace(`${COLLEGE}/1`);
           } else if (data?.userRole?.name === UserRole.STUDENT) {
-            router.replace(`${STUDENT_ROUTE}`);
+            window.location.replace(`${STUDENT_ROUTE}`);
           } else if (data?.userRole?.name === UserRole.SUPER_ADMIN) {
-            router.replace(`${PLATFORM_ROUTE}`);
+            window.location.replace(`${PLATFORM_ROUTE}`);
           } else {
-            router.replace(`${UN_AUTHORIZED_ROUTE}`);
+            window.location.replace(`${UN_AUTHORIZED_ROUTE}`);
           }
           setLoading(false);
         },
