@@ -45,11 +45,19 @@ export const authService = {
   },
 
   loginWithPassword: async (data: LoginData) => {
-    const response = await api.post(
-      `${BASE_API_URL}/${AUTH}/${LOGIN_WITH_PASSWORD}`,
-      data
-    );
-    return response.data;
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+      credentials: "same-origin",
+    });
+    const json = await res.json();
+    if (!res.ok) {
+      const err: any = new Error("Login failed");
+      err.response = { status: res.status, data: json };
+      throw err;
+    }
+    return json;
   },
 
   registerWithPassword: async (data: RegisterData) => {
