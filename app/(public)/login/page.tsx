@@ -443,7 +443,7 @@ export default function LoginPage() {
 
       // success?.("OTP verified. Logging in…");
       // assume server sets cookies
-      router.push("/student/home");
+      router.push("/student");
     } catch (err) {
       setLoading(false);
       // showError?.("Server error verifying OTP.");
@@ -603,46 +603,46 @@ export default function LoginPage() {
     setLoading(true);
     setLoadingMessage("Logging you in....");
 
-  loginWithPasswordMutation.mutate(
-  {
-    email: normalizedEmail,
-    password: normalizedPassword,
-  },
-  {
-    onSuccess: async (data: any) => {
-      console.log("LOGIN SUCCESS:", data);
+    loginWithPasswordMutation.mutate(
+      {
+        email: normalizedEmail,
+        password: normalizedPassword,
+      },
+      {
+        onSuccess: async (data: any) => {
+          console.log("LOGIN SUCCESS:", data);
 
-      const role = data?.userRole?.name;
+          const role = data?.userRole?.name;
 
-      try {
-        // 🔥 CRITICAL FIX: ensure cookie is committed before navigation
-        await fetch("/api/auth/session", {
-          method: "GET",
-          credentials: "include",
-        });
-      } catch (e) {
-        console.log("Session sync failed (non-blocking):", e);
-      }
+          try {
+            // 🔥 CRITICAL FIX: ensure cookie is committed before navigation
+            await fetch("/api/auth/session", {
+              method: "GET",
+              credentials: "include",
+            });
+          } catch (e) {
+            console.log("Session sync failed (non-blocking):", e);
+          }
 
-      // 🔥 SMALL DELAY to avoid SSR race condition
-      setTimeout(() => {
-        if (role === UserRole.ADMIN) {
-          window.location.href = "/college/1";
-        } else if (role === UserRole.STUDENT) {
-          window.location.href = "/student/home"; // ✅ IMPORTANT: use correct route
-        } else if (role === UserRole.SUPER_ADMIN) {
-          window.location.href = PLATFORM_ROUTE;
-        } else {
-          window.location.href = UN_AUTHORIZED_ROUTE;
-        }
-      }, 200);
-    },
-    onError: () => {
-      showToast("error", "Something went wrong. Please try again.");
-      setLoading(false);
-    },
-  },
-);
+          // 🔥 SMALL DELAY to avoid SSR race condition
+          setTimeout(() => {
+            if (role === UserRole.ADMIN) {
+              window.location.href = "/college/1";
+            } else if (role === UserRole.STUDENT) {
+              window.location.href = "/student"; // ✅ IMPORTANT: use correct route
+            } else if (role === UserRole.SUPER_ADMIN) {
+              window.location.href = PLATFORM_ROUTE;
+            } else {
+              window.location.href = UN_AUTHORIZED_ROUTE;
+            }
+          }, 200);
+        },
+        onError: () => {
+          showToast("error", "Something went wrong. Please try again.");
+          setLoading(false);
+        },
+      },
+    );
   }, [email, password]);
 
   // set password & login
@@ -669,7 +669,7 @@ export default function LoginPage() {
       }
 
       // success?.("Password set. Logging in…");
-      router.push("/student/home");
+      router.push("/student");
     } catch (err) {
       setLoading(false);
       // showError?.("Server error setting password.");
