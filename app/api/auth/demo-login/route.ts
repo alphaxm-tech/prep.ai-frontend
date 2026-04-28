@@ -17,22 +17,35 @@ export async function POST(request: Request) {
     );
   }
 
-  const response = NextResponse.json({ success: true });
+  // ✅ Create response FIRST
+  const response = NextResponse.json({
+    success: true,
+    message: "Demo login successful",
+    userRole: {
+      name: "ADMIN", // or STUDENT if needed
+    },
+  });
 
-  // Set access_token cookie (httpOnly so the protected layout SSR can read it)
+  const isProduction = process.env.NODE_ENV === "production";
+  const cookieDomain = isProduction ? ".aiprepbuddy.com" : undefined;
+
+  // ✅ Set cookies correctly
   response.cookies.set("access_token", "demo_session", {
     httpOnly: true,
     path: "/",
     maxAge: 60 * 60 * 8, // 8 hours
     sameSite: "lax",
+    secure: isProduction,
+    domain: cookieDomain,
   });
 
-  // Set demo_mode flag so the protected layout skips the real backend call
   response.cookies.set("demo_mode", "true", {
     httpOnly: true,
     path: "/",
-    maxAge: 60 * 60 * 8, // 8 hours
+    maxAge: 60 * 60 * 8,
     sameSite: "lax",
+    secure: isProduction,
+    domain: cookieDomain,
   });
 
   return response;
