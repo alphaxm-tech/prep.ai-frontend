@@ -1,4 +1,4 @@
-export const BASE_API_URL = `https://43.205.142.104:8080/api/v1`;
+export const BASE_API_URL = "https://api.aiprepbuddy.com";
 
 export const RESUME = `resume`;
 export const AIINTERVIEW = `ai-interview`;
