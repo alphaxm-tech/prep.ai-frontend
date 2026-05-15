@@ -453,109 +453,6 @@ export default function LoginPage() {
   // -----------------------------
   // Screen 3b -> password login
   // -----------------------------
-  // const passwordLogin = useCallback(async () => {
-  //   if (!password || password.length < 8) {
-  //     showToast("error", "Password must be of miniumun 8 characters");
-  //     return;
-  //   }
-
-  //   setLoading(true);
-  //   setLoadingMessage("Logging you in....");
-  //   loginWithPasswordMutation.mutate(
-  //     {
-  //       email: email.trim(),
-  //       password: password.trim(),
-  //     },
-  //     {
-  //       onSuccess: (data: any) => {
-  //         // setStep("choose");
-
-  //         router.push("/home");
-  //         console.log("Login successful", data);
-  //         setLoading(false);
-  //       },
-  //       onError: (err: any) => {
-  //         const status = err?.response?.status;
-  //         const data = err?.response?.data;
-
-  //         showToast("error", "Something went wrong. Please try again.");
-  //         setLoading(false);
-  //       },
-  //     }
-  //   );
-  // }, [email, password, router]);
-
-  // -----------------------------
-  // Screen 3b -> password login
-  // -----------------------------
-  // const passwordLogin = useCallback(async () => {
-  //   if (!password || password.length < 8) {
-  //     showToast("error", "Password must be of minimum 8 characters");
-  //     return;
-  //   }
-
-  //   const normalizedEmail = email.trim().toLowerCase();
-  //   const normalizedPassword = password.trim();
-
-  //   // UI-only demo short-circuit — no backend call
-  //   if (normalizedEmail === DEMO_EMAIL) {
-  //     if (normalizedPassword !== DEMO_PASSWORD) {
-  //       showToast("error", "Incorrect password");
-  //       return;
-  //     }
-  //     setLoading(true);
-  //     setLoadingMessage("Logging you in....");
-  //     try {
-  //       const res = await fetch("/api/auth/demo-login", {
-  //         method: "POST",
-  //         headers: { "Content-Type": "application/json" },
-  //         body: JSON.stringify({
-  //           email: normalizedEmail,
-  //           password: normalizedPassword,
-  //         }),
-  //       });
-  //       if (res.ok) {
-  //         router.replace("/college/1");
-  //         return;
-  //       }
-  //       showToast("error", "Demo login failed. Please try again.");
-  //     } catch {
-  //       showToast("error", "Something went wrong. Please try again.");
-  //     }
-  //     setLoading(false);
-  //     return;
-  //   }
-
-  //   setLoading(true);
-  //   setLoadingMessage("Logging you in....");
-
-  //   loginWithPasswordMutation.mutate(
-  //     {
-  //       email: normalizedEmail,
-  //       password: normalizedPassword,
-  //     },
-  //     {
-  //       onSuccess: (data: any) => {
-  //         console.log(data);
-  //         // routing based on user roles — hard reload ensures cookies are sent with the SSR request
-  //         if (data?.userRole?.name === UserRole.ADMIN) {
-  //           window.location.replace(`${COLLEGE}/1`);
-  //         } else if (data?.userRole?.name === UserRole.STUDENT) {
-  //           // window.location.replace(`${STUDENT_ROUTE}`);
-  //         } else if (data?.userRole?.name === UserRole.SUPER_ADMIN) {
-  //           window.location.replace(`${PLATFORM_ROUTE}`);
-  //         } else {
-  //           window.location.replace(`${UN_AUTHORIZED_ROUTE}`);
-  //         }
-  //         setLoading(false);
-  //       },
-  //       onError: (err: any) => {
-  //         showToast("error", "Something went wrong. Please try again.");
-  //         setLoading(false);
-  //       },
-  //     },
-  //   );
-  // }, [email, password, router]);
 
   const passwordLogin = useCallback(async () => {
     if (!password || password.length < 8) {
@@ -565,40 +462,6 @@ export default function LoginPage() {
 
     const normalizedEmail = email.trim().toLowerCase();
     const normalizedPassword = password.trim();
-
-    // DEMO LOGIN
-    if (normalizedEmail === DEMO_EMAIL) {
-      if (normalizedPassword !== DEMO_PASSWORD) {
-        showToast("error", "Incorrect password");
-        return;
-      }
-
-      setLoading(true);
-      setLoadingMessage("Logging you in....");
-
-      try {
-        const res = await fetch("/api/auth/demo-login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            email: normalizedEmail,
-            password: normalizedPassword,
-          }),
-        });
-
-        if (res.ok) {
-          window.location.href = "/college/1";
-          return;
-        }
-
-        showToast("error", "Demo login failed. Please try again.");
-      } catch {
-        showToast("error", "Something went wrong. Please try again.");
-      }
-
-      setLoading(false);
-      return;
-    }
 
     setLoading(true);
     setLoadingMessage("Logging you in....");
@@ -624,12 +487,12 @@ export default function LoginPage() {
             console.log("Session sync failed (non-blocking):", e);
           }
 
-          // 🔥 SMALL DELAY to avoid SSR race condition
+          // // 🔥 SMALL DELAY to avoid SSR race condition
           setTimeout(() => {
             if (role === UserRole.ADMIN) {
               window.location.href = "/college/1";
             } else if (role === UserRole.STUDENT) {
-              window.location.href = "/student"; // ✅ IMPORTANT: use correct route
+              window.location.href = STUDENT_ROUTE; // ✅ IMPORTANT: use correct route
             } else if (role === UserRole.SUPER_ADMIN) {
               window.location.href = PLATFORM_ROUTE;
             } else {
@@ -712,29 +575,6 @@ export default function LoginPage() {
         showToast("error", "You’re not allowed to login at the moment.");
     }
   };
-
-  // const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-  //   e.preventDefault();
-  //   if (loading || otpLoading) return;
-
-  //   switch (step) {
-  //     case "email":
-  //       verifyUserEmail();
-  //       break;
-  //     case "profile":
-  //       submitProfileDetails();
-  //       break;
-  //     case "otp":
-  //       verifyOtpAndLogin();
-  //       break;
-  //     case "password":
-  //       passwordLogin();
-  //       break;
-  //     case "setPassword":
-  //       setPasswordAndLogin();
-  //       break;
-  //   }
-  // };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -1138,9 +978,6 @@ export default function LoginPage() {
 
                   <button
                     type="submit"
-                    // onClick={
-                    //   step === "password" ? passwordLogin : setPasswordAndLogin
-                    // }
                     className="w-full mt-4 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white font-semibold py-3 rounded-xl"
                     disabled={loading}
                   >

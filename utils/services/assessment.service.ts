@@ -15,6 +15,9 @@ export const assessmentService = {
       {
         params: {
           assessment_type: params.assessmentType,
+          has_taken: params.hasTaken,
+          page_no: params.pageNo,
+          count: params.count,
         },
         paramsSerializer: (params) =>
           qs.stringify(params, { arrayFormat: "repeat" }),
