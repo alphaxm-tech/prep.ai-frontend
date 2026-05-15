@@ -7,7 +7,10 @@ import { useGetAllAssessments } from "@/utils/queries/assessment.queries";
 import Loader from "@/components/Loader";
 import { QUIZ_ROUTE, QUIZ_TEST } from "@/utils/CONSTANTS";
 import { createQuizAssessment } from "@/utils/mutations/quiz.mutation";
-import { AssessmentResponse } from "@/utils/api/types/assessment.types";
+import {
+  ASSESSMENT_TYPES,
+  AssessmentResponse,
+} from "@/utils/api/types/assessment.types";
 import WorkInProgressBanner from "@/components/WorkInProgressBanner";
 import { StatCard } from "../../../../components/StatCard";
 import QuizPage from "@/components/Quiz";
@@ -18,9 +21,23 @@ export default function Quiz() {
   const router = useRouter();
   const userDetailsMain = useContext(AuthContext);
 
-  const { data: assessmentData, isLoading } = useGetAllAssessments({
-    assessmentType: "MCQ",
-  });
+  const { data: untakenAssessments, isLoading: isUntakenLoading } =
+    useGetAllAssessments({
+      assessmentType: ASSESSMENT_TYPES.MCQ,
+      hasTaken: false,
+      pageNo: 1,
+      count: 10,
+    });
+
+  const { data: takenAssessments, isLoading: isTakenLoading } =
+    useGetAllAssessments({
+      assessmentType: ASSESSMENT_TYPES.MCQ,
+      hasTaken: true,
+      pageNo: 1,
+      count: 10,
+    });
+
+  console.log(takenAssessments?.assessments);
 
   const startQuizMutation = createQuizAssessment();
   const [difficultyFilter, setDifficultyFilter] = useState("ALL");
@@ -35,26 +52,28 @@ export default function Quiz() {
   };
 
   const { takenQuizzes, notTakenQuizzes } = useMemo(() => {
-    const assessments = assessmentData?.assessments || [];
+    const assessments = untakenAssessments?.assessments || [];
     return {
       takenQuizzes: assessments.filter((q) => q.has_taken),
       notTakenQuizzes: assessments.filter((q) => !q.has_taken),
     };
-  }, [assessmentData]);
+  }, [untakenAssessments]);
 
   const filteredQuizzes =
     difficultyFilter === "ALL"
       ? notTakenQuizzes
       : notTakenQuizzes.filter((q) => q.difficulty === difficultyFilter);
 
-  const total = assessmentData?.assessments?.length || 0;
-  const completed = takenQuizzes.length;
-  const completionPercent = total ? Math.round((completed / total) * 100) : 0;
+  const total = untakenAssessments?.assessments?.length || 0;
+  const completed = takenAssessments?.assessments?.length as number;
+  const completionPercent = total ? Math.round((completed! / total) * 100) : 0;
 
   return (
     <>
-      <WorkInProgressBanner />
-      <Loader show={isLoading || startQuizMutation.isPending} />
+      {/* <WorkInProgressBanner /> */}
+      <Loader
+        show={isUntakenLoading || startQuizMutation.isPending || isTakenLoading}
+      />
 
       <div className="min-h-screen  px-4 md:px-8 py-10">
         {/* HEADER */}
@@ -132,11 +151,11 @@ export default function Quiz() {
               Your Progress
             </h3>
 
-            {takenQuizzes.length === 0 ? (
+            {takenAssessments?.assessments?.length === 0 ? (
               <p className="text-sm text-gray-500">No quizzes attempted yet.</p>
             ) : (
               <div className="space-y-5">
-                {takenQuizzes.map((quiz) => (
+                {takenAssessments?.assessments?.map((quiz) => (
                   <CompactQuizRow quiz={quiz}></CompactQuizRow>
                 ))}
               </div>

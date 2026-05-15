@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useGetAttemptQuestion } from "@/utils/queries/quiz.queries";
 
@@ -89,6 +89,8 @@ export default function QuizPage({
   const [timeLeft, setTimeLeft] = useState(durationMinutes * 60);
   const [isRunning, setIsRunning] = useState(true);
   const [showSummary, setShowSummary] = useState(false);
+  const [showLeaveWarning, setShowLeaveWarning] = useState(false);
+  const confirmedLeaveRef = useRef(false);
 
   // useEffect(() => {
   //   if (!isRunning) return;
@@ -104,6 +106,35 @@ export default function QuizPage({
 
   //   return () => clearInterval(t);
   // }, [isRunning, timeLeft]);
+
+  // Block refresh / tab close while quiz is active
+  useEffect(() => {
+    if (showSummary) return;
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [showSummary]);
+
+  // Block browser back button while quiz is active
+  useEffect(() => {
+    if (showSummary) return;
+    window.history.pushState(null, "", window.location.href);
+    const handlePopState = () => {
+      if (confirmedLeaveRef.current) return;
+      window.history.pushState(null, "", window.location.href);
+      setShowLeaveWarning(true);
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [showSummary]);
+
+  const confirmLeave = () => {
+    confirmedLeaveRef.current = true;
+    setShowLeaveWarning(false);
+    router.back();
+  };
 
   const score = useMemo(() => {
     let correct = 0;
@@ -162,6 +193,28 @@ export default function QuizPage({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 via-white to-gray-200 p-6">
+      {showLeaveWarning && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+            <h2 className="text-xl font-bold mb-2">Are you sure you want to leave?</h2>
+            <p className="text-gray-600 mb-6">Your quiz progress may be lost.</p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowLeaveWarning(false)}
+                className="px-5 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition"
+              >
+                Stay
+              </button>
+              <button
+                onClick={confirmLeave}
+                className="px-5 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition"
+              >
+                Leave
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div className="max-w-7xl mx-auto bg-white/60 backdrop-blur-xl border border-white/40 shadow-2xl rounded-3xl overflow-hidden">
         {/* HEADER */}
         <div className="flex items-center justify-between px-8 py-6 border-b border-white/40">

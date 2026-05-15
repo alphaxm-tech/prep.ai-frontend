@@ -20,9 +20,9 @@ export default function Dashboard() {
   const router = useRouter();
   const userDetailsMain = useContext(AuthContext);
 
-  // useEffect(() => {
-  //   console.log(userDetailsMain);
-  // }, [userDetailsMain]);
+  useEffect(() => {
+    console.log(userDetailsMain);
+  }, [userDetailsMain]);
 
   const user = userDetailsMain?.user;
   const services = userDetailsMain?.services ?? [];

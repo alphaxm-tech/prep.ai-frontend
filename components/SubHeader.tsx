@@ -24,10 +24,12 @@ export function SubHeader({ user }: { user: any }) {
   > = {
     STUDENT: [
       { label: "Home", route: STUDENT_ROUTE },
-      { label: "Code Editor", route: CODE_EDITOR_ROUTE },
       { label: "Resume Builder", route: RESUME_BUILDER_ROUTE },
-      { label: "AI Interviews", route: AI_INTERVIEW_ROUTE },
+
       { label: "Quizzes", route: QUIZ_ROUTE },
+      { label: "Code Editor", route: CODE_EDITOR_ROUTE },
+      { label: "AI Interviews", route: AI_INTERVIEW_ROUTE },
+
       { label: "Study Materials", route: STUDY_MATERIAL_ROUTE },
     ],
 
@@ -80,8 +82,7 @@ export function SubHeader({ user }: { user: any }) {
   // Find the single most-specific matching route (longest prefix wins).
   // This prevents /student from staying highlighted when on /student/quiz etc.
   const activeRoute = navLinks.reduce<string | null>((best, { route }) => {
-    const matches =
-      pathname === route || pathname.startsWith(route + "/");
+    const matches = pathname === route || pathname.startsWith(route + "/");
     if (matches && (!best || route.length > best.length)) return route;
     return best;
   }, null);
