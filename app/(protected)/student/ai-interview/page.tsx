@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useGetAllAssessments } from "@/utils/queries/assessment.queries";
 import Loader from "@/components/Loader";
 import WorkInProgressBanner from "@/components/WorkInProgressBanner";
+import { ASSESSMENT_TYPES } from "@/utils/api/types/assessment.types";
 
 type InterviewType = {
   id: string; // NEW: stable identifier
@@ -29,21 +30,16 @@ type PastInterview = {
   notes?: string;
 };
 
-// (optional) old demo questions – can be removed if not needed
-const questions = [
-  { id: 1, text: "Tell me about yourself." },
-  { id: 2, text: "What was the most challenging project you worked on?" },
-  { id: 3, text: "Explain a system design of URL Shortener." },
-];
-
 export default function AIInterviewPage() {
   const router = useRouter();
 
   const [selected, setSelected] = useState<InterviewType | null>(null);
   const { data: assessmentData, isLoading: getAssessmentsLoading } =
     useGetAllAssessments({
-      // groups: [4, 5],
-      assessmentType: "DESCRIPTIVE",
+      assessmentType: ASSESSMENT_TYPES.DESCRIPTIVE,
+      hasTaken: true,
+      pageNo: 1,
+      count: 1,
     });
 
   // Sample past interviews (dummy data) — replace with real data from your backend
