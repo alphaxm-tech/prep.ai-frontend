@@ -95,7 +95,8 @@ export default function LoginPage() {
   const [otp, setOtp] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [fullName, setFulName] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState<any>();
   const [location, setLocation] = useState("");
   const [userID, setUserID] = useState<number | null>();
 
@@ -292,15 +293,6 @@ export default function LoginPage() {
       return;
     }
 
-    // UI-only demo short-circuit — no backend call
-    if (trimmed === DEMO_EMAIL) {
-      setHasPassword(true);
-      setEmailVerified(true);
-      setUserID(-1);
-      setStep("password");
-      return;
-    }
-
     setLoading(true);
     setErrorMessage(null);
     setLoadingMessage("Verifying your email id");
@@ -321,6 +313,9 @@ export default function LoginPage() {
             setHasPassword(data?.passswordExists);
             setEmailVerified(true);
             setUserID(data?.userID ?? null);
+            setPhoneNumber(data?.phoneNumber);
+            setLocation(data?.location);
+            setFulName(data?.fullName);
 
             showToast("success", "Email verified successfully!");
           } else {
@@ -490,13 +485,13 @@ export default function LoginPage() {
           // // 🔥 SMALL DELAY to avoid SSR race condition
           setTimeout(() => {
             if (role === UserRole.ADMIN) {
-              window.location.href = "/college/1";
+              router.replace("/college/1");
             } else if (role === UserRole.STUDENT) {
-              window.location.href = STUDENT_ROUTE; // ✅ IMPORTANT: use correct route
+              router.replace(STUDENT_ROUTE);
             } else if (role === UserRole.SUPER_ADMIN) {
-              window.location.href = PLATFORM_ROUTE;
+              router.replace(PLATFORM_ROUTE);
             } else {
-              window.location.href = UN_AUTHORIZED_ROUTE;
+              router.replace(UN_AUTHORIZED_ROUTE);
             }
           }, 200);
         },
@@ -540,7 +535,9 @@ export default function LoginPage() {
   }, [email, password, router]);
 
   const handleGoogleLogin = () => {
-    window.location.href = "/api/auth/google";
+    // Simple redirect — NOT axios
+    // Backend will handle everything and redirect back
+    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/google/login`;
   };
 
   const handleForbidden = (data: any) => {
@@ -1045,7 +1042,10 @@ export default function LoginPage() {
                       name="phone"
                       placeholder="9876543210"
                       value={phoneNumber}
-                      onChange={(e: any) => setPhoneNumber(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        const value = e.target.value.replace(/\D/g, "");
+                        setPhoneNumber(value);
+                      }}
                       icon={<span className="text-gray-400">📞</span>}
                     />
                   </div>

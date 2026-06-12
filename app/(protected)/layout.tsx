@@ -5,7 +5,7 @@ import AppBootstrap from "@/components/AppBootstrap";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { Providers } from "../provider";
-import { BASE_API_URL, HOME, ME } from "@/utils/api/endpoints";
+import { AUTH, BASE_API_URL, HOME, ME, REFRESH } from "@/utils/api/endpoints";
 import { UserProvider } from "../context/UserContext";
 import { ProtectedHeader } from "@/components/ProtectedHeader";
 import ProtectedShell from "@/components/ProtectedShell";
@@ -20,60 +20,101 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-// Fake user data for UI-only demo session
-const DEMO_USER = {
-  full_name: "VM PrepAI",
-  role: { name: "ADMIN" },
-  user: { full_name: "VM PrepAI" },
-  college: { code: "VM" },
-};
-
 export default async function ProtectedLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // ME endpoint api call
   const cookieStore = await cookies();
-  const token = cookieStore.get("access_token")?.value;
-  if (!token) {
+
+  // Send ALL cookies, not just access token
+  const cookieHeader = cookieStore.toString();
+
+  // If no cookies at all -> login
+  if (!cookieHeader) {
     redirect("/login");
   }
 
-  // Demo mode: skip backend call and use hardcoded user data
-  const isDemoMode =
-    token === "demo_session" &&
-    cookieStore.get("demo_mode")?.value === "true";
+  let getMeDetails: any = null;
 
-  let getMeDetails: any;
+  /**
+   * Helper function to fetch current user
+   */
+  const fetchMe = async () => {
+    return fetch(`${BASE_API_URL}/${HOME}/${ME}`, {
+      method: "GET",
+      headers: {
+        Cookie: cookieHeader,
+      },
+      cache: "no-store",
+    });
+  };
 
-  if (isDemoMode) {
-    getMeDetails = DEMO_USER;
-  } else {
-    let fetchFailed = false;
+  try {
+    /**
+     * STEP 1:
+     * Try fetching user with current access token
+     */
+    let meResponse = await fetchMe();
 
-    try {
-      const res = await fetch(`${BASE_API_URL}/${HOME}/${ME}`, {
+    /**
+     * STEP 2:
+     * If access token expired -> try refresh
+     */
+    if (meResponse.status === 401) {
+      const refreshResponse = await fetch(
+        `${BASE_API_URL}/${AUTH}/${REFRESH}`,
+        {
+          method: "POST",
+          headers: {
+            Cookie: cookieHeader,
+          },
+          cache: "no-store",
+        },
+      );
+
+      /**
+       * If refresh token also failed
+       * -> user session is dead
+       */
+      if (!refreshResponse.ok) {
+        redirect("/login");
+      }
+
+      /**
+       * IMPORTANT:
+       * Get updated cookies returned by refresh endpoint
+       */
+      const setCookieHeader = refreshResponse.headers.get("set-cookie");
+
+      /**
+       * Retry /me using refreshed cookies
+       */
+      meResponse = await fetch(`${BASE_API_URL}/${HOME}/${ME}`, {
+        method: "GET",
         headers: {
-          Cookie: `access_token=${token}`,
+          Cookie: setCookieHeader || cookieHeader,
         },
         cache: "no-store",
       });
-
-      if (!res.ok) {
-        fetchFailed = true;
-      } else {
-        getMeDetails = await res.json();
-      }
-    } catch {
-      fetchFailed = true;
     }
 
-    if (fetchFailed || !getMeDetails) {
+    /**
+     * Final validation
+     */
+    if (!meResponse.ok) {
       redirect("/login");
     }
+
+    getMeDetails = await meResponse.json();
+
+    if (!getMeDetails) {
+      redirect("/login");
+    }
+  } catch (error) {
+    console.error("Protected layout auth error:", error);
+    redirect("/login");
   }
-  // console.log(getMeDetails?.role?.name);
 
   return (
     <html lang="en">

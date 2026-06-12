@@ -36,6 +36,7 @@ export default function Dashboard() {
     else if (cardTitle === "Resume Builder") route = "resume-builder";
     else if (cardTitle === "AI Interviews") route = "ai-interview";
     else if (cardTitle === "Study Materials") route = "study-material";
+    else if (cardTitle === "Code Editor") route = "study-material";
 
     if (route) router.push(`${STUDENT_ROUTE}/${route}`);
   };
@@ -51,7 +52,7 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-white text-gray-800 font-sans">
       {/* MASTER LAYOUT CONTAINER */}
-      <div className="max-w-7xl mx-auto px-6">
+      <div className="max-w-[1450px] mx-auto px-4">
         {/* ================= WELCOME ================= */}
         {user && (
           <section className="pt-10 pb-6">
@@ -87,26 +88,6 @@ export default function Dashboard() {
           </section>
         )}
 
-        {/* ================= HERO ================= */}
-        {/* <section className="text-center py-10">
-          <h2
-            className="text-3xl md:text-4xl font-normal mb-4"
-            style={{
-              fontFamily: 'Means Web, Georgia, Times, "Times New Roman", serif',
-              letterSpacing: "-0.0625rem",
-              lineHeight: "1.2",
-              color: "#1a1a1a",
-            }}
-          >
-            Empower Your Career with AI
-          </h2>
-
-          <p className="text-lg md:text-xl text-gray-700 max-w-2xl mx-auto">
-            prep.ai helps students master resumes, mock interviews, and skills —
-            using the power of AI to land their dream job faster.
-          </p>
-        </section> */}
-
         {/* ================= HERO (ADJUSTED FOR DASHBOARD) ================= */}
         <section className="pt-6 pb-10">
           <h2
@@ -129,7 +110,7 @@ export default function Dashboard() {
 
         {/* ================= ACTION CARDS ================= */}
         <section className="py-10">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
             <Card
               title="Build Resume"
               description="Create a professional resume with AI assistance"
@@ -137,16 +118,22 @@ export default function Dashboard() {
               onClick={() => handleCardClick("Resume Builder")}
             />
             <Card
-              title="Mock Interview"
-              description="Practice with AI interviewer"
-              variant="green"
-              onClick={() => handleCardClick("AI Interviews")}
-            />
-            <Card
               title="Take Quiz"
               description="Test your knowledge"
               variant="purple"
               onClick={() => handleCardClick("Quizzes")}
+            />
+            <Card
+              title="Take Coding Test"
+              description="Practise data structures and algorithm"
+              variant="blue"
+              onClick={() => handleCardClick("Study Materials")}
+            />
+            <Card
+              title="AI Interview"
+              description="Practice with AI interviewer"
+              variant="green"
+              onClick={() => handleCardClick("AI Interviews")}
             />
             <Card
               title="Study Materials"
@@ -157,43 +144,61 @@ export default function Dashboard() {
           </div>
         </section>
 
-        {/* ================= FEATURES (UNCHANGED CONTENT, ALIGNED) ================= */}
-        <section className="bg-gray-50 py-14 px-6 -mx-6">
-          <h3 className="text-2xl md:text-3xl font-semibold text-center mb-10">
-            Why Choose prep.ai?
-          </h3>
+        <section className="py-16">
+          <div className="relative overflow-hidden rounded-[36px] border border-yellow-100 bg-gradient-to-br from-[#fffdf7] via-white to-[#fff8e7] p-10 md:p-14">
+            {/* subtle glow */}
+            <div className="absolute -top-10 right-0 h-72 w-72 rounded-full bg-yellow-100 blur-3xl opacity-60" />
+            <div className="absolute bottom-0 left-0 h-72 w-72 rounded-full bg-amber-50 blur-3xl opacity-70" />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
-            <div className="text-center">
-              <ClipboardDocumentCheckIcon className="h-10 w-10 mx-auto text-blue-500" />
-              <h4 className="mt-4 text-lg font-medium">AI Resume Builder</h4>
-              <p className="mt-2 text-gray-600">
-                Generate ATS-friendly resumes tailored to your dream job.
-              </p>
-            </div>
+            <div className="relative z-10">
+              <div className="max-w-3xl">
+                <span className="inline-flex items-center rounded-full border border-yellow-200 bg-yellow-50 px-4 py-1 text-sm font-medium text-yellow-700">
+                  AI-powered interview preparation
+                </span>
 
-            <div className="text-center">
-              <ClockIcon className="h-10 w-10 mx-auto text-green-500" />
-              <h4 className="mt-4 text-lg font-medium">Mock Interviews</h4>
-              <p className="mt-2 text-gray-600">
-                Practice with AI interviewers and get feedback.
-              </p>
-            </div>
+                <h2
+                  className="mt-6 text-4xl md:text-5xl font-normal text-gray-900 leading-tight"
+                  style={{
+                    fontFamily:
+                      'Means Web, Georgia, Times, "Times New Roman", serif',
+                    letterSpacing: "-0.04rem",
+                  }}
+                >
+                  Getting interview-ready
+                  <br />
+                  shouldn’t feel overwhelming.
+                </h2>
 
-            <div className="text-center">
-              <CalendarDaysIcon className="h-10 w-10 mx-auto text-purple-500" />
-              <h4 className="mt-4 text-lg font-medium">Skill Quizzes</h4>
-              <p className="mt-2 text-gray-600">
-                Sharpen your technical and soft skills.
-              </p>
-            </div>
+                <p className="mt-6 text-lg leading-8 text-gray-600">
+                  Most students struggle not because they lack potential, but
+                  because preparation feels confusing and unstructured.
+                </p>
 
-            <div className="text-center">
-              <ArrowTrendingUpIcon className="h-10 w-10 mx-auto text-yellow-500" />
-              <h4 className="mt-4 text-lg font-medium">Career Growth</h4>
-              <p className="mt-2 text-gray-600">
-                Track measurable improvements.
-              </p>
+                <p className="mt-4 text-lg leading-8 text-gray-600">
+                  prep.ai helps you prepare with clarity through AI interviews,
+                  resume feedback, coding practice, and guided learning — all
+                  designed to help you feel confident before real interviews.
+                </p>
+              </div>
+
+              {/* feature pills */}
+              <div className="mt-12 flex flex-wrap gap-4">
+                <div className="rounded-2xl border border-white/70 bg-white/70 backdrop-blur px-5 py-3 shadow-sm text-gray-700">
+                  AI Mock Interviews
+                </div>
+
+                <div className="rounded-2xl border border-white/70 bg-white/70 backdrop-blur px-5 py-3 shadow-sm text-gray-700">
+                  ATS Resume Feedback
+                </div>
+
+                <div className="rounded-2xl border border-white/70 bg-white/70 backdrop-blur px-5 py-3 shadow-sm text-gray-700">
+                  Coding Practice
+                </div>
+
+                <div className="rounded-2xl border border-white/70 bg-white/70 backdrop-blur px-5 py-3 shadow-sm text-gray-700">
+                  Structured Preparation
+                </div>
+              </div>
             </div>
           </div>
         </section>

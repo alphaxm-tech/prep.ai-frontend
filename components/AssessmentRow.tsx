@@ -6,7 +6,11 @@ type QuizRowProps = {
   onStartQuiz: (quiz: AssessmentResponse) => void;
 };
 
-export default function QuizRow({ quiz, index, onStartQuiz }: QuizRowProps) {
+export default function AssessmentRow({
+  quiz,
+  index,
+  onStartQuiz,
+}: QuizRowProps) {
   const minutes = Math.max(1, Math.ceil(quiz.duration_sec / 60));
 
   const formattedDifficulty = quiz.difficulty
@@ -49,10 +53,10 @@ export default function QuizRow({ quiz, index, onStartQuiz }: QuizRowProps) {
           </span>
         </div>
 
-        <div className="flex items-center gap-4 text-sm text-yellow-900 mt-1">
+        {/* <div className="flex items-center gap-4 text-sm text-yellow-900 mt-1">
           <span>{attemptsLabel}</span>
           <span className="text-green-700 font-semibold">Best: {11}%</span>
-        </div>
+        </div> */}
       </div>
 
       {/* CTA */}

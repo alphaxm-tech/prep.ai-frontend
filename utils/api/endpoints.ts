@@ -10,6 +10,7 @@ export const ASSESSMENT = `assessment`;
 export const QUIZ = `quiz`;
 export const CCG = `ccg`;
 export const CODEEDITOR = "code-editor";
+export const LOGIN = "login";
 
 /// RESUME endpoints ///
 export const GET_RESUME_FORMATS = `get-resume-formats`;
@@ -22,6 +23,7 @@ export const GET_COMPLETE_RESUME_BY_ID = `get-complete-resume-by-id`;
 export const VERIFY_USER_EMAIL = `verify-user-email`;
 export const ADD_USER_DETAILS = `add-user-details`;
 export const LOGIN_WITH_PASSWORD = `login-with-password`;
+export const REFRESH = `refresh`;
 
 export const REGISTER = `register`;
 export const LOGIN_WITH_OTP = `auth/login-with-otp`;

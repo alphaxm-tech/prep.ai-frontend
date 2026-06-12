@@ -2,7 +2,10 @@
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useGetAttemptQuestion } from "@/utils/queries/quiz.queries";
+import {
+  useGetAttemptQuestion,
+  useGetQuizSession,
+} from "@/utils/queries/quiz.queries";
 
 export type Option = { id: string; text: string };
 
@@ -177,7 +180,13 @@ export default function QuizPage({
     );
   }
 
-  /// API calls
+  //////////////////////// API calls ////////////////////////
+
+  //////// get quiz session /////////////
+  const { data: quizSessionData, isLoading: quizSessionLoading } =
+    useGetQuizSession(attemptId);
+
+  //////// get question /////////////
   const {
     data: questionData,
     isLoading: questionLoading,
@@ -186,18 +195,22 @@ export default function QuizPage({
     refetch,
   } = useGetAttemptQuestion({
     AttemptID: attemptId,
-    Index: 2,
+    Index: quizSessionData?.data?.session?.current_index,
   });
 
-  console.log(isError, error);
+  console.log(quizSessionData?.data?.session?.current_index);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 via-white to-gray-200 p-6">
       {showLeaveWarning && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
           <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
-            <h2 className="text-xl font-bold mb-2">Are you sure you want to leave?</h2>
-            <p className="text-gray-600 mb-6">Your quiz progress may be lost.</p>
+            <h2 className="text-xl font-bold mb-2">
+              Are you sure you want to leave?
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Your quiz progress may be lost.
+            </p>
             <div className="flex gap-3 justify-end">
               <button
                 onClick={() => setShowLeaveWarning(false)}

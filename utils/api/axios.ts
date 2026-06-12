@@ -1,35 +1,5 @@
-// import axios from "axios";
-
-// const api = axios.create({
-//   baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1",
-//   withCredentials: true, // if using cookies
-// });
-
-// // Request interceptor for auth token
-// api.interceptors.request.use((config) => {
-//   const token =
-//     typeof window !== "undefined" ? localStorage.getItem("token") : null;
-//   if (token) {
-//     config.headers.Authorization = `Bearer ${token}`;
-//   }
-//   return config;
-// });
-
-// // Response interceptor (optional, e.g., refresh token)
-// api.interceptors.response.use(
-//   (response) => response,
-//   async (error) => {
-//     // Example: refresh token flow
-//     if (error.response?.status === 401) {
-//       // Handle unauthorized
-//     }
-//     return Promise.reject(error);
-//   }
-// );
-
-// export default api;
-
 import axios from "axios";
+import { AUTH, LOGIN, REFRESH } from "./endpoints";
 
 const api = axios.create({
   baseURL:
@@ -62,52 +32,14 @@ const processQueue = (error: any) => {
   refreshQueue = [];
 };
 
-// api.interceptors.response.use(
-//   (response) => response,
-//   async (error) => {
-//     const originalRequest = error.config;
-
-//     // Only attempt refresh once per request
-//     if (error.response?.status === 401 && !originalRequest._retry) {
-//       originalRequest._retry = true;
-
-//       // If refresh already in progress, queue request
-//       if (isRefreshing) {
-//         return new Promise((resolve, reject) => {
-//           refreshQueue.push({ resolve, reject });
-//         }).then(() => api(originalRequest));
-//       }
-
-//       isRefreshing = true;
-
-//       try {
-//         // 🔁 Call refresh endpoint
-//         await api.post("/auth/refresh");
-
-//         processQueue(null);
-//         return api(originalRequest);
-//       } catch (refreshError) {
-//         processQueue(refreshError);
-
-//         // Refresh failed → force logout
-//         window.location.href = "/login";
-//         return Promise.reject(refreshError);
-//       } finally {
-//         isRefreshing = false;
-//       }
-//     }
-
-//     return Promise.reject(error);
-//   }
-// );
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    // ❗ If refresh endpoint itself fails → logout
-    if (originalRequest?.url?.includes("/auth/refresh")) {
-      window.location.href = "/login";
+    // If refresh endpoint itself fails → logout
+    if (originalRequest?.url?.includes(`/${AUTH}/${REFRESH}`)) {
+      window.location.href = `/${LOGIN}`;
       return Promise.reject(error);
     }
 
@@ -123,7 +55,7 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        await api.post("/auth/refresh"); // cookie-based
+        await api.post(`/${AUTH}/${REFRESH}`); // cookie-based
         processQueue(null);
         return api(originalRequest);
       } catch (refreshError) {

@@ -1,6 +1,6 @@
 import { AssessmentResponse } from "@/utils/api/types/assessment.types";
 
-export default function CompactQuizRow({
+export default function CompactAssessmentRow({
   quiz,
   // onStartQuiz,
 }: {

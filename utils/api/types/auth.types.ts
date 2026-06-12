@@ -32,6 +32,9 @@ export type VerifyUserEmailResponse = {
   reason: string;
   userID: number;
   userDetails: boolean;
+  fullName: string;
+  location: string;
+  phoneNumber: number;
 };
 
 export interface AddUserDetailsRequest {

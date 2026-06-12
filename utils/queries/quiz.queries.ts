@@ -8,7 +8,7 @@ import { quizService } from "../services/quiz.service";
 
 export const useGetAttemptQuestion = (params: GetAttemptQuestion) => {
   return useQuery({
-    queryKey: ["quiz", "getAttemptQuestion"],
+    queryKey: ["quiz", "getAttemptQuestion", params.AttemptID, params.Index],
     queryFn: () => quizService.getAttemptQuestion(params),
   });
 };
@@ -29,6 +29,7 @@ export const useGetLeaderboard = (assessmentId: number) => {
 
 export const useGetQuizSession = (attemptId: number) => {
   return useQuery({
-    queryKey: ["quiz", "getQuizSession"],
+    queryKey: ["quiz", "getQuizSession", attemptId],
+    queryFn: () => quizService.getQuizSession(attemptId),
   });
 };

@@ -14,9 +14,8 @@ import {
 import WorkInProgressBanner from "@/components/WorkInProgressBanner";
 import { StatCard } from "../../../../components/StatCard";
 import QuizPage from "@/components/Quiz";
-import QuizRow from "@/components/QuizRow";
-import CompactQuizRow from "@/components/CompactQuizRow";
-
+import AssessmentRow from "@/components/AssessmentRow";
+import CompactAssessmentRow from "@/components/CompactAssessmentRow";
 export default function Quiz() {
   const router = useRouter();
   const userDetailsMain = useContext(AuthContext);
@@ -75,7 +74,7 @@ export default function Quiz() {
         show={isUntakenLoading || startQuizMutation.isPending || isTakenLoading}
       />
 
-      <div className="min-h-screen  px-4 md:px-8 py-10">
+      <div className="min-h-screen px-4 md:px-8 py-10">
         {/* HEADER */}
         <div className="max-w-6xl mx-auto flex justify-between items-center mb-6">
           <div>
@@ -95,7 +94,11 @@ export default function Quiz() {
         {/* 🔥 STAT CARDS BACK AGAIN */}
         <section className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
           <StatCard label="Total Quizzes" value={total} variant="blue" />
-          <StatCard label="Quizzes Taken" value={completed} variant="green" />
+          <StatCard
+            label="Quizzes Taken"
+            value={completed ? completed : 0}
+            variant="green"
+          />
           <StatCard label="Best Score" value={"92%"} variant="yellow" />
           <StatCard label="Avg Score" value={"78%"} variant="purple" />
         </section>
@@ -137,11 +140,11 @@ export default function Quiz() {
           {/* LEFT SIDE — EXPLORE */}
           <section className="lg:col-span-2 space-y-6">
             {filteredQuizzes.map((quiz) => (
-              <QuizRow
+              <AssessmentRow
                 quiz={quiz}
                 index={quiz.assessment_id}
                 onStartQuiz={handleStartQuiz}
-              ></QuizRow>
+              ></AssessmentRow>
             ))}
           </section>
 
@@ -156,7 +159,7 @@ export default function Quiz() {
             ) : (
               <div className="space-y-5">
                 {takenAssessments?.assessments?.map((quiz) => (
-                  <CompactQuizRow quiz={quiz}></CompactQuizRow>
+                  <CompactAssessmentRow quiz={quiz}></CompactAssessmentRow>
                 ))}
               </div>
             )}

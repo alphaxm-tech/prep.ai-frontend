@@ -23,13 +23,13 @@ import {
 
 export const authService = {
   verifyUserEmail: async (
-    data: VerifyUserEmailInput
+    data: VerifyUserEmailInput,
   ): Promise<VerifyUserEmailResponse> => {
     const response = await api.get(
       `${BASE_API_URL}/${AUTH}/${VERIFY_USER_EMAIL}`,
       {
         params: { Email: data?.email },
-      }
+      },
     );
 
     return response.data;
@@ -38,7 +38,7 @@ export const authService = {
   addUserDetails: async (data: AddUserDetailsRequest): Promise<User> => {
     const response = await api.post(
       `${BASE_API_URL}/${AUTH}/${ADD_USER_DETAILS}`,
-      data
+      data,
     );
 
     return response.data;
@@ -67,7 +67,7 @@ export const authService = {
 
   sendOtpForLogin: async (data: LoginWithOtpData) => {
     const response = await api.post(
-      `${BASE_API_URL}${LOGIN_WITH_OTP}?email=${data?.email}`
+      `${BASE_API_URL}${LOGIN_WITH_OTP}?email=${data?.email}`,
     );
     return response.data;
   },
@@ -75,7 +75,7 @@ export const authService = {
   verifyOtpForLogin: async (data: VerifyOtpForLogin) => {
     const response = await api.patch(
       `${BASE_API_URL}${VERIFY_LOGIN_OTP}`,
-      data
+      data,
     );
     return response.data;
   },
