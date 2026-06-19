@@ -38,7 +38,11 @@ interface QuestionDetail {
   memory_limit_mb: number;
   languages_allowed: string[];
   starter_code: Record<string, string>;
-  test_cases: { test_case_id: number; input_data: string; expected_output: string }[];
+  test_cases: {
+    test_case_id: number;
+    input_data: string;
+    expected_output: string;
+  }[];
 }
 
 // ---------------------------------------------------------------------------
@@ -47,33 +51,107 @@ interface QuestionDetail {
 
 const Q_STATUS: Record<
   QuestionStatus,
-  { label: string; bgClass: string; textClass: string; isSpinner: boolean; symbol: string }
+  {
+    label: string;
+    bgClass: string;
+    textClass: string;
+    isSpinner: boolean;
+    symbol: string;
+  }
 > = {
-  not_started:       { label: "Not Started",   bgClass: "bg-gray-100",   textClass: "text-gray-500",   isSpinner: false, symbol: "○" },
-  pending:           { label: "Evaluating",     bgClass: "bg-yellow-50",  textClass: "text-yellow-600", isSpinner: true,  symbol: "" },
-  running:           { label: "Running",        bgClass: "bg-yellow-50",  textClass: "text-yellow-600", isSpinner: true,  symbol: "" },
-  accepted:          { label: "Accepted",       bgClass: "bg-green-50",   textClass: "text-green-700",  isSpinner: false, symbol: "✓" },
-  wrong_answer:      { label: "Wrong Answer",   bgClass: "bg-red-50",     textClass: "text-red-700",    isSpinner: false, symbol: "✗" },
-  runtime_error:     { label: "Runtime Error",  bgClass: "bg-red-50",     textClass: "text-red-700",    isSpinner: false, symbol: "✗" },
-  tle:               { label: "TLE",            bgClass: "bg-orange-50",  textClass: "text-orange-700", isSpinner: false, symbol: "✗" },
-  compilation_error: { label: "Compile Error",  bgClass: "bg-red-50",     textClass: "text-red-700",    isSpinner: false, symbol: "✗" },
+  not_started: {
+    label: "Not Started",
+    bgClass: "bg-gray-100",
+    textClass: "text-gray-500",
+    isSpinner: false,
+    symbol: "○",
+  },
+  pending: {
+    label: "Evaluating",
+    bgClass: "bg-yellow-50",
+    textClass: "text-yellow-600",
+    isSpinner: true,
+    symbol: "",
+  },
+  running: {
+    label: "Running",
+    bgClass: "bg-yellow-50",
+    textClass: "text-yellow-600",
+    isSpinner: true,
+    symbol: "",
+  },
+  accepted: {
+    label: "Accepted",
+    bgClass: "bg-green-50",
+    textClass: "text-green-700",
+    isSpinner: false,
+    symbol: "✓",
+  },
+  wrong_answer: {
+    label: "Wrong Answer",
+    bgClass: "bg-red-50",
+    textClass: "text-red-700",
+    isSpinner: false,
+    symbol: "✗",
+  },
+  runtime_error: {
+    label: "Runtime Error",
+    bgClass: "bg-red-50",
+    textClass: "text-red-700",
+    isSpinner: false,
+    symbol: "✗",
+  },
+  tle: {
+    label: "TLE",
+    bgClass: "bg-orange-50",
+    textClass: "text-orange-700",
+    isSpinner: false,
+    symbol: "✗",
+  },
+  compilation_error: {
+    label: "Compile Error",
+    bgClass: "bg-red-50",
+    textClass: "text-red-700",
+    isSpinner: false,
+    symbol: "✗",
+  },
 };
 
 const EXECUTION_STATUS_CONFIG: Record<
   string,
   { label: string; className: string; icon: string }
 > = {
-  Accepted:           { label: "Accepted",              className: "text-green-700 bg-green-100",  icon: "✅" },
-  "Wrong Answer":     { label: "Wrong Answer",          className: "text-red-700 bg-red-100",      icon: "❌" },
-  "Runtime Error":    { label: "Runtime Error",         className: "text-red-700 bg-red-100",      icon: "❌" },
-  TLE:                { label: "Time Limit Exceeded",   className: "text-orange-700 bg-orange-100",icon: "⏱" },
-  "Compilation Error":{ label: "Compilation Error",     className: "text-red-700 bg-red-100",      icon: "❌" },
+  Accepted: {
+    label: "Accepted",
+    className: "text-green-700 bg-green-100",
+    icon: "✅",
+  },
+  "Wrong Answer": {
+    label: "Wrong Answer",
+    className: "text-red-700 bg-red-100",
+    icon: "❌",
+  },
+  "Runtime Error": {
+    label: "Runtime Error",
+    className: "text-red-700 bg-red-100",
+    icon: "❌",
+  },
+  TLE: {
+    label: "Time Limit Exceeded",
+    className: "text-orange-700 bg-orange-100",
+    icon: "⏱",
+  },
+  "Compilation Error": {
+    label: "Compilation Error",
+    className: "text-red-700 bg-red-100",
+    icon: "❌",
+  },
 };
 
 const DIFFICULTY_STYLES: Record<string, string> = {
-  easy:   "bg-green-100 text-green-700",
+  easy: "bg-green-100 text-green-700",
   medium: "bg-yellow-100 text-yellow-700",
-  hard:   "bg-red-100 text-red-700",
+  hard: "bg-red-100 text-red-700",
 };
 
 const MAX_POLL_RETRIES = 60;
@@ -88,17 +166,26 @@ export default function AssessmentTestPage() {
   const { showToast } = useToast();
 
   const assessmentId = Number(params.id);
-  const urlTitle = decodeURIComponent(params.title as string).replace(/-/g, " ");
+  const urlTitle = decodeURIComponent(params.title as string).replace(
+    /-/g,
+    " ",
+  );
 
   // Session
   const [sessionLoading, setSessionLoading] = useState(true);
-  const [sessionQuestions, setSessionQuestions] = useState<AssessmentSessionQuestion[]>([]);
+  const [sessionQuestions, setSessionQuestions] = useState<
+    AssessmentSessionQuestion[]
+  >([]);
   const [assessmentTitle, setAssessmentTitle] = useState(urlTitle);
   const [expiresAt, setExpiresAt] = useState<string | null>(null);
 
   // Selected question
-  const [selectedQuestionId, setSelectedQuestionId] = useState<number | null>(null);
-  const [questionDetail, setQuestionDetail] = useState<QuestionDetail | null>(null);
+  const [selectedQuestionId, setSelectedQuestionId] = useState<number | null>(
+    null,
+  );
+  const [questionDetail, setQuestionDetail] = useState<QuestionDetail | null>(
+    null,
+  );
   const [questionDetailLoading, setQuestionDetailLoading] = useState(false);
 
   // Timer
@@ -115,7 +202,9 @@ export default function AssessmentTestPage() {
   >(undefined);
 
   // Output panel
-  const [outputState, setOutputState] = useState<OutputState>({ phase: "idle" });
+  const [outputState, setOutputState] = useState<OutputState>({
+    phase: "idle",
+  });
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollCountRef = useRef(0);
 
@@ -172,7 +261,10 @@ export default function AssessmentTestPage() {
         await loadQuestion(questions[0].question_id);
       }
     } catch {
-      showToast("error", "Failed to start assessment. Please refresh and try again.");
+      showToast(
+        "error",
+        "Failed to start assessment. Please refresh and try again.",
+      );
     } finally {
       setSessionLoading(false);
     }
@@ -216,6 +308,7 @@ export default function AssessmentTestPage() {
   // ---------------------------------------------------------------------------
 
   async function handleRun() {
+    // setSessionLoading(true);
     if (!selectedQuestionId) return;
     const { code, language } = editorStateRef.current;
     clearPolling();
@@ -232,9 +325,11 @@ export default function AssessmentTestPage() {
         pollCountRef.current++;
         if (pollCountRef.current >= MAX_POLL_RETRIES) {
           clearPolling();
+          // setSessionLoading(false);
           setOutputState({
             phase: "error",
-            message: "Evaluation taking longer than expected. Please try again.",
+            message:
+              "Evaluation taking longer than expected. Please try again.",
           });
           return;
         }
@@ -243,6 +338,7 @@ export default function AssessmentTestPage() {
           const { status, execution_result } = poll.data;
           if (status !== "pending" && status !== "running") {
             clearPolling();
+            // setSessionLoading(false);
             setOutputState({
               phase: "done",
               mode: "run",
@@ -252,10 +348,15 @@ export default function AssessmentTestPage() {
           }
         } catch {
           clearPolling();
-          setOutputState({ phase: "error", message: "Failed to poll run job." });
+          // setSessionLoading(false);
+          setOutputState({
+            phase: "error",
+            message: "Failed to poll run job.",
+          });
         }
       }, 2000);
     } catch (err: any) {
+      // setSessionLoading(false);
       setOutputState({
         phase: "error",
         message: err?.response?.data?.error ?? "Failed to run code.",
@@ -284,9 +385,11 @@ export default function AssessmentTestPage() {
         pollCountRef.current++;
         if (pollCountRef.current >= MAX_POLL_RETRIES) {
           clearPolling();
+          setSessionLoading(false);
           setOutputState({
             phase: "error",
-            message: "Evaluation taking longer than expected. Please try again.",
+            message:
+              "Evaluation taking longer than expected. Please try again.",
           });
           return;
         }
@@ -306,10 +409,15 @@ export default function AssessmentTestPage() {
           }
         } catch {
           clearPolling();
-          setOutputState({ phase: "error", message: "Failed to poll submission." });
+          setSessionLoading(false);
+          setOutputState({
+            phase: "error",
+            message: "Failed to poll submission.",
+          });
         }
       }, 2000);
     } catch (err: any) {
+      setSessionLoading(false);
       setOutputState({
         phase: "error",
         message: err?.response?.data?.error ?? "Failed to submit question.",
@@ -339,11 +447,14 @@ export default function AssessmentTestPage() {
     try {
       await codeEditorService.finalizeAssessment(assessmentId);
       setShowFinalizeModal(false);
-      router.push(`/student/code-editor/${params.title}/${assessmentId}/result`);
+      router.push(
+        `/student/code-editor/${params.title}/${assessmentId}/result`,
+      );
     } catch (err: any) {
       showToast(
         "error",
-        err?.response?.data?.error ?? "Failed to finalize test. Please try again.",
+        err?.response?.data?.error ??
+          "Failed to finalize test. Please try again.",
       );
     } finally {
       setFinalizing(false);
@@ -387,8 +498,8 @@ export default function AssessmentTestPage() {
                 isTimeUp
                   ? "bg-red-100 text-red-700"
                   : isTimeCritical
-                  ? "bg-orange-100 text-orange-700 animate-pulse"
-                  : "bg-gray-100 text-gray-700"
+                    ? "bg-orange-100 text-orange-700 animate-pulse"
+                    : "bg-gray-100 text-gray-700"
               }`}
             >
               <span>⏱</span>
@@ -484,58 +595,66 @@ export default function AssessmentTestPage() {
                 )}
 
                 {!questionDetailLoading && !questionDetail && (
-                  <p className="text-gray-400">Select a question from the sidebar.</p>
+                  <p className="text-gray-400">
+                    Select a question from the sidebar.
+                  </p>
                 )}
 
-                {!questionDetailLoading && questionDetail && activeTab === "Description" && (
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h2 className="text-base font-semibold text-gray-900">
-                        {questionDetail.title}
-                      </h2>
-                      {questionDetail.difficulty && (
-                        <span
-                          className={`text-[11px] px-2 py-0.5 rounded-full capitalize ${
-                            DIFFICULTY_STYLES[questionDetail.difficulty] ??
-                            "bg-gray-100 text-gray-600"
-                          }`}
-                        >
-                          {questionDetail.difficulty}
-                        </span>
+                {!questionDetailLoading &&
+                  questionDetail &&
+                  activeTab === "Description" && (
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h2 className="text-base font-semibold text-gray-900">
+                          {questionDetail.title}
+                        </h2>
+                        {questionDetail.difficulty && (
+                          <span
+                            className={`text-[11px] px-2 py-0.5 rounded-full capitalize ${
+                              DIFFICULTY_STYLES[questionDetail.difficulty] ??
+                              "bg-gray-100 text-gray-600"
+                            }`}
+                          >
+                            {questionDetail.difficulty}
+                          </span>
+                        )}
+                      </div>
+
+                      <p className="whitespace-pre-line">
+                        {questionDetail.question_text}
+                      </p>
+
+                      {questionDetail.test_cases?.length > 0 && (
+                        <div className="space-y-2">
+                          <h3 className="font-semibold text-gray-800 text-sm">
+                            Examples:
+                          </h3>
+                          {questionDetail.test_cases.map((tc) => (
+                            <div
+                              key={tc.test_case_id}
+                              className="bg-gray-50 px-4 py-3 rounded-lg text-xs font-mono space-y-1"
+                            >
+                              <div>
+                                <span className="font-semibold">Input:</span>{" "}
+                                {tc.input_data}
+                              </div>
+                              <div>
+                                <span className="font-semibold">Output:</span>{" "}
+                                {tc.expected_output}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {questionDetail.time_limit_ms && (
+                        <p className="text-xs text-gray-400">
+                          Time limit: {questionDetail.time_limit_ms}ms &middot;
+                          Memory: {questionDetail.memory_limit_mb}MB
+                        </p>
                       )}
                     </div>
-
-                    <p className="whitespace-pre-line">{questionDetail.question_text}</p>
-
-                    {questionDetail.test_cases?.length > 0 && (
-                      <div className="space-y-2">
-                        <h3 className="font-semibold text-gray-800 text-sm">Examples:</h3>
-                        {questionDetail.test_cases.map((tc) => (
-                          <div
-                            key={tc.test_case_id}
-                            className="bg-gray-50 px-4 py-3 rounded-lg text-xs font-mono space-y-1"
-                          >
-                            <div>
-                              <span className="font-semibold">Input:</span>{" "}
-                              {tc.input_data}
-                            </div>
-                            <div>
-                              <span className="font-semibold">Output:</span>{" "}
-                              {tc.expected_output}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {questionDetail.time_limit_ms && (
-                      <p className="text-xs text-gray-400">
-                        Time limit: {questionDetail.time_limit_ms}ms &middot; Memory:{" "}
-                        {questionDetail.memory_limit_mb}MB
-                      </p>
-                    )}
-                  </div>
-                )}
+                  )}
 
                 {!questionDetailLoading && activeTab === "Editorial" && (
                   <p className="text-gray-400">Editorial coming soon...</p>
@@ -555,7 +674,9 @@ export default function AssessmentTestPage() {
                   onClick={handleRun}
                   className="px-3 py-1.5 text-xs rounded-md bg-gray-100 hover:bg-gray-200 transition disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isRunning && outputState.mode === "run" ? "Running..." : "Run"}
+                  {isRunning && outputState.mode === "run"
+                    ? "Running..."
+                    : "Run"}
                 </button>
 
                 <button
@@ -581,7 +702,8 @@ export default function AssessmentTestPage() {
                       if (!codePerQuestionRef.current[selectedQuestionId]) {
                         codePerQuestionRef.current[selectedQuestionId] = {};
                       }
-                      codePerQuestionRef.current[selectedQuestionId][language] = code;
+                      codePerQuestionRef.current[selectedQuestionId][language] =
+                        code;
                     }
                   }}
                 />
@@ -629,8 +751,8 @@ export default function AssessmentTestPage() {
 
                           {result && (
                             <span className="text-gray-500">
-                              {result.test_cases_passed} / {result.total_test_cases} test
-                              cases passed
+                              {result.test_cases_passed} /{" "}
+                              {result.total_test_cases} test cases passed
                             </span>
                           )}
 
@@ -649,7 +771,9 @@ export default function AssessmentTestPage() {
 
                         {result?.output && (
                           <div>
-                            <span className="font-semibold text-gray-600">Output: </span>
+                            <span className="font-semibold text-gray-600">
+                              Output:{" "}
+                            </span>
                             <span className="font-mono text-gray-700 whitespace-pre-wrap">
                               {result.output}
                             </span>
@@ -658,7 +782,9 @@ export default function AssessmentTestPage() {
 
                         {result?.error && (
                           <div>
-                            <span className="font-semibold text-red-500">Error: </span>
+                            <span className="font-semibold text-red-500">
+                              Error:{" "}
+                            </span>
                             <span className="font-mono text-red-600 whitespace-pre-wrap">
                               {result.error}
                             </span>
@@ -676,10 +802,12 @@ export default function AssessmentTestPage() {
         {showFinalizeModal && (
           <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50">
             <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm mx-4">
-              <h2 className="text-base font-semibold text-gray-900">Submit Complete Test?</h2>
+              <h2 className="text-base font-semibold text-gray-900">
+                Submit Complete Test?
+              </h2>
               <p className="text-sm text-gray-600 mt-2">
-                You cannot change your answers after submission. Make sure you have
-                submitted all the questions you want graded.
+                You cannot change your answers after submission. Make sure you
+                have submitted all the questions you want graded.
               </p>
 
               <div className="mt-5 flex gap-3">

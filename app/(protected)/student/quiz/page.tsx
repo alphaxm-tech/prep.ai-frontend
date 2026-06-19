@@ -75,9 +75,8 @@ export default function Quiz() {
       />
 
       <div className="min-h-screen px-4 md:px-8 py-10">
-        {/* HEADER */}
-        <div className="max-w-6xl mx-auto flex justify-between items-center mb-6">
-          <div>
+        <div className="max-w-6xl mx-auto">
+          <div className="mb-8">
             <h1 className="text-4xl font-bold tracking-tight text-gray-900">
               Quizzes
             </h1>
@@ -86,9 +85,9 @@ export default function Quiz() {
             </p>
           </div>
 
-          <button className="bg-yellow-400 hover:bg-yellow-300 transition-all duration-200 px-6 py-3 text-yellow-900 font-semibold rounded-xl shadow-md hover:shadow-lg">
+          {/* <button className="bg-yellow-400 hover:bg-yellow-300 transition-all duration-200 px-6 py-3 text-yellow-900 font-semibold rounded-xl shadow-md hover:shadow-lg">
             🏆 Leaderboard
-          </button>
+          </button> */}
         </div>
 
         {/* 🔥 STAT CARDS BACK AGAIN */}
@@ -119,20 +118,43 @@ export default function Quiz() {
           >
             {/* LEFT SIDE — Filters */}
             <div className="flex flex-wrap gap-3">
-              {["ALL", "EASY", "MEDIUM", "HARD"].map((level) => (
-                <button
-                  key={level}
-                  onClick={() => setDifficultyFilter(level)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                    difficultyFilter === level
-                      ? "bg-yellow-400 text-yellow-900 shadow-md"
-                      : "bg-white border border-gray-200 hover:bg-gray-50"
-                  }`}
-                >
-                  {level}
-                </button>
-              ))}
+              {["ALL", "EASY", "MEDIUM", "HARD"].map((level) => {
+                const active = difficultyFilter === level;
+
+                const colors = {
+                  ALL: active
+                    ? "bg-slate-900 text-white"
+                    : "bg-slate-100 text-slate-700",
+                  EASY: active
+                    ? "bg-green-500 text-white"
+                    : "bg-green-50 text-green-700",
+                  MEDIUM: active
+                    ? "bg-yellow-500 text-white"
+                    : "bg-yellow-50 text-yellow-700",
+                  HARD: active
+                    ? "bg-red-500 text-white"
+                    : "bg-red-50 text-red-700",
+                };
+
+                return (
+                  <button
+                    key={level}
+                    onClick={() => setDifficultyFilter(level)}
+                    className={`
+          px-4 py-2 rounded-full text-sm font-medium
+          transition-all duration-200
+          hover:scale-105
+          ${colors[level as keyof typeof colors]}
+        `}
+                  >
+                    {level}
+                  </button>
+                );
+              })}
             </div>
+            <p className="text-sm text-gray-500">
+              {filteredQuizzes.length} quizzes found
+            </p>
           </div>
         </div>
         {/* MAIN GRID */}

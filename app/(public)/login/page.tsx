@@ -9,7 +9,7 @@ import React, {
   forwardRef,
 } from "react";
 import { EnvelopeIcon, LockClosedIcon } from "@heroicons/react/24/outline";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Loader from "@/components/Loader";
 import {
   addUserDetails,
@@ -25,6 +25,7 @@ import {
   UN_AUTHORIZED_ROUTE,
 } from "@/utils/CONSTANTS";
 import { UserRole } from "@/utils/enums";
+import { AUTH, GOOGLE, LOGIN } from "@/utils/api/endpoints";
 
 // UI-only demo credentials (no backend required)
 const DEMO_EMAIL = "vm.prepai@gmail.com";
@@ -535,9 +536,13 @@ export default function LoginPage() {
   }, [email, password, router]);
 
   const handleGoogleLogin = () => {
+    setLoading(true);
+    setLoadingMessage("Logging you in via google....");
     // Simple redirect — NOT axios
     // Backend will handle everything and redirect back
-    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/google/login`;
+    setTimeout(() => {
+      window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/${AUTH}/${GOOGLE}/${LOGIN}`;
+    }, 100);
   };
 
   const handleForbidden = (data: any) => {
@@ -595,6 +600,38 @@ export default function LoginPage() {
         break;
     }
   };
+
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const error = searchParams.get("error");
+
+    if (!error) return;
+
+    switch (error) {
+      case "USER_NOT_FOUND":
+        showToast(
+          "error",
+          "No account exists with this email, please contact your coordinator",
+        );
+        break;
+
+      case "ACCOUNT_DISABLED":
+        showToast("error", "Your account is disabled.");
+        break;
+
+      default:
+        showToast("error", "Login failed.");
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    const error = searchParams.get("error");
+
+    if (!error) return;
+
+    router.replace("/login");
+  }, [searchParams, router]);
 
   // UI rendering by step
   return (

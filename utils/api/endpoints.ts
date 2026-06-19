@@ -25,6 +25,9 @@ export const ADD_USER_DETAILS = `add-user-details`;
 export const LOGIN_WITH_PASSWORD = `login-with-password`;
 export const REFRESH = `refresh`;
 
+/// AUTH endpoints ///
+export const GOOGLE = `google`;
+
 export const REGISTER = `register`;
 export const LOGIN_WITH_OTP = `auth/login-with-otp`;
 export const VERIFY_LOGIN_OTP = `auth/verify-login-otp`;

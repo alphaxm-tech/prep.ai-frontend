@@ -90,7 +90,16 @@ export function SubHeader({ user }: { user: any }) {
   const isActive = (route: string) => route === activeRoute;
 
   return (
-    <nav className="hidden md:flex bg-white border-y border-gray-200 px-6">
+    <nav
+      className="
+    hidden md:flex
+    sticky top-16
+    z-40
+    bg-white
+    border-y border-gray-200
+    px-6
+  "
+    >
       <div className="flex items-center gap-8 mx-auto">
         {navLinks.map(({ label, route }) => {
           const active = isActive(route);

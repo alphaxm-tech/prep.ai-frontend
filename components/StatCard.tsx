@@ -29,7 +29,7 @@ const variantStyles: Record<
 type StatCardProps = {
   label: string;
   value: string | number;
-  variant?: Variant; // optional, default to yellow
+  variant?: Variant;
 };
 
 export function StatCard({ label, value, variant = "yellow" }: StatCardProps) {
@@ -37,10 +37,31 @@ export function StatCard({ label, value, variant = "yellow" }: StatCardProps) {
 
   return (
     <div
-      className={`${styles.bg} ${styles.border} border rounded-lg text-center py-4`}
+      className={`
+        ${styles.bg}
+        ${styles.border}
+        border
+        rounded-lg
+        text-center
+        py-3
+        px-4
+        transition-all
+      `}
     >
-      <div className={`text-3xl font-bold ${styles.text}`}>{value}</div>
-      <div className={`mt-2 ${styles.text}`}>{label}</div>
+      <div className={`text-2xl font-bold leading-none ${styles.text}`}>
+        {value}
+      </div>
+
+      <div
+        className={`
+          mt-1
+          text-sm
+          font-medium
+          ${styles.text}
+        `}
+      >
+        {label}
+      </div>
     </div>
   );
 }
