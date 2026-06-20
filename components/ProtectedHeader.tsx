@@ -2,6 +2,7 @@
 
 import { PLATFORM_ROUTE, STUDENT_ROUTE } from "@/utils/CONSTANTS";
 import { UserRole } from "@/utils/enums";
+import { logout } from "@/utils/mutations/auth.mutations";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 
@@ -23,6 +24,7 @@ export function ProtectedHeader({ user }: { user: any }) {
   const [profileOpen, setProfileOpen] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const logoutMutation = logout();
 
   const role = user?.role?.name;
 
@@ -34,6 +36,7 @@ export function ProtectedHeader({ user }: { user: any }) {
   const handleLogout = async () => {
     try {
       // await fetch("/api/logout", { method: "POST" });
+      logoutMutation.mutate();
     } finally {
       router.replace("/");
     }

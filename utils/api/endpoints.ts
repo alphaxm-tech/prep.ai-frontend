@@ -11,6 +11,7 @@ export const QUIZ = `quiz`;
 export const CCG = `ccg`;
 export const CODEEDITOR = "code-editor";
 export const LOGIN = "login";
+export const LOGOUT = "logout";
 
 /// RESUME endpoints ///
 export const GET_RESUME_FORMATS = `get-resume-formats`;

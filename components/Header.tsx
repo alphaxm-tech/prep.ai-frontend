@@ -1,10 +1,11 @@
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useContext } from "react";
 import { AuthContext } from "@/app/provider";
 import { useUser } from "@/app/context/UserContext";
+import { logout } from "@/utils/mutations/auth.mutations";
 
 export function Header() {
   const router = useRouter();
@@ -17,6 +18,7 @@ export function Header() {
   const isInsideApp = !isLandingPage && !isLoginPage;
 
   const userDetailsMain = useContext(AuthContext);
+  const logoutMutation = logout();
 
   // useEffect(() => {
   //   console.log("from header" + userDetailsMain);
@@ -48,7 +50,8 @@ export function Header() {
   };
 
   const handleLogout = () => {
-    router.push("/");
+    logoutMutation.mutate();
+    // router.push("/");
   };
 
   return (

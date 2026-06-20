@@ -19,3 +19,9 @@ export const loginWithPassword = () => {
     mutationFn: authService.loginWithPassword,
   });
 };
+
+export const logout = () => {
+  return useMutation({
+    mutationFn: authService.logout,
+  });
+};

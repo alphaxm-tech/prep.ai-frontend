@@ -24,7 +24,7 @@ import {
   STUDENT_ROUTE,
   UN_AUTHORIZED_ROUTE,
 } from "@/utils/CONSTANTS";
-import { UserRole } from "@/utils/enums";
+import { LoginErrors, LoginStates, UserRole } from "@/utils/enums";
 import { AUTH, GOOGLE, LOGIN } from "@/utils/api/endpoints";
 
 // UI-only demo credentials (no backend required)
@@ -124,19 +124,19 @@ export default function LoginPage() {
   const loginWithPasswordMutation = loginWithPassword();
 
   useEffect(() => {
-    if (step === "email") {
+    if (step === LoginStates.EMAIL) {
       loginRef.current?.focus();
     }
 
-    if (step === "otp") {
+    if (step === LoginStates.OTP) {
       otpRef.current?.focus();
     }
 
-    if (step === "password" || step === "setPassword") {
+    if (step === LoginStates.PASSWORD || step === LoginStates.SET_PASSWORD) {
       passwordRef.current?.focus();
     }
 
-    if (step === "profile") {
+    if (step === LoginStates.PROFIL) {
       firstNameRef.current?.focus();
     }
   }, [step]);
@@ -547,17 +547,17 @@ export default function LoginPage() {
 
   const handleForbidden = (data: any) => {
     switch (data?.reason) {
-      case "PASSWORD_NOT_SET":
+      case LoginErrors.PASSWORD_NOT_SET:
         showToast("error", "Your account exists but no password is set.");
         setStep("setPassword");
         break;
 
-      case "EMAIL_NOT_VERIFIED":
+      case LoginErrors.EMAIL_NOT_VERIFIED:
         showToast("error", "Please verify your email first.");
         setStep("otp");
         break;
 
-      case "ACCOUNT_SUSPENDED":
+      case LoginErrors.ACCOUNT_SUSPENDED:
         setLoading(false);
         showToast(
           "error",
@@ -565,7 +565,7 @@ export default function LoginPage() {
         );
         break;
 
-      case "USER_INACTIVE":
+      case LoginErrors.USER_INACTIVE:
         setLoading(false);
         showToast(
           "error",
@@ -583,19 +583,19 @@ export default function LoginPage() {
     if (loading || otpLoading) return;
 
     switch (step) {
-      case "email":
+      case LoginStates.EMAIL:
         verifyUserEmail();
         break;
-      case "profile":
+      case LoginStates.PROFIL:
         submitProfileDetails();
         break;
-      case "otp":
+      case LoginStates.OTP:
         verifyOtpAndLogin();
         break;
-      case "password":
+      case LoginStates.PASSWORD:
         passwordLogin(); // ✅ ONLY place it's called
         break;
-      case "setPassword":
+      case LoginStates.SET_PASSWORD:
         setPasswordAndLogin();
         break;
     }
@@ -609,15 +609,37 @@ export default function LoginPage() {
     if (!error) return;
 
     switch (error) {
-      case "USER_NOT_FOUND":
+      case LoginErrors.USER_NOT_FOUND:
         showToast(
           "error",
-          "No account exists with this email, please contact your coordinator",
+          "Unable to sign in. Please contact your coordinator",
         );
         break;
 
-      case "ACCOUNT_DISABLED":
+      case LoginErrors.INTERNAL_ERROR:
+        showToast("error", "Internal error. Please contact your coordinator");
+        break;
+
+      case LoginErrors.ACCOUNT_DISABLED:
         showToast("error", "Your account is disabled.");
+        break;
+
+      case LoginErrors.INVALID_OAUTH_STATE:
+        showToast(
+          "error",
+          "Your sign-in session has expired or is invalid. Please try signing in again.",
+        );
+        break;
+
+      case LoginErrors.INVALID_AUTHORIZATION_CODE:
+        showToast(
+          "error",
+          "Unable to complete Google sign-in. Please try again.",
+        );
+        break;
+
+      case LoginErrors.GOOGLE_AUTH_FAILED:
+        showToast("error", "Google sign-in failed. Please try again.");
         break;
 
       default:

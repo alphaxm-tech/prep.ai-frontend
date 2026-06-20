@@ -5,6 +5,7 @@ import {
   BASE_API_URL,
   LOGIN_WITH_OTP,
   LOGIN_WITH_PASSWORD,
+  LOGOUT,
   REGISTER,
   VERIFY_LOGIN_OTP,
   VERIFY_USER_EMAIL,
@@ -45,19 +46,26 @@ export const authService = {
   },
 
   loginWithPassword: async (data: LoginData) => {
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-      credentials: "same-origin",
-    });
-    const json = await res.json();
-    if (!res.ok) {
-      const err: any = new Error("Login failed");
-      err.response = { status: res.status, data: json };
-      throw err;
-    }
-    return json;
+    // const res = await fetch("/api/auth/login", {
+    //   method: "POST",
+    //   headers: { "Content-Type": "application/json" },
+    //   body: JSON.stringify(data),
+    //   credentials: "same-origin",
+    // });
+    // const json = await res.json();
+    // if (!res.ok) {
+    //   const err: any = new Error("Login failed");
+    //   err.response = { status: res.status, data: json };
+    //   throw err;
+    // }
+    // return json;
+
+    const response = await api.post(
+      `${BASE_API_URL}/${AUTH}/${LOGIN_WITH_PASSWORD}`,
+      data,
+    );
+
+    return response.data;
   },
 
   registerWithPassword: async (data: RegisterData) => {
@@ -77,6 +85,11 @@ export const authService = {
       `${BASE_API_URL}${VERIFY_LOGIN_OTP}`,
       data,
     );
+    return response.data;
+  },
+
+  logout: async () => {
+    const response = await api.post(`${BASE_API_URL}/${AUTH}/${LOGOUT}`);
     return response.data;
   },
 };
