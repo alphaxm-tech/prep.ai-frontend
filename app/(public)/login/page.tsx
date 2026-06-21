@@ -22,7 +22,7 @@ import {
   COLLEGE,
   PLATFORM_ROUTE,
   STUDENT_ROUTE,
-  UN_AUTHORIZED_ROUTE,
+  UNAUTHORIZED_ROUTE,
 } from "@/utils/CONSTANTS";
 import { LoginErrors, LoginStates, UserRole } from "@/utils/enums";
 import { AUTH, GOOGLE, LOGIN } from "@/utils/api/endpoints";
@@ -492,7 +492,7 @@ export default function LoginPage() {
             } else if (role === UserRole.SUPER_ADMIN) {
               router.replace(PLATFORM_ROUTE);
             } else {
-              router.replace(UN_AUTHORIZED_ROUTE);
+              router.replace(UNAUTHORIZED_ROUTE);
             }
           }, 200);
         },

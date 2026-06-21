@@ -8,9 +8,10 @@ export const ADMIN_ROUTE = "/admin";
 export const COLLEGE = "/college";
 export const PLATFORM_ROUTE = "/platform";
 // export const PLACEMENT_ROUTE = "/placement";
-export const UN_AUTHORIZED_ROUTE = "/unauthorized";
+export const UNAUTHORIZED_ROUTE = "/unauthorized";
 export const QUIZ_ROUTE_MAIN = "/quiz";
 export const QUIZ_TEST = "/test";
+export const LOGIN = "/login";
 
 // Student Routes
 export const HOME_ROUTE = "/"; // root home
