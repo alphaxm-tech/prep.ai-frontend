@@ -32,7 +32,7 @@ export type VerifyUserEmailResponse = {
   reason: string;
   userID: number;
   userDetails: boolean;
-  fullName: string;
+  fullname: string;
   location: string;
   phoneNumber: number;
 };
@@ -72,4 +72,20 @@ export interface User {
   createdAt: string; // ISO timestamp
   updatedAt: string; // ISO timestamp
   deletedAt: string | null;
+}
+
+export interface SetPasswordRequest {
+  email: string;
+  password: string;
+}
+
+export interface VerifyUserDetails {
+  user: User;
+  passwordExists: boolean;
+}
+
+export interface ResetPasswordRequest {
+  email: string;
+  oldPassword: string;
+  newPassword: string;
 }

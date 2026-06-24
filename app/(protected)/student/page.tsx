@@ -28,7 +28,10 @@ export default function Dashboard() {
   const services = userDetailsMain?.services ?? [];
 
   const firstName =
-    user?.full_name?.split(/[, ]+/)?.filter(Boolean)[0] ?? "there";
+    user?.full_name?.split(/[, ]+/)?.filter(Boolean)[1] ?? "there";
+
+  console.log(user?.full_name);
+  console.log(firstName);
 
   const handleCardClick = (cardTitle: string) => {
     let route;

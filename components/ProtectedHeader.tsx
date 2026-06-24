@@ -97,14 +97,14 @@ export function ProtectedHeader({ user }: { user: any }) {
     ],
 
     [UserRole.STUDENT]: [
-      { label: "My Dashboard", action: () => router.push("/student/home") },
+      { label: "My Dashboard", action: () => router.push("/student") },
       {
         label: "My Applications",
-        action: () => router.push("/student/applications"),
+        action: () => router.push("/student"),
       },
       {
         label: "My Assessments",
-        action: () => router.push("/student/assessments"),
+        action: () => router.push("/student"),
       },
     ],
   };
@@ -199,12 +199,12 @@ export function ProtectedHeader({ user }: { user: any }) {
                       </button>
                     ))}
 
-                    <button
+                    {/* <button
                       onClick={() => router.push("/profile")}
                       className="w-full text-left px-5 py-2.5 hover:bg-yellow-50 transition"
                     >
                       Account
-                    </button>
+                    </button> */}
                   </div>
 
                   <div className="border-t border-gray-100" />

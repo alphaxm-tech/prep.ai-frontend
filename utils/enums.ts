@@ -1,5 +1,5 @@
 export enum UserRole {
-  SUPER_ADMIN = "SUPER_ADMIN", // platform level access
+  SUPER_ADMIN = "SUPER ADMIN", // platform level access
   ADMIN = "ADMIN", // college access
   STUDENT = "STUDENT",
 }
@@ -24,4 +24,11 @@ export enum LoginStates {
   OTP = "otp",
   PASSWORD = "password",
   SET_PASSWORD = "setPassword",
+  CHOOSE = "choose",
+  RESET_PASSWORD = "resetPassword",
+}
+
+export enum ToastStates {
+  SUCCESS = "success",
+  ERROR = "error",
 }

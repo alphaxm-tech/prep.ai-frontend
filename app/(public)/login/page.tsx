@@ -14,6 +14,8 @@ import Loader from "@/components/Loader";
 import {
   addUserDetails,
   loginWithPassword,
+  useResetPassword,
+  useSetPassword,
   useVerifyUserEmail,
 } from "@/utils/mutations/auth.mutations";
 import { useToast } from "@/components/toast/ToastContext";
@@ -24,8 +26,9 @@ import {
   STUDENT_ROUTE,
   UNAUTHORIZED_ROUTE,
 } from "@/utils/CONSTANTS";
-import { LoginErrors, LoginStates, UserRole } from "@/utils/enums";
+import { LoginErrors, LoginStates, ToastStates, UserRole } from "@/utils/enums";
 import { AUTH, GOOGLE, LOGIN } from "@/utils/api/endpoints";
+import { validatePassword } from "@/lib/validate-password";
 
 // UI-only demo credentials (no backend required)
 const DEMO_EMAIL = "vm.prepai@gmail.com";
@@ -44,13 +47,14 @@ const InputWithIcon = memo(
       onChange,
       name,
       autoComplete,
+      hasError,
       ...rest
     },
     ref,
   ) {
     return (
       <div className="relative mt-1">
-        <div className="absolute left-3 top-2.5 h-5 w-5 text-gray-400 pointer-events-none">
+        <div className="absolute left-3 top-3.5 h-5 w-5 text-gray-400 pointer-events-none">
           {icon}
         </div>
         <input
@@ -61,7 +65,11 @@ const InputWithIcon = memo(
           value={value}
           placeholder={placeholder}
           onChange={onChange}
-          className="w-full px-4 py-3 pl-10 border border-gray-200 rounded-lg focus:ring-2 focus:ring-yellow-400 outline-none text-sm sm:text-base"
+          className={`w-full px-4 py-3 pl-10 border rounded-lg focus:ring-2 outline-none text-sm sm:text-base ${
+            hasError
+              ? "border-red-500 focus:ring-red-300"
+              : "border-gray-200 focus:ring-yellow-400"
+          }`}
           {...rest}
         />
       </div>
@@ -85,18 +93,17 @@ const InputWithIcon = memo(
  */
 export default function LoginPage() {
   const router = useRouter();
-  // screens: "email" -> "choose" -> "otp" -> "password" | "setPassword"
-  const [step, setStep] = useState<
-    "email" | "profile" | "choose" | "otp" | "password" | "setPassword"
-  >("email");
+  const [step, setStep] = useState<LoginStates>(LoginStates.EMAIL);
 
   // form state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [oldPassword, setOldPassword] = useState("");
   const [otp, setOtp] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
-  const [fullName, setFulName] = useState("");
+  const [fullName, setFullName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState<any>();
   const [location, setLocation] = useState("");
   const [userID, setUserID] = useState<number | null>();
@@ -104,6 +111,15 @@ export default function LoginPage() {
   // server-driven flags
   const [emailVerified, setEmailVerified] = useState(false);
   const [hasPassword, setHasPassword] = useState(false);
+
+  const [emailError, setEmailError] = useState(false);
+  const [firstNameError, setFirstNameError] = useState(false);
+  const [lastNameError, setLastNameError] = useState(false);
+  const [phoneError, setPhoneError] = useState(false);
+  const [locationError, setLocationError] = useState(false);
+  const [passwordError, setPasswordError] = useState(false);
+  const [confirmPasswordError, setConfirmPasswordError] = useState(false);
+  const [oldPasswordError, setOldPasswordError] = useState(false);
 
   // loaders / inline error
   const [loading, setLoading] = useState(false);
@@ -115,13 +131,17 @@ export default function LoginPage() {
   const loginRef = useRef<HTMLInputElement>(null);
   const otpRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
+  const confirmPasswordRef = useRef<HTMLInputElement>(null);
   const firstNameRef = useRef<HTMLInputElement>(null);
+  const oldPasswordRef = useRef<HTMLInputElement>(null);
 
   const { showToast } = useToast();
 
   const verifyEmailMutation = useVerifyUserEmail();
   const addUserDetailsMutation = addUserDetails();
   const loginWithPasswordMutation = loginWithPassword();
+  const setPasswordMutation = useSetPassword();
+  const resetPasswordMutation = useResetPassword();
 
   useEffect(() => {
     if (step === LoginStates.EMAIL) {
@@ -136,6 +156,10 @@ export default function LoginPage() {
       passwordRef.current?.focus();
     }
 
+    if (step === LoginStates.RESET_PASSWORD) {
+      oldPasswordRef.current?.focus();
+    }
+
     if (step === LoginStates.PROFIL) {
       firstNameRef.current?.focus();
     }
@@ -144,12 +168,22 @@ export default function LoginPage() {
   // input handlers
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setEmail(e.target.value);
+    if (emailError) setEmailError(false);
     if (errorMessage) setErrorMessage(null);
   };
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setPassword(e.target.value);
+    if (passwordError) setPasswordError(false);
     if (errorMessage) setErrorMessage(null);
   };
+  const handleConfirmPasswordChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    setConfirmPassword(e.target.value);
+    if (confirmPasswordError) setConfirmPasswordError(false);
+    if (errorMessage) setErrorMessage(null);
+  };
+
   const handleOtpChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setOtp(e.target.value);
     if (errorMessage) setErrorMessage(null);
@@ -158,131 +192,9 @@ export default function LoginPage() {
   // -----------------------------
   // Screen 1 -> verify user email
   // -----------------------------
-  // const verifyUserEmail = useCallback(() => {
-  //   if (!email) {
-  //     showToast("error", "Please add an email ID");
-  //     return;
-  //   }
-  //   setLoading(true);
-  //   setErrorMessage(null);
-  //   setLoadingMessage("Verifying your email id");
-
-  //   const trimmed = email.trim().toLowerCase();
-  //   if (!trimmed || !trimmed.includes("@")) {
-  //     // showError?.("Enter a valid email.");
-  //     return;
-  //   }
-
-  //   verifyEmailMutation.mutate(
-  //     { email: trimmed },
-  //     {
-  //       onSuccess: (data) => {
-  //         console.log("Verification successful", data);
-  //         setLoading(false);
-  //         if (data?.canLogin) {
-  //           if (!data?.userDetails) {
-  //             setStep("profile");
-  //           } else {
-  //             setStep("choose");
-  //           }
-
-  //           setHasPassword(data?.passswordExists);
-  //           showToast("success", "Email verified successfully!");
-  //           setUserID(data?.userID ?? null);
-  //         } else {
-  //           showToast("error", data?.reason);
-  //         }
-  //       },
-  //       onError: (err: any) => {
-  //         const status = err?.response?.status;
-  //         const data = err?.response?.data;
-  //         console.log(status);
-
-  //         if (status === 403) {
-  //           handleForbidden(data);
-  //           return;
-  //         }
-
-  //         showToast("error", "Something went wrong. Please try again.");
-  //         setLoading(false);
-  //       },
-  //     }
-  //   );
-  // }, [email]);
-
-  // const verifyUserEmail = useCallback(() => {
-  //   if (!email) {
-  //     showToast("error", "Please add an email ID");
-  //     return;
-  //   }
-
-  //   const trimmed = email.trim().toLowerCase();
-
-  //   if (!trimmed || !trimmed.includes("@")) {
-  //     showToast("error", "Enter a valid email address");
-  //     return;
-  //   }
-
-  //   /**
-  //    * 🔐 DEMO ADMIN SHORT-CIRCUIT (NO BACKEND)
-  //    */
-  //   if (trimmed === DEMO_ADMIN_EMAIL) {
-  //     showToast("success", "Admin email verified");
-
-  //     // Fake server response locally
-  //     setStep("password"); // go directly to password login
-  //     setHasPassword(true); // admin has password
-  //     setEmailVerified(true);
-  //     setUserID(-1); // dummy ID (never used)
-  //     return;
-  //   }
-
-  //   /**
-  //    * 🔁 REAL BACKEND FLOW (UNCHANGED)
-  //    */
-  //   setLoading(true);
-  //   setErrorMessage(null);
-  //   setLoadingMessage("Verifying your email id");
-
-  //   verifyEmailMutation.mutate(
-  //     { email: trimmed },
-  //     {
-  //       onSuccess: (data) => {
-  //         setLoading(false);
-
-  //         if (data?.canLogin) {
-  //           if (!data?.userDetails) {
-  //             setStep("profile");
-  //           } else {
-  //             setStep("choose");
-  //           }
-
-  //           setHasPassword(data?.passswordExists);
-  //           setEmailVerified(true);
-  //           setUserID(data?.userID ?? null);
-  //           showToast("success", "Email verified successfully!");
-  //         } else {
-  //           showToast("error", data?.reason);
-  //         }
-  //       },
-  //       onError: (err: any) => {
-  //         const status = err?.response?.status;
-  //         const data = err?.response?.data;
-
-  //         if (status === 403) {
-  //           handleForbidden(data);
-  //           return;
-  //         }
-
-  //         showToast("error", "Something went wrong. Please try again.");
-  //         setLoading(false);
-  //       },
-  //     }
-  //   );
-  // }, [email]);
-
   const verifyUserEmail = useCallback(() => {
     if (!email) {
+      setEmailError(true);
       showToast("error", "Please add an email ID");
       return;
     }
@@ -305,34 +217,67 @@ export default function LoginPage() {
           setLoading(false);
 
           if (data?.canLogin) {
-            if (!data?.userDetails) {
-              setStep("profile");
-            } else {
-              setStep("choose");
-            }
-
+            const phone = data?.phoneNumber || "";
+            const loc = data?.location || "";
             setHasPassword(data?.passswordExists);
             setEmailVerified(true);
             setUserID(data?.userID ?? null);
-            setPhoneNumber(data?.phoneNumber);
-            setLocation(data?.location);
-            setFulName(data?.fullName);
+            setPhoneNumber(phone);
+            setLocation(loc);
 
-            showToast("success", "Email verified successfully!");
+            const fullName = data?.fullname?.trim() || "";
+
+            if (fullName.includes(",")) {
+              const [last, first] = fullName.split(",");
+
+              setFirstName(first?.trim() || "");
+              setLastName(last?.trim() || "");
+            } else {
+              const parts = fullName.split(" ");
+
+              setFirstName(parts[0] || "");
+              setLastName(parts.slice(1).join(" ") || "");
+            }
+
+            const fn = data?.fullname?.split(",")[1]?.trim() || "";
+            const ln = data?.fullname?.split(",")[0]?.trim() || "";
+            setFullName(data?.fullname || "");
+
+            if (!data?.userDetails) {
+              setFirstNameError(!fn);
+              setLastNameError(!ln);
+              setPhoneError(!phone);
+              setLocationError(!loc);
+              setStep(LoginStates.PROFIL);
+            } else {
+              if (data?.passswordExists) {
+                setStep(LoginStates.CHOOSE);
+              } else {
+                setStep(LoginStates.SET_PASSWORD);
+              }
+            }
+
+            showToast(ToastStates.SUCCESS, "Email verified successfully!");
           } else {
-            showToast("error", data?.reason);
+            showToast(ToastStates.ERROR, data?.reason);
           }
         },
         onError: (err: any) => {
           const status = err?.response?.status;
           const data = err?.response?.data;
+          console.log(err);
 
           if (status === 403) {
             handleForbidden(data);
             return;
           }
 
-          showToast("error", "Something went wrong. Please try again.");
+          showToast(
+            "error",
+            err?.response?.status
+              ? err?.response?.data?.error?.message
+              : "Something went wrong. Please try again.",
+          );
           setLoading(false);
         },
       },
@@ -343,7 +288,24 @@ export default function LoginPage() {
   // Screen 2 -> add user details -> name, phonenumber, location
   // -----------------------------
   const submitProfileDetails = useCallback(async () => {
-    if (!email || !firstName || !lastName || !phoneNumber || !location) {
+    const trimmedFirstName = firstName.trim();
+    const trimmedLastName = lastName.trim();
+    const trimmedPhoneNumber = phoneNumber.trim();
+    const trimmedLocation = location.trim();
+    const trimmedEmail = email.trim();
+
+    const hasEmpty =
+      !trimmedFirstName ||
+      !trimmedLastName ||
+      !trimmedPhoneNumber ||
+      !trimmedLocation;
+
+    if (hasEmpty) {
+      setFirstNameError(!trimmedFirstName);
+      setLastNameError(!trimmedLastName);
+      setPhoneError(!trimmedPhoneNumber);
+      setLocationError(!trimmedLocation);
+
       showToast("error", "Please fill all the details");
       return;
     }
@@ -353,16 +315,21 @@ export default function LoginPage() {
 
     addUserDetailsMutation.mutate(
       {
-        email: email.trim(),
-        full_name: `${firstName.trim()}, ${lastName.trim()}`,
-        phone_number: phoneNumber.trim(),
-        location: location.trim(),
+        email: trimmedEmail,
+        full_name: `${trimmedLastName}, ${trimmedFirstName}`,
+        phone_number: trimmedPhoneNumber,
+        location: trimmedLocation,
       },
       {
         onSuccess: (data: any) => {
-          setStep("choose");
           console.log("Verification successful", data);
           setLoading(false);
+
+          if (data?.passwordExists) {
+            setStep(LoginStates.CHOOSE);
+          } else {
+            setStep(LoginStates.SET_PASSWORD);
+          }
         },
         onError: (err: any) => {
           const status = err?.response?.status;
@@ -402,7 +369,7 @@ export default function LoginPage() {
 
       setOtpSent(true);
       // success?.("OTP sent to your email.");
-      setStep("otp");
+      setStep(LoginStates.OTP);
     } catch (err) {
       setOtpLoading(false);
       // showError?.("Server error sending OTP.");
@@ -459,6 +426,12 @@ export default function LoginPage() {
     const normalizedEmail = email.trim().toLowerCase();
     const normalizedPassword = password.trim();
 
+    if (normalizedPassword == "") {
+      showToast("error", "Please enter a valid password");
+      setPassword("");
+      return;
+    }
+
     setLoading(true);
     setLoadingMessage("Logging you in....");
 
@@ -496,52 +469,235 @@ export default function LoginPage() {
             }
           }, 200);
         },
-        onError: () => {
-          showToast("error", "Something went wrong. Please try again.");
+        onError: (data: any) => {
+          console.log(data?.response?.data?.error?.message);
+          showToast(
+            "error",
+            data?.response?.data?.error?.message
+              ? data?.response?.data?.error?.message
+              : "Unable to access your account. Please contact your college administrator.",
+          );
+          // setStep(LoginStates.EMAIL);
+          // setPassword("");
+          // setEmail("");
           setLoading(false);
         },
       },
     );
   }, [email, password]);
 
-  // set password & login
-  const setPasswordAndLogin = useCallback(async () => {
-    if (!password || password.length < 6) {
-      // showError?.("Password should be at least 6 characters.");
+  const resetPassword = useCallback(async () => {
+    if (!oldPassword) {
+      setOldPasswordError(true);
+      showToast(ToastStates.ERROR, "Please enter your current password");
+      return;
+    }
+
+    if (!password || !confirmPassword) {
+      setPasswordError(!password);
+      setConfirmPasswordError(!confirmPassword);
+      showToast(
+        ToastStates.ERROR,
+        "Please enter and confirm your new password",
+      );
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      showToast(ToastStates.ERROR, "New passwords do not match");
+      return;
+    }
+
+    if (
+      oldPassword.trim() == "" ||
+      confirmPassword.trim() == "" ||
+      password.trim() == ""
+    ) {
+      showToast(ToastStates.ERROR, "Password cannot be empty");
+      return;
+    }
+
+    if (!validatePassword(password)) {
+      showToast(
+        ToastStates.ERROR,
+        "Password must be at least 8 characters and include an uppercase letter, lowercase letter, number, and special character.",
+      );
       return;
     }
 
     setLoading(true);
-    try {
-      const res = await fetch("/api/auth/setPasswordAndLogin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim().toLowerCase(), password }),
-      });
+    setLoadingMessage("Resetting your password...");
 
-      const data = await res.json();
-      setLoading(false);
+    resetPasswordMutation.mutate(
+      {
+        email: email.trim(),
+        oldPassword: oldPassword.trim(),
+        newPassword: password.trim(),
+      },
+      {
+        onSuccess: async (data: any) => {
+          setLoading(false);
+          showToast(ToastStates.SUCCESS, "Password reset successfully!");
+          setOldPassword("");
+          setPassword("");
+          setConfirmPassword("");
+          // setStep(LoginStates.PASSWORD);
 
-      if (!res.ok || !data.success) {
-        // showError?.(data?.message || "Unable to set password.");
-        return;
-      }
+          // User can login
+          try {
+            // 🔥 CRITICAL FIX: ensure cookie is committed before navigation
+            await fetch("/api/auth/session", {
+              method: "GET",
+              credentials: "include",
+            });
+          } catch (e) {
+            console.log("Session sync failed (non-blocking):", e);
+          }
 
-      // success?.("Password set. Logging in…");
-      router.push("/student");
-    } catch (err) {
-      setLoading(false);
-      // showError?.("Server error setting password.");
+          const role = data?.userRole?.name;
+
+          // // 🔥 SMALL DELAY to avoid SSR race condition
+          setTimeout(() => {
+            if (role === UserRole.ADMIN) {
+              router.replace("/college/1");
+            } else if (role === UserRole.STUDENT) {
+              router.replace(STUDENT_ROUTE);
+            } else if (role === UserRole.SUPER_ADMIN) {
+              router.replace(PLATFORM_ROUTE);
+            } else {
+              router.replace(UNAUTHORIZED_ROUTE);
+            }
+          }, 200);
+        },
+        onError: (err: any) => {
+          setLoading(false);
+          showToast(
+            ToastStates.ERROR,
+            err?.response?.data?.error?.message ||
+              "Failed to reset password. Please check your current password.",
+          );
+        },
+      },
+    );
+  }, [email, oldPassword, password, confirmPassword]);
+
+  // set password & login
+  const setPasswordAndLogin = useCallback(async () => {
+    if (!password || !confirmPassword) {
+      showToast(ToastStates.ERROR, "Please enter and confirm your password");
+      setPasswordError(!password);
+      setConfirmPasswordError(!confirmPassword);
+      return;
     }
-  }, [email, password, router]);
+
+    if (password != confirmPassword) {
+      showToast(ToastStates.ERROR, "Passwords do not match");
+      return;
+    }
+
+    if (!validatePassword(password)) {
+      showToast(
+        ToastStates.ERROR,
+        "Password must be at least 8 characters and include an uppercase letter, lowercase letter, number, and special character.",
+      );
+      return;
+    }
+
+    setLoading(true);
+    setPasswordMutation.mutate(
+      {
+        email: email.trim(),
+        password: password.trim(),
+      },
+      {
+        onSuccess: async (data: any) => {
+          setLoading(false);
+          console.log("userDetails", data);
+
+          if (!data?.userDetails) {
+            setStep(LoginStates.PROFIL);
+
+            const phone = data?.phoneNumber || "";
+            const loc = data?.location || "";
+            const fn = data?.fullname?.split(",")[1]?.trim() || "";
+            const ln = data?.fullname?.split(",")[0]?.trim() || "";
+            const fullName = data?.fullname?.trim() || "";
+
+            setFirstNameError(!fn);
+            setLastNameError(!ln);
+            setPhoneError(!phone);
+            setLocationError(!loc);
+
+            setHasPassword(!data?.passswordExists);
+            setPhoneNumber(phone);
+            setLocation(loc);
+            setFullName(data?.fullname || "");
+
+            if (fullName.includes(",")) {
+              const [last, first] = fullName.split(",");
+
+              setFirstName(first?.trim() || "");
+              setLastName(last?.trim() || "");
+            } else {
+              const parts = fullName.split(" ");
+
+              setFirstName(parts[0] || "");
+              setLastName(parts.slice(1).join(" ") || "");
+            }
+          } else {
+            // User can login
+            try {
+              // 🔥 CRITICAL FIX: ensure cookie is committed before navigation
+              await fetch("/api/auth/session", {
+                method: "GET",
+                credentials: "include",
+              });
+            } catch (e) {
+              console.log("Session sync failed (non-blocking):", e);
+            }
+
+            const role = data?.userRole?.name;
+
+            // // 🔥 SMALL DELAY to avoid SSR race condition
+            setTimeout(() => {
+              if (role === UserRole.ADMIN) {
+                router.replace("/college/1");
+              } else if (role === UserRole.STUDENT) {
+                router.replace(STUDENT_ROUTE);
+              } else if (role === UserRole.SUPER_ADMIN) {
+                router.replace(PLATFORM_ROUTE);
+              } else {
+                router.replace(UNAUTHORIZED_ROUTE);
+              }
+            }, 200);
+
+            // showToast(ToastStates.SUCCESS, "You can login");
+          }
+        },
+        onError: () => {
+          showToast(
+            "error",
+            "Unable to access your account. Please contact your college administrator.",
+          );
+          setLoading(false);
+          setPassword("");
+          setStep(LoginStates.EMAIL);
+        },
+      },
+    );
+  }, [email, password, confirmPassword, router]);
 
   const handleGoogleLogin = () => {
     setLoading(true);
     setLoadingMessage("Logging you in via google....");
-    // Simple redirect — NOT axios
-    // Backend will handle everything and redirect back
+    // replace() instead of href= so /login is removed from history.
+    // The full OAuth redirect chain (HTTP 302s) follows transparently,
+    // and the final destination (/student) replaces this entry — back button
+    // will skip Google entirely and go to the page before /login.
     setTimeout(() => {
-      window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/${AUTH}/${GOOGLE}/${LOGIN}`;
+      window.location.replace(
+        `${process.env.NEXT_PUBLIC_API_URL}/${AUTH}/${GOOGLE}/${LOGIN}`,
+      );
     }, 100);
   };
 
@@ -549,12 +705,12 @@ export default function LoginPage() {
     switch (data?.reason) {
       case LoginErrors.PASSWORD_NOT_SET:
         showToast("error", "Your account exists but no password is set.");
-        setStep("setPassword");
+        setStep(LoginStates.SET_PASSWORD);
         break;
 
       case LoginErrors.EMAIL_NOT_VERIFIED:
         showToast("error", "Please verify your email first.");
-        setStep("otp");
+        setStep(LoginStates.OTP);
         break;
 
       case LoginErrors.ACCOUNT_SUSPENDED:
@@ -594,6 +750,9 @@ export default function LoginPage() {
         break;
       case LoginStates.PASSWORD:
         passwordLogin(); // ✅ ONLY place it's called
+        break;
+      case LoginStates.RESET_PASSWORD:
+        resetPassword();
         break;
       case LoginStates.SET_PASSWORD:
         setPasswordAndLogin();
@@ -867,12 +1026,13 @@ export default function LoginPage() {
           <div className="p-6 sm:p-8">
             <div className="text-center mb-4">
               <p className="text-gray-500 text-sm sm:text-base">
-                {step === "email" && "Sign in to your account"}
-                {step === "profile" && "Complete your profile"}
-                {step === "choose" && "Choose a login method"}
-                {step === "otp" && "Enter the OTP sent to your email"}
-                {step === "password" && "Enter your password"}
-                {step === "setPassword" && "Create a new password"}
+                {step === LoginStates.EMAIL && "Sign in to your account"}
+                {step === LoginStates.PROFIL && "Complete your profile"}
+                {step === LoginStates.CHOOSE && "Choose a login method"}
+                {step === LoginStates.OTP && "Enter the OTP sent to your email"}
+                {step === LoginStates.PASSWORD && "Enter your password"}
+                {step === LoginStates.SET_PASSWORD && "Create a new password"}
+                {step === LoginStates.RESET_PASSWORD && "Reset your password"}
               </p>
             </div>
 
@@ -881,7 +1041,7 @@ export default function LoginPage() {
               onSubmit={handleSubmit}
             >
               {/* Screen 1: only email + verify button */}
-              {step === "email" && (
+              {step === LoginStates.EMAIL && (
                 <div>
                   <label className="block text-sm font-medium text-gray-600">
                     Email
@@ -895,11 +1055,11 @@ export default function LoginPage() {
                     placeholder="you@gmail.com"
                     value={email}
                     onChange={handleEmailChange}
+                    hasError={emailError}
                   />
 
                   <button
                     type="submit"
-                    onClick={verifyUserEmail}
                     className="w-full mt-4 bg-yellow-500 text-white font-semibold py-3 rounded-xl"
                     disabled={loading}
                   >
@@ -911,29 +1071,29 @@ export default function LoginPage() {
               )}
 
               {/* Screen 2: choose method */}
-              {step === "choose" && (
+              {step === LoginStates.CHOOSE && (
                 <div>
                   <div className="text-sm text-gray-600 mb-3">
                     Email verified:{" "}
                     <span className="font-medium text-gray-800">{email}</span>
                   </div>
 
-                  <button
+                  {/* <button
                     type="button"
                     onClick={sendOtpAndGo}
                     className="w-full mb-3 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white py-3 rounded-xl font-semibold"
                     disabled={otpLoading}
                   >
                     Login with OTP
-                  </button>
+                  </button> */}
 
                   <button
                     type="button"
                     onClick={() => {
                       if (hasPassword) {
-                        setStep("password");
+                        setStep(LoginStates.PASSWORD);
                       } else {
-                        setStep("setPassword");
+                        setStep(LoginStates.SET_PASSWORD);
                       }
                     }}
                     className="w-full mb-3 bg-yellow-100 text-yellow-700 py-3 rounded-xl font-semibold"
@@ -943,7 +1103,7 @@ export default function LoginPage() {
 
                   <button
                     type="button"
-                    onClick={() => router.push("/reset-password")}
+                    onClick={() => setStep(LoginStates.RESET_PASSWORD)}
                     className="w-full text-sm text-gray-500 underline mt-2"
                   >
                     Reset Password
@@ -952,7 +1112,7 @@ export default function LoginPage() {
               )}
 
               {/* Screen 3a: OTP entry only */}
-              {step === "otp" && (
+              {step === LoginStates.OTP && (
                 <div>
                   <label className="block text-sm font-medium text-gray-600 pb-1">
                     Enter OTP
@@ -993,21 +1153,27 @@ export default function LoginPage() {
               )}
 
               {/* Screen 3b: Password entry or Set password */}
-              {(step === "password" || step === "setPassword") && (
+              {(step === LoginStates.PASSWORD ||
+                step === LoginStates.SET_PASSWORD) && (
                 <div>
                   <label className="block text-sm font-medium text-gray-600">
-                    {step === "password" ? "Password" : "Set New Password"}
+                    {step === LoginStates.PASSWORD
+                      ? "Password"
+                      : "Set New Password"}
                   </label>
                   <InputWithIcon
                     ref={passwordRef}
                     name="password"
+                    hasError={passwordError}
                     autoComplete={
-                      step === "password" ? "current-password" : "new-password"
+                      step === LoginStates.PASSWORD
+                        ? "current-password"
+                        : "new-password"
                     }
                     icon={<LockClosedIcon className="h-5 w-5" />}
                     type="password"
                     placeholder={
-                      step === "password"
+                      step === LoginStates.PASSWORD
                         ? "Enter your password"
                         : "Create a password"
                     }
@@ -1015,21 +1181,29 @@ export default function LoginPage() {
                     onChange={handlePasswordChange}
                   />
 
-                  {step === "setPassword" && (
+                  {step === LoginStates.SET_PASSWORD && (
                     <div className="mt-4">
                       <label className="block text-sm font-medium text-gray-600">
                         {"Confim password"}
                       </label>
                       <InputWithIcon
-                        name="password"
+                        ref={confirmPasswordRef}
+                        name="confirm-password"
+                        hasError={confirmPasswordError}
                         autoComplete={"new-password"}
                         icon={<LockClosedIcon className="h-5 w-5" />}
                         type="password"
-                        placeholder={"confirm password"}
-                        value={password}
-                        onChange={handlePasswordChange}
+                        placeholder={"Confirm password"}
+                        value={confirmPassword}
+                        onChange={handleConfirmPasswordChange}
                       />
                     </div>
+                  )}
+                  {step === LoginStates.SET_PASSWORD && (
+                    <p className="text-xs text-muted-foreground text-gray-400 mt-2">
+                      Use 8+ characters, including an uppercase letter,
+                      lowercase letter, number, and special character.
+                    </p>
                   )}
 
                   <button
@@ -1037,24 +1211,29 @@ export default function LoginPage() {
                     className="w-full mt-4 bg-gradient-to-r from-yellow-400 to-yellow-500 text-white font-semibold py-3 rounded-xl"
                     disabled={loading}
                   >
-                    {step === "password" ? "Login" : "Save & Login"}
+                    {step === LoginStates.PASSWORD ? "Login" : "Save & Login"}
                   </button>
                 </div>
               )}
 
               {/* Keep a tiny link to go back to email screen (helpful navigation) */}
-              {step !== "email" && (
+              {step !== LoginStates.EMAIL && (
                 <div className="text-center mt-3">
                   <button
                     type="button"
                     onClick={() => {
                       // if user goes back to email, reset flow
-                      setStep("email");
+                      setStep(LoginStates.EMAIL);
                       setEmailVerified(false);
                       setHasPassword(false);
                       setOtp("");
                       setPassword("");
+                      setConfirmPassword("");
+                      setOldPassword("");
                       setOtpSent(false);
+                      setPasswordError(false);
+                      setConfirmPasswordError(false);
+                      setOldPasswordError(false);
                     }}
                     className="text-sm text-gray-500 hover:underline"
                   >
@@ -1063,7 +1242,7 @@ export default function LoginPage() {
                 </div>
               )}
 
-              {step === "profile" && (
+              {step === LoginStates.PROFIL && (
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-600 mb-1">
@@ -1075,9 +1254,15 @@ export default function LoginPage() {
                         name="firstName"
                         placeholder="First name"
                         value={firstName}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          setFirstName(e.target.value)
-                        }
+                        hasError={firstNameError}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          const value = e.target.value.replace(
+                            /[^a-zA-Z\s]/g,
+                            "",
+                          );
+                          setFirstName(value);
+                          if (firstNameError) setFirstNameError(false);
+                        }}
                         icon={<span className="text-gray-400">👤</span>}
                       />
 
@@ -1085,9 +1270,15 @@ export default function LoginPage() {
                         name="lastName"
                         placeholder="Last name"
                         value={lastName}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          setLastName(e.target.value)
-                        }
+                        hasError={lastNameError}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                          const value = e.target.value.replace(
+                            /[^a-zA-Z\s]/g,
+                            "",
+                          );
+                          setLastName(value);
+                          if (lastNameError) setLastNameError(false);
+                        }}
                         icon={<span className="text-gray-400">👤</span>}
                       />
                     </div>
@@ -1101,10 +1292,13 @@ export default function LoginPage() {
                       name="phone"
                       placeholder="9876543210"
                       value={phoneNumber}
+                      hasError={phoneError}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                         const value = e.target.value.replace(/\D/g, "");
                         setPhoneNumber(value);
+                        if (phoneError) setPhoneError(false);
                       }}
+                      maxLength={10}
                       icon={<span className="text-gray-400">📞</span>}
                     />
                   </div>
@@ -1117,7 +1311,11 @@ export default function LoginPage() {
                       name="location"
                       placeholder="Mumbai, India"
                       value={location}
-                      onChange={(e: any) => setLocation(e.target.value)}
+                      hasError={locationError}
+                      onChange={(e: any) => {
+                        setLocation(e.target.value);
+                        if (locationError) setLocationError(false);
+                      }}
                       icon={<span className="text-gray-400">📍</span>}
                     />
                   </div>
@@ -1145,9 +1343,81 @@ export default function LoginPage() {
               )}
 
               {/* Keep original demo Sign In hidden except user explicitly wants; but keep a small fallback to preserve behavior */}
-              {step === "email" && (
+              {step === LoginStates.EMAIL && (
                 <div className="mt-4">
                   {/* Hidden by default per your requirement — no Sign In button on first screen other than Verify Email */}
+                </div>
+              )}
+
+              {step === LoginStates.RESET_PASSWORD && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600">
+                      Current Password
+                    </label>
+                    <InputWithIcon
+                      ref={oldPasswordRef}
+                      name="old-password"
+                      autoComplete="current-password"
+                      icon={<LockClosedIcon className="h-5 w-5" />}
+                      type="password"
+                      placeholder="Enter your current password"
+                      value={oldPassword}
+                      hasError={oldPasswordError}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        setOldPassword(e.target.value);
+                        if (oldPasswordError) setOldPasswordError(false);
+                        if (errorMessage) setErrorMessage(null);
+                      }}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600">
+                      New Password
+                    </label>
+                    <InputWithIcon
+                      ref={passwordRef}
+                      name="new-password"
+                      autoComplete="new-password"
+                      icon={<LockClosedIcon className="h-5 w-5" />}
+                      type="password"
+                      placeholder="Create a new password"
+                      value={password}
+                      hasError={passwordError}
+                      onChange={handlePasswordChange}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-600">
+                      Confirm New Password
+                    </label>
+                    <InputWithIcon
+                      ref={confirmPasswordRef}
+                      name="confirm-new-password"
+                      autoComplete="new-password"
+                      icon={<LockClosedIcon className="h-5 w-5" />}
+                      type="password"
+                      placeholder="Confirm new password"
+                      value={confirmPassword}
+                      hasError={confirmPasswordError}
+                      onChange={handleConfirmPasswordChange}
+                    />
+                  </div>
+
+                  <p className="text-xs text-gray-400">
+                    Use 8+ characters, including an uppercase letter, lowercase
+                    letter, number, and special character.
+                  </p>
+
+                  <button
+                    type="submit"
+                    className="w-full bg-gradient-to-r from-yellow-400 to-yellow-500 text-white font-semibold py-3 rounded-xl"
+                    disabled={loading}
+                  >
+                    Reset Password
+                  </button>
                 </div>
               )}
             </form>

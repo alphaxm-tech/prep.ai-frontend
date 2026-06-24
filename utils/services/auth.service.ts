@@ -7,6 +7,8 @@ import {
   LOGIN_WITH_PASSWORD,
   LOGOUT,
   REGISTER,
+  RESET_PASSWORD,
+  SET_PASSWORD,
   VERIFY_LOGIN_OTP,
   VERIFY_USER_EMAIL,
 } from "@/utils/api/endpoints";
@@ -20,6 +22,9 @@ import {
   VerifyUserEmailResponse,
   AddUserDetailsRequest,
   User,
+  SetPasswordRequest,
+  VerifyUserDetails,
+  ResetPasswordRequest,
 } from "@/utils/api/types/auth.types";
 
 export const authService = {
@@ -36,7 +41,9 @@ export const authService = {
     return response.data;
   },
 
-  addUserDetails: async (data: AddUserDetailsRequest): Promise<User> => {
+  addUserDetails: async (
+    data: AddUserDetailsRequest,
+  ): Promise<VerifyUserDetails> => {
     const response = await api.post(
       `${BASE_API_URL}/${AUTH}/${ADD_USER_DETAILS}`,
       data,
@@ -90,6 +97,22 @@ export const authService = {
 
   logout: async () => {
     const response = await api.post(`${BASE_API_URL}/${AUTH}/${LOGOUT}`);
+    return response.data;
+  },
+
+  setPassword: async (data: SetPasswordRequest) => {
+    const response = await api.post(
+      `${BASE_API_URL}/${AUTH}/${SET_PASSWORD}`,
+      data,
+    );
+    return response.data;
+  },
+
+  resetPassword: async (data: ResetPasswordRequest) => {
+    const response = await api.post(
+      `${BASE_API_URL}/${AUTH}/${RESET_PASSWORD}`,
+      data,
+    );
     return response.data;
   },
 };

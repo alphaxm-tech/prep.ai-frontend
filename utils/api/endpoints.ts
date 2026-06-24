@@ -25,6 +25,8 @@ export const VERIFY_USER_EMAIL = `verify-user-email`;
 export const ADD_USER_DETAILS = `add-user-details`;
 export const LOGIN_WITH_PASSWORD = `login-with-password`;
 export const REFRESH = `refresh`;
+export const SET_PASSWORD = `set-password`;
+export const RESET_PASSWORD = `reset-password`;
 
 /// AUTH endpoints ///
 export const GOOGLE = `google`;

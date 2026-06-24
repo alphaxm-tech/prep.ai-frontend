@@ -1,60 +1,36 @@
-import { Geist, Geist_Mono } from "next/font/google";
-import "../globals.css";
-import { SubHeader } from "@/components/SubHeader";
 import AppBootstrap from "@/components/AppBootstrap";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { Providers } from "../provider";
-import { BASE_API_URL, HOME, ME } from "@/utils/api/endpoints";
 import { UserProvider } from "../context/UserContext";
-import { ProtectedHeader } from "@/components/ProtectedHeader";
 import { Header } from "@/components/Header";
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import { getRoleRedirect } from "@/lib/get-role-redirect";
 
 export default async function PublicLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // ME endpoint api call
   const cookieStore = await cookies();
-  const token = cookieStore.get("access_token")?.value;
+  const accessToken = cookieStore.get("access_token")?.value;
+  const refreshToken = cookieStore.get("refresh_token")?.value;
 
-  // const res = await fetch(`${BASE_API_URL}/${HOME}/${ME}`, {
-  //   headers: {
-  //     Authorization: `Bearer ${token}`,
-  //   },
-  //   cache: "no-store",
-  // });
-
-  // if (!res.ok) {
-  //   redirect("/login");
-  // }
-
-  // const getMeDetails = await res.json();
-  // console.log(getMeDetails?.role?.name);
+  // If the user already has a session, redirect to their role-specific dashboard.
+  // accessToken carries the role claim; refreshToken-only falls back to /student
+  // (middleware will handle the silent refresh + role routing from there).
+  if (accessToken) {
+    redirect(getRoleRedirect(accessToken));
+  } else if (refreshToken) {
+    redirect("/student");
+  }
 
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <Providers>
-          <UserProvider>
-            <Header />
-            <AppBootstrap />
-            {children}
-          </UserProvider>
-        </Providers>
-      </body>
-    </html>
+    <Providers>
+      <UserProvider>
+        <Header />
+        <AppBootstrap />
+        {children}
+      </UserProvider>
+    </Providers>
   );
 }

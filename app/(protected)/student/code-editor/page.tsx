@@ -15,6 +15,7 @@ import {
 } from "@/utils/api/types/assessment.types";
 import AssessmentRow from "@/components/AssessmentRow";
 import CompactAssessmentRow from "@/components/CompactAssessmentRow";
+import WorkInProgressBanner from "@/components/WorkInProgressBanner";
 
 function slugify(title: string) {
   return title
@@ -68,21 +69,21 @@ export default function CodeEditorListPage() {
     setTotalQuizzes(totalAssessments);
   }, [takenAssessments, untakenAssessments]);
 
-  useEffect(() => {
-    if (!isLoading && isError) {
-      showToast("error", "Failed to load assessments. Please try again.");
-    } else if (
-      !isLoading &&
-      !isError &&
-      assessments.length === 0 &&
-      codingQuestionData
-    ) {
-      showToast(
-        "info",
-        "No coding assessments are available for you right now.",
-      );
-    }
-  }, [isLoading, isError, codingQuestionData]);
+  // useEffect(() => {
+  //   if (!isLoading && isError) {
+  //     showToast("error", "Failed to load assessments. Please try again.");
+  //   } else if (
+  //     !isLoading &&
+  //     !isError &&
+  //     assessments.length === 0 &&
+  //     codingQuestionData
+  //   ) {
+  //     showToast(
+  //       "info",
+  //       "No coding assessments are available for you right now.",
+  //     );
+  //   }
+  // }, [isLoading, isError, codingQuestionData]);
 
   const handleStartCodingTest = (assessment: AssessmentResponse) => {
     console.log("Test", assessment);
@@ -141,10 +142,12 @@ export default function CodeEditorListPage() {
 
   return (
     <>
-      <Loader
+      <WorkInProgressBanner />
+      {/* <Loader
         show={isLoading || isUntakenLoading || isTakenLoading}
         message={loadingMessageMain}
-      />
+      /> */}
+
       <div className="min-h-screen px-4 md:px-8 py-10">
         <div className="max-w-6xl mx-auto">
           <div className="mb-8 flex items-start justify-between gap-4">
@@ -198,11 +201,11 @@ export default function CodeEditorListPage() {
             <StatCard label="Best Score" value={"92%"} variant="yellow" />
             <StatCard label="Avg Score" value={"78%"} variant="purple" />
           </section>
-          {!isLoading && assessments.length === 0 && (
+          {/* {!isLoading && assessments.length === 0 && (
             <div className="py-20 text-center text-gray-500 text-sm">
               No assessments available right now.
             </div>
-          )}
+          )} */}
 
           {/* Filters */}
           <div
