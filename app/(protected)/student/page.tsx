@@ -20,15 +20,18 @@ export default function Dashboard() {
   const router = useRouter();
   const userDetailsMain = useContext(AuthContext);
 
-  useEffect(() => {
-    console.log(userDetailsMain);
-  }, [userDetailsMain]);
+  // useEffect(() => {
+  //   console.log(userDetailsMain);
+  // }, [userDetailsMain]);
 
   const user = userDetailsMain?.user;
   const services = userDetailsMain?.services ?? [];
 
   const firstName =
-    user?.full_name?.split(/[, ]+/)?.filter(Boolean)[0] ?? "there";
+    user?.full_name?.split(/[, ]+/)?.filter(Boolean)[1] ?? "there";
+
+  console.log(user?.full_name);
+  console.log(firstName);
 
   const handleCardClick = (cardTitle: string) => {
     let route;

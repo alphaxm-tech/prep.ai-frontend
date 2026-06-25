@@ -6,21 +6,16 @@ export async function GET() {
     const cookieStore = await cookies();
 
     const token = cookieStore.get("access_token")?.value;
+    // const refreshToken = cookieStore.get
 
     if (!token) {
-      return NextResponse.json(
-        { authenticated: false },
-        { status: 401 }
-      );
+      return NextResponse.json({ authenticated: false }, { status: 401 });
     }
 
     return NextResponse.json({
       authenticated: true,
     });
   } catch (error) {
-    return NextResponse.json(
-      { authenticated: false },
-      { status: 500 }
-    );
+    return NextResponse.json({ authenticated: false }, { status: 500 });
   }
 }

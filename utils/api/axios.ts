@@ -1,5 +1,5 @@
 import axios from "axios";
-import { AUTH, LOGIN, REFRESH } from "./endpoints";
+import { AUTH, LOGIN, LOGIN_WITH_PASSWORD, REFRESH } from "./endpoints";
 
 const api = axios.create({
   baseURL:
@@ -40,6 +40,11 @@ api.interceptors.response.use(
     // If refresh endpoint itself fails → logout
     if (originalRequest?.url?.includes(`/${AUTH}/${REFRESH}`)) {
       window.location.href = `/${LOGIN}`;
+      return Promise.reject(error);
+    }
+
+    // Login endpoint 401 means wrong credentials — don't try to refresh
+    if (originalRequest?.url?.includes(`/${AUTH}/${LOGIN_WITH_PASSWORD}`)) {
       return Promise.reject(error);
     }
 

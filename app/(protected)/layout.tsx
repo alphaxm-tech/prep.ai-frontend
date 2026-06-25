@@ -5,10 +5,11 @@ import AppBootstrap from "@/components/AppBootstrap";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { Providers } from "../provider";
-import { AUTH, BASE_API_URL, HOME, ME, REFRESH } from "@/utils/api/endpoints";
+import { BASE_API_URL, HOME, ME } from "@/utils/api/endpoints";
 import { UserProvider } from "../context/UserContext";
 import { ProtectedHeader } from "@/components/ProtectedHeader";
 import ProtectedShell from "@/components/ProtectedShell";
+import { getCurrentUser } from "@/lib/get-user-details";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,106 +27,52 @@ export default async function ProtectedLayout({
   children: React.ReactNode;
 }) {
   const cookieStore = await cookies();
-
-  // Send ALL cookies, not just access token
   const cookieHeader = cookieStore.toString();
 
-  // If no cookies at all -> login
   if (!cookieHeader) {
     redirect("/login");
   }
 
-  let getMeDetails: any = null;
+  // let getMeDetails: any = null;
 
-  /**
-   * Helper function to fetch current user
-   */
-  const fetchMe = async () => {
-    return fetch(`${BASE_API_URL}/${HOME}/${ME}`, {
-      method: "GET",
-      headers: {
-        Cookie: cookieHeader,
-      },
-      cache: "no-store",
-    });
-  };
+  // middleware.ts already handles token refresh before this layout runs.
+  // By the time we reach here, the cookie header contains a valid access_token
+  // (either the original one or a freshly refreshed one injected by middleware).
+  // try {
+  //   const meResponse = await fetch(`${BASE_API_URL}/${HOME}/${ME}`, {
+  //     method: "GET",
+  //     headers: { Cookie: cookieHeader },
+  //     cache: "no-store",
+  //   });
 
-  try {
-    /**
-     * STEP 1:
-     * Try fetching user with current access token
-     */
-    let meResponse = await fetchMe();
+  //   // console.log("ME STATUS:", meResponse.status);
 
-    /**
-     * STEP 2:
-     * If access token expired -> try refresh
-     */
-    if (meResponse.status === 401) {
-      const refreshResponse = await fetch(
-        `${BASE_API_URL}/${AUTH}/${REFRESH}`,
-        {
-          method: "POST",
-          headers: {
-            Cookie: cookieHeader,
-          },
-          cache: "no-store",
-        },
-      );
+  //   if (!meResponse.ok) {
+  //     redirect("/login");
+  //   }
 
-      /**
-       * If refresh token also failed
-       * -> user session is dead
-       */
-      if (!refreshResponse.ok) {
-        redirect("/login");
-      }
+  //   getMeDetails = await meResponse.json();
+  //   // console.log("me", getMeDetails);
 
-      /**
-       * IMPORTANT:
-       * Get updated cookies returned by refresh endpoint
-       */
-      const setCookieHeader = refreshResponse.headers.get("set-cookie");
-
-      /**
-       * Retry /me using refreshed cookies
-       */
-      meResponse = await fetch(`${BASE_API_URL}/${HOME}/${ME}`, {
-        method: "GET",
-        headers: {
-          Cookie: setCookieHeader || cookieHeader,
-        },
-        cache: "no-store",
-      });
-    }
-
-    /**
-     * Final validation
-     */
-    if (!meResponse.ok) {
-      redirect("/login");
-    }
-
-    getMeDetails = await meResponse.json();
-
-    if (!getMeDetails) {
-      redirect("/login");
-    }
-  } catch (error) {
-    console.error("Protected layout auth error:", error);
-    redirect("/login");
-  }
+  //   if (!getMeDetails) {
+  //     redirect("/login");
+  //   }
+  // } catch (error) {
+  //   console.error("Protected layout auth error:", error);
+  //   redirect("/login");
+  // }
+  const user = await getCurrentUser();
 
   return (
     <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <Providers user={getMeDetails}>
-          <UserProvider user={getMeDetails}>
-            <ProtectedHeader user={getMeDetails} />
+        <Providers user={user}>
+          <UserProvider user={user}>
+            <ProtectedHeader user={user} />
             <AppBootstrap />
-            <SubHeaderWrapper user={getMeDetails} />
+            <SubHeaderWrapper user={user} />
             <ProtectedShell>{children}</ProtectedShell>
           </UserProvider>
         </Providers>

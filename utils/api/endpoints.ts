@@ -11,6 +11,7 @@ export const QUIZ = `quiz`;
 export const CCG = `ccg`;
 export const CODEEDITOR = "code-editor";
 export const LOGIN = "login";
+export const LOGOUT = "logout";
 
 /// RESUME endpoints ///
 export const GET_RESUME_FORMATS = `get-resume-formats`;
@@ -24,6 +25,8 @@ export const VERIFY_USER_EMAIL = `verify-user-email`;
 export const ADD_USER_DETAILS = `add-user-details`;
 export const LOGIN_WITH_PASSWORD = `login-with-password`;
 export const REFRESH = `refresh`;
+export const SET_PASSWORD = `set-password`;
+export const RESET_PASSWORD = `reset-password`;
 
 /// AUTH endpoints ///
 export const GOOGLE = `google`;

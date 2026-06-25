@@ -2,6 +2,7 @@
 
 import { PLATFORM_ROUTE, STUDENT_ROUTE } from "@/utils/CONSTANTS";
 import { UserRole } from "@/utils/enums";
+import { logout } from "@/utils/mutations/auth.mutations";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 
@@ -23,6 +24,7 @@ export function ProtectedHeader({ user }: { user: any }) {
   const [profileOpen, setProfileOpen] = useState(false);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const logoutMutation = logout();
 
   const role = user?.role?.name;
 
@@ -34,6 +36,7 @@ export function ProtectedHeader({ user }: { user: any }) {
   const handleLogout = async () => {
     try {
       // await fetch("/api/logout", { method: "POST" });
+      logoutMutation.mutate();
     } finally {
       router.replace("/");
     }
@@ -94,14 +97,14 @@ export function ProtectedHeader({ user }: { user: any }) {
     ],
 
     [UserRole.STUDENT]: [
-      { label: "My Dashboard", action: () => router.push("/student/home") },
+      { label: "My Dashboard", action: () => router.push("/student") },
       {
         label: "My Applications",
-        action: () => router.push("/student/applications"),
+        action: () => router.push("/student"),
       },
       {
         label: "My Assessments",
-        action: () => router.push("/student/assessments"),
+        action: () => router.push("/student"),
       },
     ],
   };
@@ -196,12 +199,12 @@ export function ProtectedHeader({ user }: { user: any }) {
                       </button>
                     ))}
 
-                    <button
+                    {/* <button
                       onClick={() => router.push("/profile")}
                       className="w-full text-left px-5 py-2.5 hover:bg-yellow-50 transition"
                     >
                       Account
-                    </button>
+                    </button> */}
                   </div>
 
                   <div className="border-t border-gray-100" />

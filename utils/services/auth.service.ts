@@ -5,7 +5,10 @@ import {
   BASE_API_URL,
   LOGIN_WITH_OTP,
   LOGIN_WITH_PASSWORD,
+  LOGOUT,
   REGISTER,
+  RESET_PASSWORD,
+  SET_PASSWORD,
   VERIFY_LOGIN_OTP,
   VERIFY_USER_EMAIL,
 } from "@/utils/api/endpoints";
@@ -19,6 +22,9 @@ import {
   VerifyUserEmailResponse,
   AddUserDetailsRequest,
   User,
+  SetPasswordRequest,
+  VerifyUserDetails,
+  ResetPasswordRequest,
 } from "@/utils/api/types/auth.types";
 
 export const authService = {
@@ -35,7 +41,9 @@ export const authService = {
     return response.data;
   },
 
-  addUserDetails: async (data: AddUserDetailsRequest): Promise<User> => {
+  addUserDetails: async (
+    data: AddUserDetailsRequest,
+  ): Promise<VerifyUserDetails> => {
     const response = await api.post(
       `${BASE_API_URL}/${AUTH}/${ADD_USER_DETAILS}`,
       data,
@@ -45,19 +53,26 @@ export const authService = {
   },
 
   loginWithPassword: async (data: LoginData) => {
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-      credentials: "same-origin",
-    });
-    const json = await res.json();
-    if (!res.ok) {
-      const err: any = new Error("Login failed");
-      err.response = { status: res.status, data: json };
-      throw err;
-    }
-    return json;
+    // const res = await fetch("/api/auth/login", {
+    //   method: "POST",
+    //   headers: { "Content-Type": "application/json" },
+    //   body: JSON.stringify(data),
+    //   credentials: "same-origin",
+    // });
+    // const json = await res.json();
+    // if (!res.ok) {
+    //   const err: any = new Error("Login failed");
+    //   err.response = { status: res.status, data: json };
+    //   throw err;
+    // }
+    // return json;
+
+    const response = await api.post(
+      `${BASE_API_URL}/${AUTH}/${LOGIN_WITH_PASSWORD}`,
+      data,
+    );
+
+    return response.data;
   },
 
   registerWithPassword: async (data: RegisterData) => {
@@ -75,6 +90,27 @@ export const authService = {
   verifyOtpForLogin: async (data: VerifyOtpForLogin) => {
     const response = await api.patch(
       `${BASE_API_URL}${VERIFY_LOGIN_OTP}`,
+      data,
+    );
+    return response.data;
+  },
+
+  logout: async () => {
+    const response = await api.post(`${BASE_API_URL}/${AUTH}/${LOGOUT}`);
+    return response.data;
+  },
+
+  setPassword: async (data: SetPasswordRequest) => {
+    const response = await api.post(
+      `${BASE_API_URL}/${AUTH}/${SET_PASSWORD}`,
+      data,
+    );
+    return response.data;
+  },
+
+  resetPassword: async (data: ResetPasswordRequest) => {
+    const response = await api.post(
+      `${BASE_API_URL}/${AUTH}/${RESET_PASSWORD}`,
       data,
     );
     return response.data;

@@ -19,3 +19,21 @@ export const loginWithPassword = () => {
     mutationFn: authService.loginWithPassword,
   });
 };
+
+export const logout = () => {
+  return useMutation({
+    mutationFn: authService.logout,
+  });
+};
+
+export const useSetPassword = () => {
+  return useMutation({
+    mutationFn: authService.setPassword,
+  });
+};
+
+export const useResetPassword = () => {
+  return useMutation({
+    mutationFn: authService.resetPassword,
+  });
+};

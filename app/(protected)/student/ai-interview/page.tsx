@@ -181,7 +181,7 @@ export default function AIInterviewPage() {
 
   return (
     <>
-      {/* <WorkInProgressBanner /> */}
+      <WorkInProgressBanner />
       <Loader show={isPageLoading} message="Loading interviews for you" />
       <div className="min-h-screen bg-white px-12 py-8">
         {/* Page Header */}
