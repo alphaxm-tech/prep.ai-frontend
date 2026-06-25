@@ -446,28 +446,29 @@ export default function LoginPage() {
 
           const role = data?.userRole?.name;
 
-          try {
-            // 🔥 CRITICAL FIX: ensure cookie is committed before navigation
-            await fetch("/api/auth/session", {
-              method: "GET",
-              credentials: "include",
-            });
-          } catch (e) {
-            console.log("Session sync failed (non-blocking):", e);
+          const sessionRes = await fetch("/api/auth/session", {
+            method: "GET",
+            credentials: "include",
+          });
+
+          if (!sessionRes.ok) {
+            setLoading(false);
+            showToast(
+              "error",
+              "Login succeeded but session could not be established. Please try again.",
+            );
+            return;
           }
 
-          // // 🔥 SMALL DELAY to avoid SSR race condition
-          setTimeout(() => {
-            if (role === UserRole.ADMIN) {
-              router.replace("/college/1");
-            } else if (role === UserRole.STUDENT) {
-              router.replace(STUDENT_ROUTE);
-            } else if (role === UserRole.SUPER_ADMIN) {
-              router.replace(PLATFORM_ROUTE);
-            } else {
-              router.replace(UNAUTHORIZED_ROUTE);
-            }
-          }, 200);
+          if (role === UserRole.ADMIN) {
+            router.replace("/college/1");
+          } else if (role === UserRole.STUDENT) {
+            router.replace(STUDENT_ROUTE);
+          } else if (role === UserRole.SUPER_ADMIN) {
+            router.replace(PLATFORM_ROUTE);
+          } else {
+            router.replace(UNAUTHORIZED_ROUTE);
+          }
         },
         onError: (data: any) => {
           console.log(data?.response?.data?.error?.message);
@@ -477,9 +478,6 @@ export default function LoginPage() {
               ? data?.response?.data?.error?.message
               : "Unable to access your account. Please contact your college administrator.",
           );
-          // setStep(LoginStates.EMAIL);
-          // setPassword("");
-          // setEmail("");
           setLoading(false);
         },
       },
@@ -543,31 +541,31 @@ export default function LoginPage() {
           setConfirmPassword("");
           // setStep(LoginStates.PASSWORD);
 
-          // User can login
-          try {
-            // 🔥 CRITICAL FIX: ensure cookie is committed before navigation
-            await fetch("/api/auth/session", {
-              method: "GET",
-              credentials: "include",
-            });
-          } catch (e) {
-            console.log("Session sync failed (non-blocking):", e);
-          }
-
           const role = data?.userRole?.name;
 
-          // // 🔥 SMALL DELAY to avoid SSR race condition
-          setTimeout(() => {
-            if (role === UserRole.ADMIN) {
-              router.replace("/college/1");
-            } else if (role === UserRole.STUDENT) {
-              router.replace(STUDENT_ROUTE);
-            } else if (role === UserRole.SUPER_ADMIN) {
-              router.replace(PLATFORM_ROUTE);
-            } else {
-              router.replace(UNAUTHORIZED_ROUTE);
-            }
-          }, 200);
+          const sessionRes = await fetch("/api/auth/session", {
+            method: "GET",
+            credentials: "include",
+          });
+
+          if (!sessionRes.ok) {
+            setLoading(false);
+            showToast(
+              "error",
+              "Password reset succeeded but session could not be established. Please log in again.",
+            );
+            return;
+          }
+
+          if (role === UserRole.ADMIN) {
+            router.replace("/college/1");
+          } else if (role === UserRole.STUDENT) {
+            router.replace(STUDENT_ROUTE);
+          } else if (role === UserRole.SUPER_ADMIN) {
+            router.replace(PLATFORM_ROUTE);
+          } else {
+            router.replace(UNAUTHORIZED_ROUTE);
+          }
         },
         onError: (err: any) => {
           setLoading(false);
@@ -645,33 +643,32 @@ export default function LoginPage() {
               setLastName(parts.slice(1).join(" ") || "");
             }
           } else {
-            // User can login
-            try {
-              // 🔥 CRITICAL FIX: ensure cookie is committed before navigation
-              await fetch("/api/auth/session", {
-                method: "GET",
-                credentials: "include",
-              });
-            } catch (e) {
-              console.log("Session sync failed (non-blocking):", e);
-            }
-
             const role = data?.userRole?.name;
 
-            // // 🔥 SMALL DELAY to avoid SSR race condition
-            setTimeout(() => {
-              if (role === UserRole.ADMIN) {
-                router.replace("/college/1");
-              } else if (role === UserRole.STUDENT) {
-                router.replace(STUDENT_ROUTE);
-              } else if (role === UserRole.SUPER_ADMIN) {
-                router.replace(PLATFORM_ROUTE);
-              } else {
-                router.replace(UNAUTHORIZED_ROUTE);
-              }
-            }, 200);
+            const sessionRes = await fetch("/api/auth/session", {
+              method: "GET",
+              credentials: "include",
+            });
 
-            // showToast(ToastStates.SUCCESS, "You can login");
+            if (!sessionRes.ok) {
+              setLoading(false);
+              showToast(
+                "error",
+                "Account setup succeeded but session could not be established. Please log in.",
+              );
+              setStep(LoginStates.EMAIL);
+              return;
+            }
+
+            if (role === UserRole.ADMIN) {
+              router.replace("/college/1");
+            } else if (role === UserRole.STUDENT) {
+              router.replace(STUDENT_ROUTE);
+            } else if (role === UserRole.SUPER_ADMIN) {
+              router.replace(PLATFORM_ROUTE);
+            } else {
+              router.replace(UNAUTHORIZED_ROUTE);
+            }
           }
         },
         onError: () => {

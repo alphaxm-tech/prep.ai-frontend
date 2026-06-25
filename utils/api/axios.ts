@@ -2,9 +2,9 @@ import axios from "axios";
 import { AUTH, LOGIN, LOGIN_WITH_PASSWORD, REFRESH } from "./endpoints";
 
 const api = axios.create({
-  baseURL:
-    process.env.NEXT_PUBLIC_API_URL || "https://api.aiprepbuddy.com/api/v1",
-  // "http://localhost:8080/api/v1",
+  // In production the Next.js rewrite at /api/v1/* proxies to the backend,
+  // so cookies are set on the frontend domain instead of the backend domain.
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "/api/v1",
 
   withCredentials: true, // REQUIRED for cookies
 });
