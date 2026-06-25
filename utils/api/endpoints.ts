@@ -1,6 +1,5 @@
-export const BASE_API_URL = process.env.BACKEND_URL
-  ? `${process.env.BACKEND_URL}/api/v1`
-  : "http://localhost:8080/api/v1";
+// "https://api.aiprepbuddy.com/api/v1";
+export const BASE_API_URL = "https://prepai-backend-production-fe9c.up.railway.app/api/v1";
 
 export const RESUME = `resume`;
 export const AIINTERVIEW = `ai-interview`;
