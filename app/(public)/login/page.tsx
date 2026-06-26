@@ -27,7 +27,7 @@ import {
   UNAUTHORIZED_ROUTE,
 } from "@/utils/CONSTANTS";
 import { LoginErrors, LoginStates, ToastStates, UserRole } from "@/utils/enums";
-import { AUTH, GOOGLE, LOGIN } from "@/utils/api/endpoints";
+// import { AUTH, GOOGLE, LOGIN } from "@/utils/api/endpoints";
 import { validatePassword } from "@/lib/validate-password";
 
 // UI-only demo credentials (no backend required)
@@ -684,19 +684,19 @@ export default function LoginPage() {
     );
   }, [email, password, confirmPassword, router]);
 
-  const handleGoogleLogin = () => {
-    setLoading(true);
-    setLoadingMessage("Logging you in via google....");
-    // replace() instead of href= so /login is removed from history.
-    // The full OAuth redirect chain (HTTP 302s) follows transparently,
-    // and the final destination (/student) replaces this entry — back button
-    // will skip Google entirely and go to the page before /login.
-    setTimeout(() => {
-      window.location.replace(
-        `${process.env.NEXT_PUBLIC_API_URL}/${AUTH}/${GOOGLE}/${LOGIN}`,
-      );
-    }, 100);
-  };
+  // const handleGoogleLogin = () => {
+  //   setLoading(true);
+  //   setLoadingMessage("Logging you in via google....");
+  //   // replace() instead of href= so /login is removed from history.
+  //   // The full OAuth redirect chain (HTTP 302s) follows transparently,
+  //   // and the final destination (/student) replaces this entry — back button
+  //   // will skip Google entirely and go to the page before /login.
+  //   setTimeout(() => {
+  //     window.location.replace(
+  //       `${process.env.NEXT_PUBLIC_API_URL}/${AUTH}/${GOOGLE}/${LOGIN}`,
+  //     );
+  //   }, 100);
+  // };
 
   const handleForbidden = (data: any) => {
     switch (data?.reason) {
@@ -816,7 +816,7 @@ export default function LoginPage() {
     <>
       <Loader show={loading || otpLoading} message={loadingMessage} />
 
-      <div className="min-h-screen flex flex-col items-center justify-start bg-yellow-50/40 px-4 pt-6 sm:pt-10">
+      <div className="min-h-screen flex flex-col items-center justify-start bg-yellow-50 px-4 pt-6 sm:pt-10">
         {/* Header Section */}
         <div className="w-full max-w-4xl mb-6">
           <div className="text-center">
@@ -1419,7 +1419,7 @@ export default function LoginPage() {
               )}
             </form>
 
-            <div className="my-4 flex items-center">
+            {/* <div className="my-4 flex items-center">
               <hr className="flex-grow border-gray-300" />
               <span className="mx-2 text-gray-500 text-sm">OR</span>
               <hr className="flex-grow border-gray-300" />
@@ -1456,7 +1456,7 @@ export default function LoginPage() {
               <span className="text-gray-700 font-medium">
                 Continue with Google
               </span>
-            </button>
+            </button> */}
           </div>
         </div>
       </div>
