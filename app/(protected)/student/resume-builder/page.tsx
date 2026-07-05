@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import WorkInProgressBanner from "@/components/WorkInProgressBanner";
+import Loader from "@/components/Loader";
 import { resumeService } from "@/utils/services/resume.service";
 import { SkillsPanel, Tag as SkillTag } from "@/components/resume/SkillsPanel";
 import EducationForm from "@/components/resume/EducationForm";
@@ -24,6 +25,7 @@ import {
   Education,
   Project,
   Resume,
+  ResumeResponse,
   UsersResumeResponse,
   WorkExperience,
 } from "@/utils/api/types/resume.types";
@@ -44,6 +46,78 @@ import {
 } from "@/utils/resume-draft-storage";
 
 // type TemplateKey = "modern" | "classic" | "creative" | "minimal" | "standard";
+
+// Backend expects RFC3339 timestamps for start_year/end_year, but the forms
+// only collect a bare year (or "Present"). Convert before sending to the API.
+const yearToISODate = (value?: string): string => {
+  if (!value) return "";
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  if (/^present$/i.test(trimmed)) {
+    return new Date().toISOString();
+  }
+  const year = Number(trimmed);
+  if (Number.isInteger(year) && trimmed.length <= 4) {
+    return new Date(Date.UTC(year, 0, 1)).toISOString();
+  }
+  return trimmed;
+};
+
+// Inverse of yearToISODate — the complete-resume-by-id endpoint returns
+// full ISO timestamps for education/experience dates, but the templates
+// only render a bare year (or "Present" for an open-ended end date).
+const isoDateToYear = (value?: string): string => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return String(date.getUTCFullYear());
+};
+
+// Maps the raw GET /resume/get-complete-resume-by-id/:id response onto the
+// AddResumeRequest shape the five resume templates already know how to
+// render (same shape used while building/previewing a new resume).
+// Note: `skills` here holds display names (strings) for rendering, even
+// though AddResumeRequest types it as number[] for the save payload — the
+// same pre-existing conflation `assembledDataWithDefaults` below relies on,
+// so this is typed loosely rather than forced into AddResumeRequest.
+const mapCompleteResumeToTemplateData = (resume: ResumeResponse): any => ({
+  resume_details: {
+    format_id: resume.format_id,
+    title: resume.title ?? "",
+    is_default: resume.is_default,
+  },
+  user: {
+    location: resume.user?.location ?? "",
+    phone: resume.user?.phone ?? "",
+    objective: resume.user?.objective ?? "",
+    portfolio_website_url: resume.user?.portfolio_link ?? "",
+    github_url: resume.user?.github_link ?? "",
+    linkedin_url: resume.user?.linkedin_link ?? "",
+  },
+  skills: (resume.skills ?? []).map(
+    (skill) => skill.display_name || skill.skill_key,
+  ),
+  softskills: resume.soft_skills ?? [],
+  education: (resume.education ?? []).map((ed) => ({
+    degree: ed.degree,
+    institute: ed.institute ?? "",
+    location: ed.location ?? "",
+    start_year: isoDateToYear(ed.start_date),
+    end_year: isoDateToYear(ed.end_date) || "Present",
+    grade: ed.grade ?? "",
+  })),
+  experience: (resume.work_experience ?? []).map((exp) => ({
+    company: exp.company,
+    role: exp.role,
+    start_year: isoDateToYear(exp.start_date),
+    end_year: isoDateToYear(exp.end_date) || "Present",
+    description: exp.description ?? "",
+  })),
+  projects: (resume.projects ?? []).map((p) => ({
+    name: p.title,
+    description: p.description ?? "",
+  })),
+});
 
 export default function ResumeBuilderPage() {
   // --- MAIN LIFTED STATE (single source of truth for basic details) ---
@@ -77,7 +151,6 @@ export default function ResumeBuilderPage() {
   const RESULT_PDF_URL = "/pdfs/Resume.pdf";
 
   const user = useUser();
-  console.log(user?.services[0]?.service_config?.max_resumes_per_user);
 
   // --- Local draft persistence (unsaved-resume data survives refresh/tab close) ---
   const [isDraftHydrated, setIsDraftHydrated] = useState(false);
@@ -94,8 +167,7 @@ export default function ResumeBuilderPage() {
       if (draft.portfolioLink !== undefined)
         setPortfolioLink(draft.portfolioLink);
       if (draft.githubLink !== undefined) setGithubLink(draft.githubLink);
-      if (draft.linkedinLink !== undefined)
-        setLinkedinLink(draft.linkedinLink);
+      if (draft.linkedinLink !== undefined) setLinkedinLink(draft.linkedinLink);
       if (draft.isDefault !== undefined) setIsDefault(draft.isDefault);
       if (draft.technicalSkills) setTechnicalSkills(draft.technicalSkills);
       if (draft.softSkills) setSoftSkills(draft.softSkills);
@@ -117,7 +189,7 @@ export default function ResumeBuilderPage() {
     // restored from a local draft) with the profile default.
     setLocation((prev) => prev || user?.user?.location || "");
     setPhone((prev) => prev || user?.user?.phone_number || "");
-    setTotalResumes(user?.services[0]?.service_config?.max_resumes_per_user);
+    setTotalResumes(user?.services?.[0]?.service_config?.max_resumes_per_user);
   }, [user]);
 
   // Autosave the in-progress form into localStorage on every change. Skipped
@@ -177,7 +249,8 @@ export default function ResumeBuilderPage() {
   // const totalResumes = service?.services_config
   //   ?.max_resumes_per_student as number;
 
-  const { data: resumeData } = useGetResumeFormats();
+  const { data: resumeData, isLoading: resumeFormatLoading } =
+    useGetResumeFormats();
   const { data: skillsMasterData } = useGetSkillsMaster();
   const { data: usersAllResumes } = useGetUsersAllResumes();
   const usersAllResumesLength = usersAllResumes?.resumes?.length;
@@ -382,7 +455,16 @@ export default function ResumeBuilderPage() {
       github_url: githubLink,
     },
     skills: technicalSkillIds,
-    experience: experiences,
+    education: educations.map((e) => ({
+      ...e,
+      start_year: yearToISODate(e.start_year),
+      end_year: yearToISODate(e.end_year),
+    })),
+    experience: experiences.map((exp) => ({
+      ...exp,
+      start_year: yearToISODate(exp.start_year),
+      end_year: yearToISODate(exp.end_year),
+    })),
     projects: projects,
   };
 
@@ -834,399 +916,423 @@ export default function ResumeBuilderPage() {
 
   const disableSave = remainingResumes === 0 || hasAnyErrors(validationErrors);
 
+  // Once the user has attempted a save (validationErrors is populated), keep
+  // the displayed red borders in sync with real-time validity: as soon as a
+  // previously-invalid field becomes valid, its red border should clear
+  // immediately rather than waiting for the next Save click.
   useEffect(() => {
+    setValidationErrors((prev) =>
+      Object.keys(prev).length === 0 ? prev : currentValidation,
+    );
+
     if (!hasAnyErrors(currentValidation)) {
-      setValidationErrors({});
       setQuotaError(null);
     }
   }, [currentValidation]);
 
-  const FORMAT_ID_TO_KEY: Record<number, string> = {
-    1: "creative",
-    2: "modern",
-    3: "professional",
-    4: "standard",
-    5: "minimalist",
+  // Fallback used only until useGetResumeFormats() has loaded; the dynamic
+  // format_id -> format_key map derived from that response (below) is the
+  // source of truth since format IDs are assigned by the backend.
+  const FALLBACK_FORMAT_ID_TO_KEY: Record<number, ResumeFormats> = {
+    1: ResumeFormats.CREATIVE,
+    2: ResumeFormats.MODERN,
+    3: ResumeFormats.CLASSIC,
+    4: ResumeFormats.STANDARD,
+    5: ResumeFormats.MINIMAL,
   };
 
-  const renderResumeByFormat = (userResumeByIDData: AddResumeRequest) => {
-    const formatId = userResumeByIDData?.resume_details?.format_id;
-    const formatKey = formatId ? FORMAT_ID_TO_KEY[formatId] : undefined;
-    const data: AddResumeRequest = {
-      resume_details: userResumeByIDData.resume_details,
-      user: userResumeByIDData?.user,
-      skills: userResumeByIDData?.skills,
-      softskills: userResumeByIDData?.softskills,
-      education: userResumeByIDData?.education,
-      experience: userResumeByIDData?.experience,
-      projects: userResumeByIDData?.projects,
-    };
+  const formatIdToFormatKey = useMemo(() => {
+    const map: Record<number, string> = {};
+    resumeData?.resumeFormats?.forEach((f: any) => {
+      map[f.format_id] = f.format_key;
+    });
+    return map;
+  }, [resumeData?.resumeFormats]);
 
-    const props = {
-      data,
-      showPlaceholders: false,
-      fullName: userResumeByIDData.user?.full_name,
-      email: userResumeByIDData.user?.email,
-    };
-
+  const renderTemplateByFormatKey = (
+    formatKey: string | undefined,
+    props: { data: any; showPlaceholders: boolean; fullName?: string; email?: string },
+  ) => {
     switch (formatKey) {
-      case "creative":
+      case ResumeFormats.CREATIVE:
         return <CreativeResumeTemplate {...props} />;
-      case "classic":
+      case ResumeFormats.CLASSIC:
         return <ProfessionalResumeTemplateVertical {...props} />;
-      case "modern":
+      case ResumeFormats.MODERN:
         return <ModernResumeTemplate {...props} />;
-      case "minimal":
+      case ResumeFormats.MINIMAL:
         return <MinimalResumeTemplate {...props} />;
-      case "standard":
+      case ResumeFormats.STANDARD:
       default:
         return <StandardResumeTemplate {...props} />;
     }
   };
 
-  const handleDropdownClick = (e: any) => {
-    console.log(e.target.value);
+  const renderResumeByFormat = (completeResume: ResumeResponse) => {
+    const formatKey =
+      formatIdToFormatKey[completeResume.format_id] ??
+      FALLBACK_FORMAT_ID_TO_KEY[completeResume.format_id];
+
+    const data = mapCompleteResumeToTemplateData(completeResume);
+
+    return renderTemplateByFormatKey(formatKey, {
+      data,
+      showPlaceholders: false,
+      fullName: fullName || user?.user?.full_name,
+      email: email || user?.user?.email,
+    });
   };
 
-  const resumeId = selectedResume?.ResumeID as string;
+  const resumeId = selectedResume?.ResumeID ?? "";
   const {
     data: userResumeByIDData,
-    isLoading,
-    error,
+    isLoading: isCompleteResumeLoading,
+    error: completeResumeError,
   } = useGetCompleteResumeByID(resumeId);
 
+  if (!user?.services?.[0]?.service_config?.max_resumes_per_user) {
+    return <Loader show message="Loading your profile..." />;
+  }
+
   return (
-    <div className="min-h-screen bg-white py-8 px-3 sm:px-4 md:px-6 lg:px-8">
-      {/* <WorkInProgressBanner /> */}
-      <main className="w-full">
-        {/* Heading + Dropdown */}
-        <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-6 max-w-[1550px] mx-auto">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-800">
-              AI-Powered Resume Builder
-            </h1>
-            <p className="text-sm text-gray-600 mt-1">
-              Build your resume in real time with instant live preview and
-              AI-powered enhancements
-            </p>
-          </div>
-
-          <div className="flex items-center gap-4">
-            {/* Resume Selector */}
-            <div className="relative">
-              <ResumeDropdown
-                resumes={usersAllResumes!?.resumes}
-                onSelect={(resume) => {
-                  setSelectedResume(resume);
-                  setShowResumeViewModal(true);
-                }}
-                // onClick={handleDropdownClick}
-              />
-            </div>
-
-            {/* Quota Status */}
-            <div
-              className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium border ${
-                remainingResumes === 0
-                  ? "bg-red-50 border-red-200 text-red-700"
-                  : "bg-gray-50 border-gray-200 text-gray-700"
-              }`}
-            >
-              {/* Icon */}
-              <span
-                className={`text-base ${
-                  remainingResumes === 0 ? "text-red-500" : "text-gray-500"
-                }`}
-              >
-                📄
-              </span>
-
-              {/* Text */}
-              <div className="flex items-baseline gap-1">
-                <span className="font-semibold">
-                  {usersAllResumesLength}/{totalResumes ? totalResumes : ""}
-                </span>
-                <span className="text-xs opacity-80">resumes</span>
-              </div>
-
-              {/* Divider */}
-              <span className="mx-1 h-3 w-px bg-gray-300 opacity-50" />
-
-              {/* Remaining */}
-              <span
-                className={`text-xs font-semibold ${
-                  remainingResumes === 0 ? "text-red-600" : "text-gray-500"
-                }`}
-              >
-                {remainingResumes ? remainingResumes : ""}
-                {remainingResumes ? " left" : ""}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {remainingResumes === 0 && (
-          <div className="max-w-[1550px] mx-auto mb-6">
-            <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
-              <svg
-                className="w-5 h-5 text-red-600 flex-shrink-0"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                aria-hidden
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 9v2m0 4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"
-                />
-              </svg>
-
-              <p className="text-sm font-medium text-red-700">
-                You’ve reached your resume limit.
-                <span className="font-semibold">
-                  {" "}
-                  Please delete an existing resume to create a new one.
-                </span>
+    <>
+      <Loader
+        show={resumeFormatLoading}
+        message="Loading your profile..."
+      ></Loader>
+      <div className="min-h-screen bg-white py-8 px-3 sm:px-4 md:px-6 lg:px-8">
+        {/* <WorkInProgressBanner /> */}
+        <main className="w-full">
+          {/* Heading + Dropdown */}
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-6 max-w-[1550px] mx-auto">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-800">
+                AI-Powered Resume Builder
+              </h1>
+              <p className="text-sm text-gray-600 mt-1">
+                Build your resume in real time with instant live preview and
+                AI-powered enhancements
               </p>
             </div>
-          </div>
-        )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-6 max-w-[1550px] mx-auto">
-          {/* Left: forms */}
+            <div className="flex items-center gap-4">
+              {/* Resume Selector */}
+              <div className="relative">
+                <ResumeDropdown
+                  resumes={usersAllResumes!?.resumes}
+                  onSelect={(resume) => {
+                    setSelectedResume(resume);
+                    setShowResumeViewModal(true);
+                  }}
+                  // onClick={handleDropdownClick}
+                />
+              </div>
 
-          <div className="space-y-4">
-            <VerticalAccordion
-              isOpenProp={true}
-              title="Personal details"
-              isComplete={isPersonalDetailsComplete}
-            >
-              <BasicDetails
-                isDefault={isDefault}
-                setIsDefault={setIsDefault}
-                resumeTitle={resumeTitle}
-                setResumeTitle={setResumeTitle}
-                fullName={fullName}
-                email={email}
-                phone={phone}
-                setPhone={setPhone}
-                location={location}
-                setLocation={setLocation}
-                portfolioLink={portfolioLink}
-                setPortfolioLink={setPortfolioLink}
-                githubLink={githubLink}
-                setGithubLink={setGithubLink}
-                linkedinLink={linkedinLink}
-                setLinkedinLink={setLinkedinLink}
-                summary={summary}
-                setSummary={setSummary}
-                validationErrors={validationErrors}
-              />
-            </VerticalAccordion>
+              {/* Quota Status */}
+              <div
+                className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium border ${
+                  remainingResumes === 0
+                    ? "bg-red-50 border-red-200 text-red-700"
+                    : "bg-gray-50 border-gray-200 text-gray-700"
+                }`}
+              >
+                {/* Icon */}
+                <span
+                  className={`text-base ${
+                    remainingResumes === 0 ? "text-red-500" : "text-gray-500"
+                  }`}
+                >
+                  📄
+                </span>
 
-            <VerticalAccordion
-              isOpenProp={false}
-              title="Skills"
-              isComplete={isSkillsComplete}
-            >
-              <SkillsPanel
-                skillsMaster={skillsMasterData}
-                skills={technicalSkills}
-                setSkills={
-                  setTechnicalSkills as React.Dispatch<
-                    React.SetStateAction<SkillTag[]>
-                  >
-                }
-                softSkills={softSkills}
-                setSoftSkills={
-                  setSoftSkills as React.Dispatch<
-                    React.SetStateAction<SkillTag[]>
-                  >
-                }
-                validation={{
-                  skillsMissing: !!validationErrors.technicalSkills,
-                  softSkillsMissing: !!validationErrors.softSkills,
-                }}
-              />
-            </VerticalAccordion>
+                {/* Text */}
+                <div className="flex items-baseline gap-1">
+                  <span className="font-semibold">
+                    {usersAllResumesLength}/{totalResumes ? totalResumes : ""}
+                  </span>
+                  <span className="text-xs opacity-80">resumes</span>
+                </div>
 
-            <VerticalAccordion
-              isOpenProp={false}
-              title="Education"
-              isComplete={isEducationComplete}
-            >
-              <EducationForm
-                educations={educations}
-                setEducations={setEducations}
-                validationErrors={validationErrors}
-              />
-            </VerticalAccordion>
+                {/* Divider */}
+                <span className="mx-1 h-3 w-px bg-gray-300 opacity-50" />
 
-            <VerticalAccordion
-              isOpenProp={false}
-              title="Work Experience"
-              isComplete={true}
-            >
-              <WorkExperienceForm
-                experiences={experiences}
-                setExperiences={setExperiences}
-                // validationErrors={validationErrors}
-              />
-            </VerticalAccordion>
-
-            <VerticalAccordion
-              isOpenProp={false}
-              title="Project Details"
-              isComplete={true}
-            >
-              <ProjectsForm
-                projects={projects}
-                setProjects={setProjects}
-                // validationErrors={validationErrors}
-              />
-            </VerticalAccordion>
+                {/* Remaining */}
+                <span
+                  className={`text-xs font-semibold ${
+                    remainingResumes === 0 ? "text-red-600" : "text-gray-500"
+                  }`}
+                >
+                  {remainingResumes ? remainingResumes : ""}
+                  {remainingResumes ? " left" : ""}
+                </span>
+              </div>
+            </div>
           </div>
 
-          {/* Right: preview */}
-          <div className="space-y-4">
-            <div className="sticky top-20">
-              <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="text-sm font-semibold text-gray-700">
-                    Template Preview
-                  </div>
+          {remainingResumes === 0 && (
+            <div className="max-w-[1550px] mx-auto mb-6">
+              <div className="flex items-center gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3">
+                <svg
+                  className="w-5 h-5 text-red-600 flex-shrink-0"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  aria-hidden
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01M12 2a10 10 0 100 20 10 10 0 000-20z"
+                  />
+                </svg>
 
-                  <div className="flex items-center gap-2">
-                    <select
-                      value={resumeFormat}
-                      onChange={(e) => {
-                        setResumeFormat(e.target.value as ResumeFormats);
-                      }}
-                      className="pl-3 pr-8 py-2 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400"
+                <p className="text-sm font-medium text-red-700">
+                  You’ve reached your resume limit.
+                  <span className="font-semibold">
+                    {" "}
+                    Please delete an existing resume to create a new one.
+                  </span>
+                </p>
+              </div>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-6 max-w-[1550px] mx-auto">
+            {/* Left: forms */}
+
+            <div className="space-y-4">
+              <VerticalAccordion
+                isOpenProp={true}
+                title="Personal details"
+                isComplete={isPersonalDetailsComplete}
+              >
+                <BasicDetails
+                  isDefault={isDefault}
+                  setIsDefault={setIsDefault}
+                  resumeTitle={resumeTitle}
+                  setResumeTitle={setResumeTitle}
+                  fullName={fullName}
+                  email={email}
+                  phone={phone}
+                  setPhone={setPhone}
+                  location={location}
+                  setLocation={setLocation}
+                  portfolioLink={portfolioLink}
+                  setPortfolioLink={setPortfolioLink}
+                  githubLink={githubLink}
+                  setGithubLink={setGithubLink}
+                  linkedinLink={linkedinLink}
+                  setLinkedinLink={setLinkedinLink}
+                  summary={summary}
+                  setSummary={setSummary}
+                  validationErrors={validationErrors}
+                />
+              </VerticalAccordion>
+
+              <VerticalAccordion
+                isOpenProp={false}
+                title="Skills"
+                isComplete={isSkillsComplete}
+              >
+                <SkillsPanel
+                  skillsMaster={skillsMasterData}
+                  skills={technicalSkills}
+                  setSkills={
+                    setTechnicalSkills as React.Dispatch<
+                      React.SetStateAction<SkillTag[]>
                     >
-                      {
-                        (resumeData?.resumeFormats &&
-                        resumeData?.resumeFormats.length
-                          ? resumeData?.resumeFormats?.map((f: any) => (
-                              <option key={f.format_id} value={f.format_key}>
-                                {f.title}
-                              </option>
-                            ))
-                          : localFormats.map((f) => (
-                              <option key={f.key} value={f.key}>
-                                {f.title}
-                              </option>
-                            ))) as any
-                      }
-                    </select>
+                  }
+                  softSkills={softSkills}
+                  setSoftSkills={
+                    setSoftSkills as React.Dispatch<
+                      React.SetStateAction<SkillTag[]>
+                    >
+                  }
+                  validation={{
+                    skillsMissing: !!validationErrors.technicalSkills,
+                    softSkillsMissing: !!validationErrors.softSkills,
+                  }}
+                />
+              </VerticalAccordion>
 
-                    <button
-                      onClick={disableSave ? undefined : handleSaveClick}
-                      disabled={disableSave}
-                      className={`px-3 py-2 rounded-lg text-white font-bold text-sm transition
+              <VerticalAccordion
+                isOpenProp={false}
+                title="Education"
+                isComplete={isEducationComplete}
+              >
+                <EducationForm
+                  educations={educations}
+                  setEducations={setEducations}
+                  validationErrors={validationErrors}
+                />
+              </VerticalAccordion>
+
+              <VerticalAccordion
+                isOpenProp={false}
+                title="Work Experience"
+                isComplete={true}
+              >
+                <WorkExperienceForm
+                  experiences={experiences}
+                  setExperiences={setExperiences}
+                  // validationErrors={validationErrors}
+                />
+              </VerticalAccordion>
+
+              <VerticalAccordion
+                isOpenProp={false}
+                title="Project Details"
+                isComplete={true}
+              >
+                <ProjectsForm
+                  projects={projects}
+                  setProjects={setProjects}
+                  // validationErrors={validationErrors}
+                />
+              </VerticalAccordion>
+            </div>
+
+            {/* Right: preview */}
+            <div className="space-y-4">
+              <div className="sticky top-20">
+                <div className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="text-sm font-semibold text-gray-700">
+                      Template Preview
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={resumeFormat}
+                        onChange={(e) => {
+                          setResumeFormat(e.target.value as ResumeFormats);
+                        }}
+                        className="pl-3 pr-8 py-2 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400"
+                      >
+                        {
+                          (resumeData?.resumeFormats &&
+                          resumeData?.resumeFormats.length
+                            ? resumeData?.resumeFormats?.map((f: any) => (
+                                <option key={f.format_id} value={f.format_key}>
+                                  {f.title}
+                                </option>
+                              ))
+                            : localFormats.map((f) => (
+                                <option key={f.key} value={f.key}>
+                                  {f.title}
+                                </option>
+                              ))) as any
+                        }
+                      </select>
+
+                      <button
+                        onClick={disableSave ? undefined : handleSaveClick}
+                        disabled={disableSave}
+                        className={`px-3 py-2 rounded-lg text-white font-bold text-sm transition
                                     ${
                                       disableSave
                                         ? "bg-gray-300 cursor-not-allowed"
                                         : "bg-yellow-400 hover:bg-yellow-500"
                                     }
                               `}
-                      title={
-                        remainingResumes === 0
-                          ? `Resume limit reached (${usedResumes}/${totalResumes})`
-                          : hasAnyErrors(validationErrors)
-                            ? "Fill required fields to save"
-                            : "Save Resume"
-                      }
-                    >
-                      Save Resume
-                    </button>
+                        title={
+                          remainingResumes === 0
+                            ? `Resume limit reached (${usedResumes}/${totalResumes})`
+                            : hasAnyErrors(validationErrors)
+                              ? "Fill required fields to save"
+                              : "Save Resume"
+                        }
+                      >
+                        Save Resume
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Inline compact preview: showPlaceholders = true */}
+                  <div className="rounded-md overflow-hidden">
+                    <div className="bg-white">
+                      {renderSelectedTemplate(true)}
+                    </div>
                   </div>
                 </div>
-
-                {/* Inline compact preview: showPlaceholders = true */}
-                <div className="rounded-md overflow-hidden">
-                  <div className="bg-white">{renderSelectedTemplate(true)}</div>
-                </div>
               </div>
-            </div>
 
-            {/* Modal preview (clean): showPlaceholders = false */}
-            {showPreviewModal && (
-              <div className="fixed inset-0 z-50 flex items-start md:items-center justify-center p-4">
-                <div
-                  className="absolute inset-0 bg-black/40"
-                  onClick={() => setShowPreviewModal(false)}
-                />
-                <div className="relative max-w-4xl w-full max-h-[90vh] overflow-auto rounded-2xl bg-white shadow-xl border border-gray-100 z-10">
-                  <div className="flex items-center justify-between p-4 border-b">
-                    <div className="text-sm font-semibold text-gray-800">
-                      Resume Preview
-                    </div>
+              {/* Modal preview (clean): showPlaceholders = false */}
+              {showPreviewModal && (
+                <div className="fixed inset-0 z-50 flex items-start md:items-center justify-center p-4">
+                  <div
+                    className="absolute inset-0 bg-black/40"
+                    onClick={() => setShowPreviewModal(false)}
+                  />
+                  <div className="relative max-w-4xl w-full max-h-[90vh] overflow-auto rounded-2xl bg-white shadow-xl border border-gray-100 z-10">
+                    <div className="flex items-center justify-between p-4 border-b">
+                      <div className="text-sm font-semibold text-gray-800">
+                        Resume Preview
+                      </div>
 
-                    {/* Buttons grouped on the right */}
-                    <div className="flex items-center gap-2">
-                      <button
-                        // onClick={onDownloadPrint}
-                        onClick={handleDownloadPdf}
-                        disabled={isDownloading}
-                        aria-label="Download resume"
-                        title="Download resume"
-                        className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-white text-sm font-semibold shadow-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-blue-300 ${
-                          isDownloading
-                            ? "bg-blue-300 cursor-not-allowed"
-                            : "bg-blue-500 hover:bg-blue-600 focus:bg-blue-700"
-                        }`}
-                      >
-                        {isDownloading ? (
-                          <>
-                            <svg
-                              className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                              xmlns="http://www.w3.org/2000/svg"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                            >
-                              <circle
-                                className="opacity-25"
-                                cx="12"
-                                cy="12"
-                                r="10"
+                      {/* Buttons grouped on the right */}
+                      <div className="flex items-center gap-2">
+                        <button
+                          // onClick={onDownloadPrint}
+                          onClick={handleDownloadPdf}
+                          disabled={isDownloading}
+                          aria-label="Download resume"
+                          title="Download resume"
+                          className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-white text-sm font-semibold shadow-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-blue-300 ${
+                            isDownloading
+                              ? "bg-blue-300 cursor-not-allowed"
+                              : "bg-blue-500 hover:bg-blue-600 focus:bg-blue-700"
+                          }`}
+                        >
+                          {isDownloading ? (
+                            <>
+                              <svg
+                                className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                              >
+                                <circle
+                                  className="opacity-25"
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                ></circle>
+                                <path
+                                  className="opacity-75"
+                                  fill="currentColor"
+                                  d="M4 12a8 8 0 018-8v8z"
+                                ></path>
+                              </svg>
+                              Preparing PDF...
+                            </>
+                          ) : (
+                            <>
+                              <svg
+                                className="w-4 h-4"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
                                 stroke="currentColor"
-                                strokeWidth="4"
-                              ></circle>
-                              <path
-                                className="opacity-75"
-                                fill="currentColor"
-                                d="M4 12a8 8 0 018-8v8z"
-                              ></path>
-                            </svg>
-                            Preparing PDF...
-                          </>
-                        ) : (
-                          <>
-                            <svg
-                              className="w-4 h-4"
-                              xmlns="http://www.w3.org/2000/svg"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                              aria-hidden="true"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"
-                              />
-                            </svg>
-                            Download
-                          </>
-                        )}
-                      </button>
+                                aria-hidden="true"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth="2"
+                                  d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"
+                                />
+                              </svg>
+                              Download
+                            </>
+                          )}
+                        </button>
 
-                      {/* <button
+                        {/* <button
                         onClick={handleFinalSave}
                         aria-label="Save resume"
                         title="Save resume"
@@ -1255,86 +1361,103 @@ export default function ResumeBuilderPage() {
                         Save
                       </button> */}
 
-                      <button
-                        onClick={() => setShowPreviewModal(false)}
-                        aria-label="Close preview"
-                        title="Close preview"
-                        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-gray-100 hover:bg-gray-200 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-200 transition"
-                      >
-                        Close
-                      </button>
+                        <button
+                          onClick={() => setShowPreviewModal(false)}
+                          aria-label="Close preview"
+                          title="Close preview"
+                          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-md bg-gray-100 hover:bg-gray-200 text-sm text-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-200 transition"
+                        >
+                          Close
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* IMPORTANT: wrap the actual preview with modalRef for capture */}
+                    <div className="p-6">
+                      <div ref={modalRef}>{renderSelectedTemplate(false)}</div>
                     </div>
                   </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </main>
 
-                  {/* IMPORTANT: wrap the actual preview with modalRef for capture */}
-                  <div className="p-6">
-                    <div ref={modalRef}>{renderSelectedTemplate(false)}</div>
+        {/* Helpful inline validation & quota hints */}
+        <div className="fixed bottom-6 right-6 space-y-2">
+          {hasAnyErrors(validationErrors) && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-md text-sm shadow-sm">
+              Please fill required fields highlighted in red before saving.
+            </div>
+          )}
+
+          {quotaError && (
+            <div className="bg-orange-50 border border-orange-200 text-orange-700 px-3 py-2 rounded-md text-sm shadow-sm">
+              {quotaError}
+            </div>
+          )}
+
+          {!quotaError && !hasAnyErrors(validationErrors) && !canCreateMore && (
+            <div className="bg-orange-50 border border-orange-200 text-orange-700 px-3 py-2 rounded-md text-sm shadow-sm">
+              You've reached the resume creation limit ({usedResumes}/
+              {totalResumes}).
+            </div>
+          )}
+        </div>
+
+        {showResumeViewModal && selectedResume && (
+          <div className="fixed inset-0 z-50 flex items-start md:items-center justify-center p-4">
+            {/* Overlay */}
+            <div
+              className="absolute inset-0 bg-black/40"
+              onClick={() => setShowResumeViewModal(false)}
+            />
+
+            {/* Modal */}
+            <div className="relative max-w-4xl w-full max-h-[90vh] overflow-auto rounded-2xl bg-white shadow-xl border border-gray-100 z-10">
+              {/* Header */}
+              <div className="flex items-center justify-between p-4 border-b">
+                <div>
+                  <div className="text-sm font-semibold text-gray-800">
+                    {selectedResume.Title}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    Format:{" "}
+                    {resumeData?.resumeFormats?.find(
+                      (f) => f.format_id === selectedResume.FormatID,
+                    )?.title ?? selectedResume.FormatID}
                   </div>
                 </div>
+
+                <button
+                  onClick={() => setShowResumeViewModal(false)}
+                  className="px-3 py-1.5 rounded-md bg-gray-100 hover:bg-gray-200 text-sm text-gray-700"
+                >
+                  Close
+                </button>
               </div>
-            )}
-          </div>
-        </div>
-      </main>
 
-      {/* Helpful inline validation & quota hints */}
-      <div className="fixed bottom-6 right-6 space-y-2">
-        {hasAnyErrors(validationErrors) && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-3 py-2 rounded-md text-sm shadow-sm">
-            Please fill required fields highlighted in red before saving.
-          </div>
-        )}
+              {/* Content */}
+              <div className="p-6">
+                {isCompleteResumeLoading && (
+                  <Loader show message="Loading resume..." />
+                )}
 
-        {quotaError && (
-          <div className="bg-orange-50 border border-orange-200 text-orange-700 px-3 py-2 rounded-md text-sm shadow-sm">
-            {quotaError}
-          </div>
-        )}
+                {!isCompleteResumeLoading && completeResumeError && (
+                  <p className="text-sm text-red-600 text-center py-8">
+                    Failed to load this resume. Please try again.
+                  </p>
+                )}
 
-        {!quotaError && !hasAnyErrors(validationErrors) && !canCreateMore && (
-          <div className="bg-orange-50 border border-orange-200 text-orange-700 px-3 py-2 rounded-md text-sm shadow-sm">
-            You've reached the resume creation limit ({usedResumes}/
-            {totalResumes}).
+                {!isCompleteResumeLoading &&
+                  !completeResumeError &&
+                  userResumeByIDData &&
+                  renderResumeByFormat(userResumeByIDData)}
+              </div>
+            </div>
           </div>
         )}
       </div>
-
-      {showResumeViewModal && selectedResume && (
-        <div className="fixed inset-0 z-50 flex items-start md:items-center justify-center p-4">
-          {/* Overlay */}
-          <div
-            className="absolute inset-0 bg-black/40"
-            onClick={() => setShowResumeViewModal(false)}
-          />
-
-          {/* Modal */}
-          <div className="relative max-w-4xl w-full max-h-[90vh] overflow-auto rounded-2xl bg-white shadow-xl border border-gray-100 z-10">
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b">
-              <div>
-                <div className="text-sm font-semibold text-gray-800">
-                  {/* {selectedResume.title} */}
-                </div>
-                <div className="text-xs text-gray-500">
-                  {/* Format: {selectedResume.format_key} */}
-                </div>
-              </div>
-
-              <button
-                onClick={() => setShowResumeViewModal(false)}
-                className="px-3 py-1.5 rounded-md bg-gray-100 hover:bg-gray-200 text-sm text-gray-700"
-              >
-                Close
-              </button>
-            </div>
-
-            {/* Content */}
-            <div className="p-6">
-              {/* {renderResumeByFormat(userResumeByIDData!)} */}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
+    </>
   );
 }

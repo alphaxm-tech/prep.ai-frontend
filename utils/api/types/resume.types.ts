@@ -83,14 +83,69 @@ export type UsersResumeResponse = {
   resumes: resumes[];
 };
 
+// Shape returned by GET /resume/get-complete-resume-by-id/:resume_id
+export type CompleteResumeUser = {
+  location?: string;
+  phone?: string;
+  objective?: string;
+  portfolio_link?: string;
+  github_link?: string;
+  linkedin_link?: string;
+};
+
+export type CompleteResumeSkill = {
+  skill_id: number;
+  skill_key: string;
+  display_name: string;
+  category?: string;
+  proficiency?: string;
+  summary_text?: string;
+};
+
+export type CompleteResumeEducation = {
+  education_id: number;
+  degree: string;
+  institute?: string;
+  location?: string;
+  start_date?: string;
+  end_date?: string;
+  grade?: string;
+  sort_order: number;
+};
+
+export type CompleteResumeWorkExperience = {
+  work_id: number;
+  company: string;
+  role: string;
+  start_date?: string;
+  end_date?: string;
+  description?: string;
+  sort_order: number;
+};
+
+export type CompleteResumeProject = {
+  project_id: number;
+  title: string;
+  description?: string;
+  project_url?: string;
+  repo_url?: string;
+  sort_order: number;
+};
+
 export type ResumeResponse = {
-  resume_details: ResumeDetails;
-  user: UserTemp;
-  skills?: number[];
-  softskills?: string[];
-  experience?: WorkExperience[];
-  projects?: Project[];
-  education?: Education[];
+  resume_id: string;
+  format_id: number;
+  title?: string;
+  is_default: boolean;
+  is_public: boolean;
+  created_at: string;
+  updated_at: string;
+  user: CompleteResumeUser | null;
+  skills: CompleteResumeSkill[];
+  soft_skills: string[];
+  education: CompleteResumeEducation[];
+  work_experience: CompleteResumeWorkExperience[];
+  projects: CompleteResumeProject[];
 };
 
 type UserTemp = {
