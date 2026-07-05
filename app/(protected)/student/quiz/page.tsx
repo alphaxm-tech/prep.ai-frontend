@@ -69,7 +69,7 @@ export default function Quiz() {
 
   return (
     <>
-      {/* <WorkInProgressBanner /> */}
+      <WorkInProgressBanner />
       <Loader
         show={isUntakenLoading || startQuizMutation.isPending || isTakenLoading}
       />

@@ -142,7 +142,7 @@ export default function CodeEditorListPage() {
 
   return (
     <>
-      {/* <WorkInProgressBanner /> */}
+      <WorkInProgressBanner />
       {/* <Loader
         show={isLoading || isUntakenLoading || isTakenLoading}
         message={loadingMessageMain}
