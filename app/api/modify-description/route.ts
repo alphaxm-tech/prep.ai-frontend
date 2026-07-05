@@ -9,6 +9,8 @@ export async function POST(req: Request) {
       keywords = [],
       tone = "neutral",
       type = "polish",
+      section = "objective", // "objective" | "project" | "experience"
+      context = {},
     } = body;
 
     const apiKey = process.env.OPENAI_API_KEY;
@@ -40,16 +42,45 @@ export async function POST(req: Request) {
           )}.`
         : "";
 
+    // What section this text belongs to changes both the framing given to
+    // the model and what supporting context (project title, role/company/
+    // dates, etc.) is worth mentioning alongside the text being rewritten.
+    const sectionInstructions: Record<string, string> = {
+      objective:
+        "You are rewriting the professional objective / summary section of a resume.",
+      project:
+        "You are rewriting a project description for a resume's projects section.",
+      experience:
+        "You are rewriting a work experience description/bullet points for a resume's work experience section.",
+    };
+    const sectionInstruction =
+      sectionInstructions[section] ?? sectionInstructions.objective;
+
+    let contextStr = "";
+    if (section === "project" && context?.title) {
+      contextStr = `Project title: ${context.title}.`;
+    } else if (section === "experience") {
+      const parts: string[] = [];
+      if (context?.role) parts.push(`Role: ${context.role}`);
+      if (context?.company) parts.push(`Company: ${context.company}`);
+      if (context?.start_year || context?.end_year) {
+        parts.push(
+          `Duration: ${context.start_year || "?"} - ${context.end_year || "?"}`
+        );
+      }
+      contextStr = parts.join(". ");
+    }
+
     // Build a clean message set for chat completion.
     const messages = [
       {
         role: "system",
         content:
-          "You are a helpful professional resume copywriter. Keep answers succinct and suitable for a resume/objective.",
+          "You are a helpful professional resume copywriter. Keep answers succinct and suitable for the specified resume section.",
       },
       {
         role: "user",
-        content: `Rewrite the following objective / summary. ${extraInstruction} ${kwStr}\n\nOriginal:\n${description}`,
+        content: `${sectionInstruction} ${extraInstruction} ${kwStr} ${contextStr}\n\nOriginal:\n${description}`,
       },
     ];
 

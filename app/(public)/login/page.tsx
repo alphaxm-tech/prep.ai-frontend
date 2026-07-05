@@ -26,7 +26,12 @@ import {
   STUDENT_ROUTE,
   UNAUTHORIZED_ROUTE,
 } from "@/utils/CONSTANTS";
-import { LoginErrors, LoginStates, ToastStates, UserRole } from "@/utils/enums";
+import {
+  LoginErrors,
+  LoginStates,
+  ToastStates,
+  UserRole,
+} from "@/utils/enums/enums";
 // import { AUTH, GOOGLE, LOGIN } from "@/utils/api/endpoints";
 import { validatePassword } from "@/lib/validate-password";
 
@@ -461,7 +466,7 @@ export default function LoginPage() {
           }
 
           if (role === UserRole.ADMIN) {
-            router.replace("/college/1");
+            router.replace(`${COLLEGE}/1`);
           } else if (role === UserRole.STUDENT) {
             router.replace(STUDENT_ROUTE);
           } else if (role === UserRole.SUPER_ADMIN) {

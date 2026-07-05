@@ -69,7 +69,7 @@ export default function Quiz() {
 
   return (
     <>
-      <WorkInProgressBanner />
+      {/* <WorkInProgressBanner /> */}
       <Loader
         show={isUntakenLoading || startQuizMutation.isPending || isTakenLoading}
       />
@@ -161,30 +161,69 @@ export default function Quiz() {
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* LEFT SIDE — EXPLORE */}
           <section className="lg:col-span-2 space-y-6">
-            {filteredQuizzes.map((quiz) => (
-              <AssessmentRow
-                quiz={quiz}
-                index={quiz.assessment_id}
-                onStartQuiz={handleStartQuiz}
-              ></AssessmentRow>
-            ))}
+            {filteredQuizzes?.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 bg-white/60 backdrop-blur-md border border-white/40 rounded-3xl">
+                <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
+                  <span className="text-xl">🔍</span>
+                </div>
+
+                <h3 className="text-lg font-semibold text-gray-900">
+                  No assessments found
+                </h3>
+
+                <p className="mt-2 text-sm text-gray-500 text-center max-w-md">
+                  No coding assessments match the selected difficulty filter.
+                </p>
+              </div>
+            ) : (
+              filteredQuizzes.map((quiz) => (
+                <AssessmentRow
+                  quiz={quiz}
+                  index={quiz.assessment_id}
+                  onStartQuiz={handleStartQuiz}
+                ></AssessmentRow>
+              ))
+            )}
           </section>
 
           {/* RIGHT SIDE — GLASS PANEL */}
-          <aside className="bg-white/60 backdrop-blur-xl border border-white/40 rounded-3xl p-6 shadow-xl sticky top-24 h-fit max-h-[650px] overflow-y-auto">
-            <h3 className="text-xl font-semibold text-gray-900 mb-6">
-              Your Progress
-            </h3>
+          <aside className="bg-white/70 backdrop-blur-xl border border-white/40 rounded-3xl shadow-xl sticky top-24 h-fit max-h-[650px] overflow-y-auto">
+            <div className="p-6 border-b border-gray-100">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-r from-yellow-400 to-amber-500 shadow-sm">
+                  📈
+                </div>
 
-            {takenAssessments?.assessments?.length === 0 ? (
-              <p className="text-sm text-gray-500">No quizzes attempted yet.</p>
-            ) : (
-              <div className="space-y-5">
-                {takenAssessments?.assessments?.map((quiz) => (
-                  <CompactAssessmentRow quiz={quiz}></CompactAssessmentRow>
-                ))}
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900">
+                    Your Progress
+                  </h3>
+
+                  <p className="text-sm text-gray-500">
+                    {takenAssessments?.assessments?.length || 0} completed
+                    assessments
+                  </p>
+                </div>
               </div>
-            )}
+            </div>
+
+            <div className="p-6">
+              {takenAssessments?.assessments?.length === 0 ? (
+                <div className="text-center py-10">
+                  <div className="text-4xl mb-3">🚀</div>
+
+                  <p className="text-sm text-gray-500">
+                    No quizzes attempted yet.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {takenAssessments?.assessments?.map((quiz) => (
+                    <CompactAssessmentRow quiz={quiz} />
+                  ))}
+                </div>
+              )}
+            </div>
           </aside>
         </div>
       </div>

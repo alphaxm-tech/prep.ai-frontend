@@ -17,8 +17,15 @@ export default function ProfessionalResumeTemplateVertical({
   fullName?: string;
   email?: string;
 }) {
-  const { resume_details, user, softskills, education, experience, projects } =
-    data;
+  const {
+    resume_details,
+    user,
+    skills,
+    softskills,
+    education,
+    experience,
+    projects,
+  } = data;
 
   const ph = (val?: string, fallback = "") =>
     val && val.trim() ? val : showPlaceholders ? fallback : "";
@@ -32,7 +39,7 @@ export default function ProfessionalResumeTemplateVertical({
         <header className="flex flex-col items-start gap-3">
           <div>
             <h1 className="text-3xl font-bold text-slate-900">
-              {ph(fullName, "Resume Title")}
+              {ph(fullName, "Your Name")}
             </h1>
           </div>
 
@@ -100,31 +107,41 @@ export default function ProfessionalResumeTemplateVertical({
             </div>
           </div>
 
-          {/* Soft Skills */}
+          {/* Skills */}
           <div className="md:col-span-2">
             <h3 className="text-sm font-semibold text-slate-800 uppercase tracking-wide">
               Skills
             </h3>
             <div className="mt-2 flex flex-wrap gap-2">
-              {softskills?.length ? (
-                softskills.map((s, i) => (
-                  <span
-                    key={i}
-                    className="text-xs px-2 py-1 bg-slate-100 text-slate-800 rounded"
-                  >
-                    {s}
-                  </span>
-                ))
-              ) : showPlaceholders ? (
-                <>
-                  <span className="text-xs px-2 py-1 bg-slate-100 text-slate-800 rounded">
-                    Communication
-                  </span>
-                  <span className="text-xs px-2 py-1 bg-slate-100 text-slate-800 rounded">
-                    Ownership
-                  </span>
-                </>
-              ) : (
+              {skills?.length
+                ? skills.map((s, i) => (
+                    <span
+                      key={`tech-${i}`}
+                      className="text-xs px-2 py-1 bg-indigo-100 text-indigo-800 rounded"
+                    >
+                      {s}
+                    </span>
+                  ))
+                : showPlaceholders && (
+                    <span className="text-xs px-2 py-1 bg-indigo-100 text-indigo-800 rounded">
+                      React
+                    </span>
+                  )}
+              {softskills?.length
+                ? softskills.map((s, i) => (
+                    <span
+                      key={`soft-${i}`}
+                      className="text-xs px-2 py-1 bg-slate-100 text-slate-800 rounded"
+                    >
+                      {s}
+                    </span>
+                  ))
+                : showPlaceholders && (
+                    <span className="text-xs px-2 py-1 bg-slate-100 text-slate-800 rounded">
+                      Communication
+                    </span>
+                  )}
+              {!skills?.length && !softskills?.length && !showPlaceholders && (
                 <div className="text-xs text-slate-400">None listed</div>
               )}
             </div>

@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/get-user-details";
-import { UserRole } from "@/utils/enums";
+import { UserRole } from "@/utils/enums/enums";
 import { LOGIN, UNAUTHORIZED_ROUTE } from "@/utils/CONSTANTS";
 
 export default async function AdminLayout({

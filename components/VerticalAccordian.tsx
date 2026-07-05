@@ -4,17 +4,15 @@ export function VerticalAccordion({
   title,
   children,
   isOpenProp = false,
-  invalid,
+  isComplete,
 }: {
   title: string;
   children: React.ReactNode;
   isOpenProp?: boolean;
-  invalid: Record<string, boolean>;
+  isComplete: boolean;
 }) {
   const [open, setOpen] = useState(isOpenProp);
   useEffect(() => setOpen(isOpenProp), [isOpenProp]);
-
-  if (title == "Education") console.log(title, invalid?.__static);
 
   return (
     <div
@@ -28,7 +26,7 @@ export function VerticalAccordion({
         <div className="flex items-center gap-3">
           <div
             className={`w-2.5 h-2.5 rounded-full ${
-              invalid.__static ? "bg-indigo-500" : "bg-red-500"
+              isComplete ? "bg-green-500" : "bg-red-500"
             }`}
           />
           <h3 className="text-sm font-semibold text-gray-800">{title}</h3>

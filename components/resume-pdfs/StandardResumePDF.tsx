@@ -1,13 +1,11 @@
-// components/resume-pdfs/ProfessionalResumePDF.tsx
+// components/resume-pdfs/StandardResumePDF.tsx
 import React from "react";
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 import { ResumeData, formatDuration } from "./types";
 
 /**
- * FIXED A4 PDF TEMPLATE
- * - React-PDF compatible only
- * - No Tailwind
- * - No DOM styles
+ * STANDARD RESUME PDF
+ * Clean, centered, classic single-column layout — mirrors StandardResume.tsx
  */
 
 const styles = StyleSheet.create({
@@ -19,60 +17,57 @@ const styles = StyleSheet.create({
     lineHeight: 1.4,
   },
 
-  headerBar: {
-    height: 6,
-    backgroundColor: "#1f2937",
+  header: {
+    textAlign: "center",
+    borderBottomWidth: 1,
+    borderBottomColor: "#d1d5db",
+    paddingBottom: 12,
     marginBottom: 16,
   },
 
   name: {
     fontSize: 22,
     fontWeight: "bold",
-  },
-
-  title: {
-    fontSize: 11,
-    marginTop: 4,
-    color: "#374151",
+    textAlign: "center",
   },
 
   contactRow: {
     flexDirection: "row",
     flexWrap: "wrap",
+    justifyContent: "center",
     marginTop: 8,
   },
 
   contactItem: {
-    marginRight: 12,
-    fontSize: 10,
+    fontSize: 9,
+    marginHorizontal: 6,
+    color: "#4b5563",
+  },
+
+  linkRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    marginTop: 6,
+  },
+
+  linkItem: {
+    fontSize: 9,
+    marginHorizontal: 6,
+    color: "#1d4ed8",
   },
 
   section: {
-    marginTop: 16,
+    marginTop: 14,
   },
 
   sectionTitle: {
     fontSize: 11,
     fontWeight: "bold",
     marginBottom: 6,
-    textTransform: "uppercase",
-  },
-
-  summaryBox: {
-    backgroundColor: "#f3f4f6",
-    padding: 10,
-    borderRadius: 4,
-  },
-
-  linkRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-  },
-
-  linkItem: {
-    fontSize: 9,
-    color: "#1d4ed8",
-    marginRight: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e5e7eb",
+    paddingBottom: 3,
   },
 
   skillWrap: {
@@ -84,17 +79,13 @@ const styles = StyleSheet.create({
     fontSize: 9,
     paddingVertical: 3,
     paddingHorizontal: 6,
-    backgroundColor: "#e5e7eb",
+    backgroundColor: "#f3f4f6",
     borderRadius: 3,
     marginRight: 6,
     marginBottom: 6,
   },
 
-  card: {
-    padding: 8,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    borderRadius: 4,
+  entry: {
     marginBottom: 8,
   },
 
@@ -113,56 +104,46 @@ const styles = StyleSheet.create({
   },
 });
 
-export default function ProfessionalResumePDF({ data }: { data: ResumeData }) {
+export default function StandardResumePDF({ data }: { data: ResumeData }) {
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        {/* HEADER BAR */}
-        <View style={styles.headerBar} />
-
         {/* HEADER */}
-        <View>
+        <View style={styles.header}>
           <Text style={styles.name}>{data.fullName || "Your Name"}</Text>
-          {data.title ? <Text style={styles.title}>{data.title}</Text> : null}
 
           <View style={styles.contactRow}>
             {data.email ? (
-              <Text style={styles.contactItem}>Email: {data.email}</Text>
+              <Text style={styles.contactItem}>{data.email}</Text>
             ) : null}
             {data.phone ? (
-              <Text style={styles.contactItem}>Phone: {data.phone}</Text>
+              <Text style={styles.contactItem}>{data.phone}</Text>
             ) : null}
             {data.location ? (
-              <Text style={styles.contactItem}>Location: {data.location}</Text>
+              <Text style={styles.contactItem}>{data.location}</Text>
             ) : null}
           </View>
+
+          {data.portfolioLink || data.githubLink || data.linkedinLink ? (
+            <View style={styles.linkRow}>
+              {data.portfolioLink ? (
+                <Text style={styles.linkItem}>{data.portfolioLink}</Text>
+              ) : null}
+              {data.githubLink ? (
+                <Text style={styles.linkItem}>{data.githubLink}</Text>
+              ) : null}
+              {data.linkedinLink ? (
+                <Text style={styles.linkItem}>{data.linkedinLink}</Text>
+              ) : null}
+            </View>
+          ) : null}
         </View>
 
         {/* SUMMARY */}
         {data.objective ? (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Professional Summary</Text>
-            <View style={styles.summaryBox}>
-              <Text>{data.objective}</Text>
-            </View>
-          </View>
-        ) : null}
-
-        {/* LINKS */}
-        {data.portfolioLink || data.githubLink || data.linkedinLink ? (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Links</Text>
-            <View style={styles.linkRow}>
-              {data.portfolioLink ? (
-                <Text style={styles.linkItem}>Portfolio: {data.portfolioLink}</Text>
-              ) : null}
-              {data.githubLink ? (
-                <Text style={styles.linkItem}>GitHub: {data.githubLink}</Text>
-              ) : null}
-              {data.linkedinLink ? (
-                <Text style={styles.linkItem}>LinkedIn: {data.linkedinLink}</Text>
-              ) : null}
-            </View>
+            <Text>{data.objective}</Text>
           </View>
         ) : null}
 
@@ -190,7 +171,7 @@ export default function ProfessionalResumePDF({ data }: { data: ResumeData }) {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Education</Text>
             {data.educations.map((ed, i) => (
-              <View key={i} style={styles.card}>
+              <View key={i} style={styles.entry}>
                 <Text style={styles.bold}>{ed.degree}</Text>
                 {ed.institute ? <Text>{ed.institute}</Text> : null}
                 <Text style={styles.muted}>
@@ -203,12 +184,12 @@ export default function ProfessionalResumePDF({ data }: { data: ResumeData }) {
           </View>
         ) : null}
 
-        {/* EXPERIENCE */}
+        {/* WORK EXPERIENCE */}
         {data.experiences?.length ? (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Experience</Text>
+            <Text style={styles.sectionTitle}>Work Experience</Text>
             {data.experiences.map((ex, i) => (
-              <View key={i} style={styles.card}>
+              <View key={i} style={styles.entry}>
                 <Text style={styles.bold}>{ex.role}</Text>
                 <Text>{ex.company}</Text>
                 <Text style={styles.muted}>
@@ -225,7 +206,7 @@ export default function ProfessionalResumePDF({ data }: { data: ResumeData }) {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Projects</Text>
             {data.projects.map((p, i) => (
-              <View key={i} style={styles.card}>
+              <View key={i} style={styles.entry}>
                 <Text style={styles.bold}>{p.name}</Text>
                 {p.description ? <Text>{p.description}</Text> : null}
               </View>
@@ -236,8 +217,9 @@ export default function ProfessionalResumePDF({ data }: { data: ResumeData }) {
         {/* FOOTER */}
         <View style={styles.footer}>
           <Text style={styles.muted}>
-            Generated by AI Prep Buddy — Professional Resume
+            Standard resume template · Clean & professional
           </Text>
+          <Text style={styles.muted}>Created by AI Prep Buddy</Text>
         </View>
       </Page>
     </Document>

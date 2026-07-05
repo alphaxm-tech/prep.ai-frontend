@@ -1,5 +1,5 @@
 import { decodeJwt } from "jose";
-import { UserRole } from "@/utils/enums";
+import { UserRole } from "@/utils/enums/enums";
 import { STUDENT_ROUTE, PLATFORM_ROUTE } from "@/utils/CONSTANTS";
 
 /**

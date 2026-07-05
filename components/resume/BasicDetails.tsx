@@ -1,10 +1,10 @@
 // components/resume/BasicDetails.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SparklesIcon } from "@heroicons/react/24/outline";
 import Loader from "../Loader";
-import { capitalizeFullName } from "@/app/(protected)/student/resume-builder/page";
+import { capitalizeFullName } from "../../lib/capitalize-fullname";
 
 type Props = {
   isDefault: boolean;
@@ -57,6 +57,20 @@ export default function BasicDetails({
   const [keywords, setKeywords] = useState("");
   const [tone] = useState("neutral");
   const [loading, setLoading] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   // helper to check invalid flags
   const invalid = (k: string) => !!validationErrors[k];
@@ -86,6 +100,7 @@ export default function BasicDetails({
           keywords: kwArr,
           tone,
           type, // "polish" | "concise" | "technical" | "recruiter"
+          section: "objective",
         }),
       });
 
@@ -208,7 +223,7 @@ export default function BasicDetails({
 
         <div>
           <label className="block text-sm font-medium text-gray-700">
-            Location <span className="text-xs text-gray-400">(required)</span>
+            Location* <span className="text-xs text-gray-400">(required)</span>
           </label>
           <input
             value={location}
@@ -269,7 +284,7 @@ export default function BasicDetails({
 
         <div>
           <label className="block text-sm font-medium text-gray-700">
-            Phone
+            Phone* <span className="text-xs text-gray-400">(required)</span>
           </label>
 
           <input
@@ -301,11 +316,11 @@ export default function BasicDetails({
       <div className="mt-4 relative">
         <div className="flex items-center justify-between">
           <label className="block text-sm font-medium text-gray-700">
-            Objective
+            Objective*
           </label>
 
           {/* AI Enhance Dropdown Button */}
-          <div className="relative">
+          <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setShowDropdown((prev) => !prev)}
               className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium text-gray-800 bg-gradient-to-r from-purple-100 via-pink-100 to-orange-100 shadow-sm hover:shadow-md transition-transform transform hover:-translate-y-0.5 hover:brightness-105"
@@ -315,31 +330,31 @@ export default function BasicDetails({
             </button>
 
             {showDropdown && (
-              <div className="absolute right-0 mt-1 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+              <div className="absolute right-0 z-50 mt-1 w-44 max-h-56 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg">
                 <button
                   onClick={() => handleAIEnhance(summary, "polish")}
-                  className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50"
+                  className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-yellow-50"
                   type="button"
                 >
                   ✨ Polish
                 </button>
                 <button
                   onClick={() => handleAIEnhance(summary, "concise")}
-                  className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50"
+                  className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-yellow-50"
                   type="button"
                 >
                   ✂️ Make Concise
                 </button>
                 <button
                   onClick={() => handleAIEnhance(summary, "technical")}
-                  className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50"
+                  className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-yellow-50"
                   type="button"
                 >
                   🔧 More Technical
                 </button>
                 <button
                   onClick={() => handleAIEnhance(summary, "recruiter")}
-                  className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50"
+                  className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-yellow-50"
                   type="button"
                 >
                   🏢 Recruiter-Friendly

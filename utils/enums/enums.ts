@@ -1,7 +1,7 @@
 export enum UserRole {
-  SUPER_ADMIN = "SUPER ADMIN", // platform level access
-  ADMIN = "ADMIN", // college access
-  STUDENT = "STUDENT",
+  SUPER_ADMIN = "super_admin", // platform level access
+  ADMIN = "college_admin", // college access
+  STUDENT = "student",
 }
 
 export enum LoginErrors {

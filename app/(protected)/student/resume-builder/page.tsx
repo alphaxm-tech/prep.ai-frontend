@@ -32,73 +32,18 @@ import { useSaveResume } from "@/utils/mutations/resume.mutations";
 import ProjectsForm from "@/components/resume/ProjectForm";
 import { useToast } from "@/components/toast/ToastContext";
 import { VerticalAccordion } from "@/components/VerticalAccordian";
+import { useUser } from "@/app/context/UserContext";
+import { capitalizeFullName } from "@/lib/capitalize-fullname";
+import { ResumeFormats, ResumeTitles } from "@/utils/enums/resume-enums";
+import { DEFAULT_SAMPLE } from "@/utils/dummy-data/resume-default-data";
+import { ToastStates } from "@/utils/enums/enums";
+import {
+  loadResumeDraft,
+  saveResumeDraft,
+  clearResumeDraft,
+} from "@/utils/resume-draft-storage";
 
-type TemplateKey = "modern" | "classic" | "creative" | "minimal" | "standard";
-
-export function capitalizeFullName(name: string): string {
-  return name
-    .trim()
-    .toLowerCase()
-    .split(/\s+/) // handles multiple spaces
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-}
-
-const DEFAULT_SAMPLE = {
-  fullName: "Full Name",
-  title: "Your Job Title (e.g., Fullstack Developer)",
-  email: "your.email@example.com",
-  phone: "0000000000",
-  location: "Your City, Country",
-  objective:
-    "Write a short 2–3 line summary about your experience, strengths, and the type of work you're looking for.",
-  portfolioLink: "https://your-portfolio-link.com",
-  githubLink: "https://github.com/your-username",
-  linkedinLink: "https://linkedin.com/in/your-profile",
-
-  technicalSkills: [
-    "Skill 1 (e.g., React)",
-    "Skill 2 (e.g., TypeScript)",
-    // "Skill 3 (e.g., Solidity)",
-  ],
-
-  softSkills: [
-    "Soft Skill 1 (e.g., Communication)",
-    "Soft Skill 2 (e.g., Ownership)",
-    // "Soft Skill 3 (e.g., Curiosity)",
-  ],
-
-  educations: [
-    {
-      degree: "Degree (e.g., B.Tech)",
-      institute: "Your College Name",
-      location: "City",
-      // duration: "Start–End (e.g., 2019–2023)",
-      startYear: "2016",
-      endYear: "2020",
-      grade: "CGPA/Percentage (e.g., 8.0)",
-    },
-  ],
-
-  experiences: [
-    {
-      company: "Company Name",
-      role: "Your Role (e.g., Fullstack Developer)",
-      duration: "2023 – Present",
-      description:
-        "Describe your impact. Example: Built features, improved performance, collaborated across teams, etc.",
-      logo: "",
-    },
-  ],
-
-  projects: [
-    {
-      title: "Project Title",
-      description:
-        "Describe what the project does, why you built it, and what tech you used.",
-    },
-  ],
-};
+// type TemplateKey = "modern" | "classic" | "creative" | "minimal" | "standard";
 
 export default function ResumeBuilderPage() {
   // --- MAIN LIFTED STATE (single source of truth for basic details) ---
@@ -112,6 +57,7 @@ export default function ResumeBuilderPage() {
   const [githubLink, setGithubLink] = useState<string>("");
   const [linkedinLink, setLinkedinLink] = useState<string>("");
   const [isDefault, setIsDefault] = useState(false);
+  const [totalResumes, setTotalResumes] = useState(5);
 
   // Lists and arrays liftedx
   const [technicalSkills, setTechnicalSkills] = useState<SkillTag[]>([]);
@@ -122,11 +68,102 @@ export default function ResumeBuilderPage() {
   const [loading, setLoading] = useState(false);
 
   // other page state
-  const [resumeFormat, setResumeFormat] = useState<TemplateKey>("standard");
+  const [resumeFormat, setResumeFormat] = useState<ResumeFormats>(
+    ResumeFormats.STANDARD,
+  );
   const [showPreviewModal, setShowPreviewModal] = useState<boolean>(false);
   const saveResumeMutation = useSaveResume();
 
   const RESULT_PDF_URL = "/pdfs/Resume.pdf";
+
+  const user = useUser();
+  console.log(user?.services[0]?.service_config?.max_resumes_per_user);
+
+  // --- Local draft persistence (unsaved-resume data survives refresh/tab close) ---
+  const [isDraftHydrated, setIsDraftHydrated] = useState(false);
+
+  // Restore any in-progress draft once on mount, before the profile-hydration
+  // effect below runs, so typed/restored values aren't lost.
+  useEffect(() => {
+    const draft = loadResumeDraft(user?.user?.email);
+    if (draft) {
+      if (draft.resumeTitle !== undefined) setResumeTitle(draft.resumeTitle);
+      if (draft.phone !== undefined) setPhone(draft.phone);
+      if (draft.location !== undefined) setLocation(draft.location);
+      if (draft.summary !== undefined) setSummary(draft.summary);
+      if (draft.portfolioLink !== undefined)
+        setPortfolioLink(draft.portfolioLink);
+      if (draft.githubLink !== undefined) setGithubLink(draft.githubLink);
+      if (draft.linkedinLink !== undefined)
+        setLinkedinLink(draft.linkedinLink);
+      if (draft.isDefault !== undefined) setIsDefault(draft.isDefault);
+      if (draft.technicalSkills) setTechnicalSkills(draft.technicalSkills);
+      if (draft.softSkills) setSoftSkills(draft.softSkills);
+      if (draft.educations) setEducations(draft.educations);
+      if (draft.experiences) setExperiences(draft.experiences);
+      if (draft.projects) setProjects(draft.projects);
+      if (draft.resumeFormat) setResumeFormat(draft.resumeFormat);
+    }
+    setIsDraftHydrated(true);
+    // Only ever restore once, right after mount.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    let fullname = capitalizeFullName(user?.user?.full_name);
+    setFullName(fullname);
+    setEmail(user?.user?.email);
+    // Never clobber a value the user already typed (or that was just
+    // restored from a local draft) with the profile default.
+    setLocation((prev) => prev || user?.user?.location || "");
+    setPhone((prev) => prev || user?.user?.phone_number || "");
+    setTotalResumes(user?.services[0]?.service_config?.max_resumes_per_user);
+  }, [user]);
+
+  // Autosave the in-progress form into localStorage on every change. Skipped
+  // until the draft-restore effect above has run, so we never overwrite a
+  // saved draft with the form's blank initial state. Written synchronously
+  // (no debounce) — a debounced timer can be cancelled by an unmount before
+  // it fires, which loses the last edit whenever the page is refreshed
+  // shortly after typing. localStorage writes for a form this size are
+  // sub-millisecond, so writing on every change has no perceptible cost.
+  useEffect(() => {
+    if (!isDraftHydrated) return;
+
+    saveResumeDraft(user?.user?.email, {
+      resumeTitle,
+      phone,
+      location,
+      summary,
+      portfolioLink,
+      githubLink,
+      linkedinLink,
+      isDefault,
+      technicalSkills,
+      softSkills,
+      educations,
+      experiences,
+      projects,
+      resumeFormat,
+    });
+  }, [
+    isDraftHydrated,
+    user?.user?.email,
+    resumeTitle,
+    phone,
+    location,
+    summary,
+    portfolioLink,
+    githubLink,
+    linkedinLink,
+    isDefault,
+    technicalSkills,
+    softSkills,
+    educations,
+    experiences,
+    projects,
+    resumeFormat,
+  ]);
 
   // const rawName = getUserDetailsAllRes?.user?.full_name ?? "";
   // const fullName = capitalizeFullName(rawName);
@@ -137,7 +174,7 @@ export default function ResumeBuilderPage() {
   //   (s) => s.service_id === 1,
   // );
   // console.log(service?.services_config?.max_resumes_per_student);
-  // const MAX_RESUMES = service?.services_config
+  // const totalResumes = service?.services_config
   //   ?.max_resumes_per_student as number;
 
   const { data: resumeData } = useGetResumeFormats();
@@ -145,22 +182,22 @@ export default function ResumeBuilderPage() {
   const { data: usersAllResumes } = useGetUsersAllResumes();
   const usersAllResumesLength = usersAllResumes?.resumes?.length;
 
-  const localFormats: { key: TemplateKey; title: string }[] = [
-    { key: "modern", title: "Modern" },
-    { key: "classic", title: "Classic" },
-    { key: "creative", title: "Creative" },
-    { key: "minimal", title: "Minimal" },
-    { key: "standard", title: "Standard" },
+  const localFormats: { key: ResumeFormats; title: string }[] = [
+    { key: ResumeFormats.MODERN, title: ResumeTitles.Modern },
+    { key: ResumeFormats.CLASSIC, title: ResumeTitles.Classic },
+    { key: ResumeFormats.CREATIVE, title: ResumeTitles.Creative },
+    { key: ResumeFormats.MINIMAL, title: ResumeTitles.Minimal },
+    { key: ResumeFormats.STANDARD, title: ResumeTitles.Standard },
   ];
 
   // demo resumes list
   const [resumes, setResumes] = useState<UsersResumeResponse[]>([]);
 
-  let MAX_RESUMES = 20;
+  // let MAX_RESUMES = 20;
   // quota derived values
   const usedResumes = resumes.length;
-  const remainingResumes = Math.max(0, MAX_RESUMES - usersAllResumesLength!);
-  const canCreateMore = usedResumes < MAX_RESUMES;
+  const remainingResumes = Math.max(0, totalResumes - usersAllResumesLength!);
+  const canCreateMore = usedResumes < totalResumes;
 
   // small state for quota error display
   const [quotaError, setQuotaError] = useState<string | null>(null);
@@ -194,10 +231,10 @@ export default function ResumeBuilderPage() {
 
   const assembledData = useMemo(
     () => ({
-      // fullName,
-      title: "",
+      fullName,
+      title: resumeTitle,
 
-      // email,
+      email,
       phone,
       location,
       objective: summary,
@@ -213,10 +250,14 @@ export default function ResumeBuilderPage() {
       educations,
       experiences,
       projects,
+
+      // lets the PDF route pick the matching template
+      resumeFormat,
     }),
     [
-      // fullName,
-      // email,
+      fullName,
+      resumeTitle,
+      email,
       phone,
       location,
       summary,
@@ -228,6 +269,7 @@ export default function ResumeBuilderPage() {
       educations,
       experiences,
       projects,
+      resumeFormat,
     ],
   );
 
@@ -306,21 +348,20 @@ export default function ResumeBuilderPage() {
     const props = {
       data,
       showPlaceholders,
-      fullName: DEFAULT_SAMPLE.fullName,
-      email: DEFAULT_SAMPLE.email,
+      fullName: fullName ? fullName : DEFAULT_SAMPLE.fullName,
+      email: email ? email : DEFAULT_SAMPLE.email,
     };
-    // fullName, email };
 
     switch (resumeFormat) {
-      case "creative":
+      case ResumeFormats.CREATIVE:
         return <CreativeResumeTemplate {...props} />;
-      case "classic":
+      case ResumeFormats.CLASSIC:
         return <ProfessionalResumeTemplateVertical {...props} />;
-      case "modern":
+      case ResumeFormats.MODERN:
         return <ModernResumeTemplate {...props} />;
-      case "minimal":
+      case ResumeFormats.MINIMAL:
         return <MinimalResumeTemplate {...props} />;
-      case "standard":
+      case ResumeFormats.STANDARD:
       default:
         return <StandardResumeTemplate {...props} />;
     }
@@ -359,6 +400,7 @@ export default function ResumeBuilderPage() {
 
     // Collections: require at least one item
     errors.technicalSkills = !(technicalSkills && technicalSkills.length > 0);
+    errors.softSkills = !(softSkills && softSkills.length > 0);
     errors.educations = !(educations && educations.length > 0);
 
     // NOTE: experiences and projects are intentionally NOT required,
@@ -378,7 +420,7 @@ export default function ResumeBuilderPage() {
     // check quota first
     if (!canCreateMore) {
       setQuotaError(
-        `Resume limit reached (${usedResumes}/${MAX_RESUMES}). Delete an existing resume to create a new one.`,
+        `Resume limit reached (${usedResumes}/${totalResumes}). Delete an existing resume to create a new one.`,
       );
       return;
     }
@@ -389,6 +431,7 @@ export default function ResumeBuilderPage() {
     console.log(errors);
 
     if (hasAnyErrors(errors)) {
+      showToast(ToastStates.ERROR, "Please fill all the details");
       // If invalid, DO NOT open preview modal; user must fix fields.
       // Optionally we could scroll to first invalid — omitted for brevity.
       return;
@@ -403,18 +446,19 @@ export default function ResumeBuilderPage() {
         // setLoading(false);
         setLoading(false);
         setShowPreviewModal(true);
+        // Resume is now committed to the DB — the local draft has served
+        // its purpose, so drop it to avoid resurrecting stale data next time.
+        clearResumeDraft(user?.user?.email);
       },
       onError: (err: any) => {
         const status = err?.response?.status;
         const data = err?.response?.data;
         setLoading(false);
-        console.log(data, status);
 
         if (
           data?.error ==
           "resume title already exists, please choose a different title"
         ) {
-          console.log("hello");
           showToast(
             "error",
             "Resume title already exists, please provide unique one",
@@ -435,7 +479,7 @@ export default function ResumeBuilderPage() {
     // final quota check (race-safety)
     if (!canCreateMore) {
       setQuotaError(
-        `Unable to save — resume limit reached (${usedResumes}/${MAX_RESUMES}).`,
+        `Unable to save — resume limit reached (${usedResumes}/${totalResumes}).`,
       );
       return;
     }
@@ -498,12 +542,36 @@ export default function ResumeBuilderPage() {
       location,
       summary,
       technicalSkills,
+      softSkills,
       educations,
       // experiences,
       // projects,
     ],
   );
   const canSaveNow = !hasAnyErrors(currentValidation);
+
+  // Real-time "is this accordion section complete" flags, driving the
+  // red/green status dot on each VerticalAccordion.
+  const isPersonalDetailsComplete = useMemo(
+    () =>
+      !!(resumeTitle && resumeTitle.trim().length > 0) &&
+      !!(fullName && fullName.trim().length > 0) &&
+      !!(email && email.trim().length > 0) &&
+      !!(phone && phone.trim().length > 9) &&
+      !!(location && location.trim().length > 0) &&
+      !!(summary && summary.trim().length > 0),
+    [resumeTitle, fullName, email, phone, location, summary],
+  );
+
+  const isSkillsComplete = useMemo(
+    () => technicalSkills.length > 0 && softSkills.length > 0,
+    [technicalSkills, softSkills],
+  );
+
+  const isEducationComplete = useMemo(
+    () => educations.length > 0,
+    [educations],
+  );
 
   // ---------------------- Download logic additions (iframe print) ----------------------
   const modalRef = useRef<HTMLDivElement | null>(null);
@@ -765,6 +833,7 @@ export default function ResumeBuilderPage() {
   // }, [technicalSkillIds]);
 
   const disableSave = remainingResumes === 0 || hasAnyErrors(validationErrors);
+
   useEffect(() => {
     if (!hasAnyErrors(currentValidation)) {
       setValidationErrors({});
@@ -826,25 +895,19 @@ export default function ResumeBuilderPage() {
     error,
   } = useGetCompleteResumeByID(resumeId);
 
-  // console.log(userResumeByIDData);
-
-  useEffect(() => {
-    console.log(hasAnyErrors);
-  }, [hasAnyErrors]);
-
   return (
     <div className="min-h-screen bg-white py-8 px-3 sm:px-4 md:px-6 lg:px-8">
-      <WorkInProgressBanner />
+      {/* <WorkInProgressBanner /> */}
       <main className="w-full">
         {/* Heading + Dropdown */}
         <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-6 max-w-[1550px] mx-auto">
           <div>
             <h1 className="text-3xl font-bold text-gray-800">
-              Smart resume builder with AI
+              AI-Powered Resume Builder
             </h1>
             <p className="text-sm text-gray-600 mt-1">
-              Live preview while you edit — placeholders shown inline, clean
-              preview on modal
+              Build your resume in real time with instant live preview and
+              AI-powered enhancements
             </p>
           </div>
 
@@ -881,7 +944,7 @@ export default function ResumeBuilderPage() {
               {/* Text */}
               <div className="flex items-baseline gap-1">
                 <span className="font-semibold">
-                  {usersAllResumesLength}/{MAX_RESUMES}
+                  {usersAllResumesLength}/{totalResumes ? totalResumes : ""}
                 </span>
                 <span className="text-xs opacity-80">resumes</span>
               </div>
@@ -895,7 +958,8 @@ export default function ResumeBuilderPage() {
                   remainingResumes === 0 ? "text-red-600" : "text-gray-500"
                 }`}
               >
-                {remainingResumes} left
+                {remainingResumes ? remainingResumes : ""}
+                {remainingResumes ? " left" : ""}
               </span>
             </div>
           </div>
@@ -933,97 +997,97 @@ export default function ResumeBuilderPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-6 max-w-[1550px] mx-auto">
           {/* Left: forms */}
-          <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 space-y-4">
-            <div className="space-y-4">
-              <VerticalAccordion
-                isOpenProp={true}
-                title="Personal details"
-                invalid={validationErrors}
-              >
-                <BasicDetails
-                  isDefault={isDefault}
-                  setIsDefault={setIsDefault}
-                  resumeTitle={resumeTitle}
-                  setResumeTitle={setResumeTitle}
-                  fullName={fullName}
-                  email={email}
-                  phone={phone}
-                  setPhone={setPhone}
-                  location={location}
-                  setLocation={setLocation}
-                  portfolioLink={portfolioLink}
-                  setPortfolioLink={setPortfolioLink}
-                  githubLink={githubLink}
-                  setGithubLink={setGithubLink}
-                  linkedinLink={linkedinLink}
-                  setLinkedinLink={setLinkedinLink}
-                  summary={summary}
-                  setSummary={setSummary}
-                  validationErrors={validationErrors}
-                />
-              </VerticalAccordion>
 
-              <VerticalAccordion
-                isOpenProp={false}
-                title="Skills"
-                invalid={validationErrors}
-              >
-                <SkillsPanel
-                  skillsMaster={skillsMasterData}
-                  skills={technicalSkills}
-                  setSkills={
-                    setTechnicalSkills as React.Dispatch<
-                      React.SetStateAction<SkillTag[]>
-                    >
-                  }
-                  softSkills={softSkills}
-                  setSoftSkills={
-                    setSoftSkills as React.Dispatch<
-                      React.SetStateAction<SkillTag[]>
-                    >
-                  }
-                  validation={{
-                    skillsMissing: !!validationErrors.technicalSkills,
-                  }}
-                />
-              </VerticalAccordion>
+          <div className="space-y-4">
+            <VerticalAccordion
+              isOpenProp={true}
+              title="Personal details"
+              isComplete={isPersonalDetailsComplete}
+            >
+              <BasicDetails
+                isDefault={isDefault}
+                setIsDefault={setIsDefault}
+                resumeTitle={resumeTitle}
+                setResumeTitle={setResumeTitle}
+                fullName={fullName}
+                email={email}
+                phone={phone}
+                setPhone={setPhone}
+                location={location}
+                setLocation={setLocation}
+                portfolioLink={portfolioLink}
+                setPortfolioLink={setPortfolioLink}
+                githubLink={githubLink}
+                setGithubLink={setGithubLink}
+                linkedinLink={linkedinLink}
+                setLinkedinLink={setLinkedinLink}
+                summary={summary}
+                setSummary={setSummary}
+                validationErrors={validationErrors}
+              />
+            </VerticalAccordion>
 
-              <VerticalAccordion
-                isOpenProp={false}
-                title="Education"
-                invalid={{ __static: validationErrors?.educations }}
-              >
-                <EducationForm
-                  educations={educations}
-                  setEducations={setEducations}
-                  validationErrors={validationErrors}
-                />
-              </VerticalAccordion>
+            <VerticalAccordion
+              isOpenProp={false}
+              title="Skills"
+              isComplete={isSkillsComplete}
+            >
+              <SkillsPanel
+                skillsMaster={skillsMasterData}
+                skills={technicalSkills}
+                setSkills={
+                  setTechnicalSkills as React.Dispatch<
+                    React.SetStateAction<SkillTag[]>
+                  >
+                }
+                softSkills={softSkills}
+                setSoftSkills={
+                  setSoftSkills as React.Dispatch<
+                    React.SetStateAction<SkillTag[]>
+                  >
+                }
+                validation={{
+                  skillsMissing: !!validationErrors.technicalSkills,
+                  softSkillsMissing: !!validationErrors.softSkills,
+                }}
+              />
+            </VerticalAccordion>
 
-              <VerticalAccordion
-                isOpenProp={false}
-                title="Work Experience"
-                invalid={{ __static: true }}
-              >
-                <WorkExperienceForm
-                  experiences={experiences}
-                  setExperiences={setExperiences}
-                  // validationErrors={validationErrors}
-                />
-              </VerticalAccordion>
+            <VerticalAccordion
+              isOpenProp={false}
+              title="Education"
+              isComplete={isEducationComplete}
+            >
+              <EducationForm
+                educations={educations}
+                setEducations={setEducations}
+                validationErrors={validationErrors}
+              />
+            </VerticalAccordion>
 
-              <VerticalAccordion
-                isOpenProp={false}
-                title="Project Details"
-                invalid={{ __static: true }}
-              >
-                <ProjectsForm
-                  projects={projects}
-                  setProjects={setProjects}
-                  // validationErrors={validationErrors}
-                />
-              </VerticalAccordion>
-            </div>
+            <VerticalAccordion
+              isOpenProp={false}
+              title="Work Experience"
+              isComplete={true}
+            >
+              <WorkExperienceForm
+                experiences={experiences}
+                setExperiences={setExperiences}
+                // validationErrors={validationErrors}
+              />
+            </VerticalAccordion>
+
+            <VerticalAccordion
+              isOpenProp={false}
+              title="Project Details"
+              isComplete={true}
+            >
+              <ProjectsForm
+                projects={projects}
+                setProjects={setProjects}
+                // validationErrors={validationErrors}
+              />
+            </VerticalAccordion>
           </div>
 
           {/* Right: preview */}
@@ -1038,10 +1102,10 @@ export default function ResumeBuilderPage() {
                   <div className="flex items-center gap-2">
                     <select
                       value={resumeFormat}
-                      onChange={(e) =>
-                        setResumeFormat(e.target.value as TemplateKey)
-                      }
-                      className="px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm"
+                      onChange={(e) => {
+                        setResumeFormat(e.target.value as ResumeFormats);
+                      }}
+                      className="pl-3 pr-8 py-2 rounded-lg border border-gray-200 bg-white text-sm focus:outline-none focus:border-yellow-400 focus:ring-1 focus:ring-yellow-400"
                     >
                       {
                         (resumeData?.resumeFormats &&
@@ -1071,7 +1135,7 @@ export default function ResumeBuilderPage() {
                               `}
                       title={
                         remainingResumes === 0
-                          ? `Resume limit reached (${usedResumes}/${MAX_RESUMES})`
+                          ? `Resume limit reached (${usedResumes}/${totalResumes})`
                           : hasAnyErrors(validationErrors)
                             ? "Fill required fields to save"
                             : "Save Resume"
@@ -1083,7 +1147,7 @@ export default function ResumeBuilderPage() {
                 </div>
 
                 {/* Inline compact preview: showPlaceholders = true */}
-                <div className="border border-gray-50 rounded-md overflow-hidden">
+                <div className="rounded-md overflow-hidden">
                   <div className="bg-white">{renderSelectedTemplate(true)}</div>
                 </div>
               </div>
@@ -1230,7 +1294,7 @@ export default function ResumeBuilderPage() {
         {!quotaError && !hasAnyErrors(validationErrors) && !canCreateMore && (
           <div className="bg-orange-50 border border-orange-200 text-orange-700 px-3 py-2 rounded-md text-sm shadow-sm">
             You've reached the resume creation limit ({usedResumes}/
-            {MAX_RESUMES}).
+            {totalResumes}).
           </div>
         )}
       </div>

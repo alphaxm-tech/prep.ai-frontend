@@ -43,7 +43,7 @@ export default function StandardResumeTemplate({
       {/* Header */}
       <header className="border-b border-gray-300 pb-4 mb-6 text-center">
         <h1 className="text-3xl font-bold text-gray-900">
-          {ph(fullName, "Resume Title")}
+          {ph(fullName, "Your Name")}
         </h1>
 
         <div className="mt-2 flex flex-wrap justify-center gap-4 text-sm text-gray-600">
@@ -51,6 +51,54 @@ export default function StandardResumeTemplate({
           <span>📞 {ph(user?.phone, "+91-0000000000")}</span>
           <span>📍 {ph(user?.location, "City, Country")}</span>
         </div>
+
+        {(user?.portfolio_website_url ||
+          user?.github_url ||
+          user?.linkedin_url ||
+          showPlaceholders) && (
+          <div className="mt-2 flex flex-wrap justify-center gap-4 text-sm text-blue-700">
+            {user?.portfolio_website_url ? (
+              <a
+                href={user.portfolio_website_url}
+                target="_blank"
+                rel="noreferrer"
+                className="hover:underline"
+              >
+                Portfolio
+              </a>
+            ) : (
+              showPlaceholders && (
+                <span className="text-gray-400">Portfolio</span>
+              )
+            )}
+            {user?.github_url ? (
+              <a
+                href={user.github_url}
+                target="_blank"
+                rel="noreferrer"
+                className="hover:underline"
+              >
+                GitHub
+              </a>
+            ) : (
+              showPlaceholders && <span className="text-gray-400">GitHub</span>
+            )}
+            {user?.linkedin_url ? (
+              <a
+                href={user.linkedin_url}
+                target="_blank"
+                rel="noreferrer"
+                className="hover:underline"
+              >
+                LinkedIn
+              </a>
+            ) : (
+              showPlaceholders && (
+                <span className="text-gray-400">LinkedIn</span>
+              )
+            )}
+          </div>
+        )}
       </header>
 
       <main className="space-y-6">

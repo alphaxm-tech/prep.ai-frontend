@@ -1,6 +1,6 @@
 // components/resume/ProjectForm.tsx
 import React, { useEffect, useRef, useState } from "react";
-import { SparklesIcon } from "@heroicons/react/24/outline";
+import { SparklesIcon, PlusIcon } from "@heroicons/react/24/outline";
 import Loader from "../Loader";
 import { Project } from "@/utils/api/types/resume.types";
 
@@ -45,6 +45,8 @@ export default function ProjectsForm({
   };
 
   const addProject = () => {
+    if (!newProj.name.trim()) return;
+
     setProjects([...projects, newProj]);
     setNewProj({ name: "", description: "" });
   };
@@ -100,6 +102,10 @@ export default function ProjectsForm({
           keywords: kwArr,
           tone: "neutral",
           type,
+          section: "project",
+          context: {
+            title: newProj.name,
+          },
         }),
       });
 
@@ -156,9 +162,9 @@ export default function ProjectsForm({
             <button
               type="button"
               onClick={addProject}
-              className="flex items-center justify-center w-10 h-10 rounded-full bg-yellow-300 text-white text-xl shadow-sm hover:bg-yellow-400"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-yellow-300 text-white shadow-sm hover:bg-yellow-400"
             >
-              +
+              <PlusIcon className="w-4 h-4" strokeWidth={2.5} />
             </button>
           </div>
         </div>
@@ -179,7 +185,7 @@ export default function ProjectsForm({
               </button>
 
               {showDropdown && (
-                <div className="absolute right-0 mt-1 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-10">
+                <div className="absolute right-0 z-50 mt-1 w-44 max-h-56 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg">
                   {[
                     ["✨ Polish", "polish"],
                     ["✂️ Make Concise", "concise"],
@@ -195,7 +201,7 @@ export default function ProjectsForm({
                           type as any
                         )
                       }
-                      className="block w-full px-3 py-2 text-left text-sm hover:bg-gray-50"
+                      className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-yellow-50"
                     >
                       {label}
                     </button>
