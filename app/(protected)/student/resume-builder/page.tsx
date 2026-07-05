@@ -415,6 +415,56 @@ export default function ResumeBuilderPage() {
     technicalSkills,
   ]);
 
+  // Flat shape (matches components/resume-pdfs/types.ts `ResumeData`) sent to
+  // the PDF download route. Applies the exact same "real value or
+  // DEFAULT_SAMPLE fallback" rules as assembledDataWithDefaults above, so the
+  // downloaded PDF always matches what's already on screen in the Template
+  // Preview / post-save Resume Preview modal — including placeholder content
+  // for sections the user left empty.
+  const assembledDataForPdf = useMemo<any>(() => {
+    return {
+      fullName: fullName ? fullName : DEFAULT_SAMPLE.fullName,
+      title: resumeTitle?.trim() || DEFAULT_SAMPLE.title,
+      email: email ? email : DEFAULT_SAMPLE.email,
+      phone: assembledData.phone?.trim() || DEFAULT_SAMPLE.phone,
+      location: assembledData.location?.trim() || DEFAULT_SAMPLE.location,
+      objective: assembledData.objective?.trim() || DEFAULT_SAMPLE.objective,
+      portfolioLink:
+        assembledData.portfolioLink?.trim() || DEFAULT_SAMPLE.portfolioLink,
+      githubLink:
+        assembledData.githubLink?.trim() || DEFAULT_SAMPLE.githubLink,
+      linkedinLink:
+        assembledData.linkedinLink?.trim() || DEFAULT_SAMPLE.linkedinLink,
+
+      technicalSkills:
+        assembledData.technicalSkills.length > 0
+          ? assembledData.technicalSkills
+          : DEFAULT_SAMPLE.technicalSkills,
+
+      softSkills:
+        assembledData.softSkills.length > 0
+          ? assembledData.softSkills
+          : DEFAULT_SAMPLE.softSkills,
+
+      educations:
+        assembledData.educations.length > 0
+          ? assembledData.educations
+          : DEFAULT_SAMPLE.educations,
+
+      experiences:
+        assembledData.experiences.length > 0
+          ? assembledData.experiences
+          : DEFAULT_SAMPLE.experiences,
+
+      projects:
+        assembledData.projects.length > 0
+          ? assembledData.projects
+          : DEFAULT_SAMPLE.projects,
+
+      resumeFormat,
+    };
+  }, [assembledData, fullName, email, resumeTitle, resumeFormat]);
+
   const renderSelectedTemplate = (showPlaceholders = true) => {
     // const data = showPlaceholders ? assembledDataWithDefaults : assembledData;
     const data = assembledDataWithDefaults;
@@ -896,7 +946,7 @@ export default function ResumeBuilderPage() {
     const res = await fetch("/api/resume/pdf", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(assembledData),
+      body: JSON.stringify(assembledDataForPdf),
     });
 
     const blob = await res.blob();

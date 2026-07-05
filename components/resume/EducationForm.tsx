@@ -81,7 +81,7 @@ export default function EducationForm({
     <div>
       {/* --- Add New Education Form --- */}
       <div
-        className={`mb-6 p-4 bg-gray-50/40 rounded-xl border shadow-sm space-y-3 ${
+        className={`p-4 bg-gray-50/40 rounded-xl border shadow-sm flex flex-col gap-3 mb-6 ${
           sectionInvalid ? invalidBorder : baseBorder
         }`}
         onKeyDown={(e) => {
@@ -191,9 +191,9 @@ export default function EducationForm({
             <button
               type="button"
               onClick={addEducation}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-yellow-300 text-white shadow-sm hover:bg-yellow-400"
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-yellow-400 text-white shadow-sm hover:bg-yellow-500"
             >
-              <PlusIcon className="w-4 h-4" strokeWidth={2.5} />
+              <PlusIcon className="w-4 h-4" strokeWidth={3} />
             </button>
           </div>
         </div>

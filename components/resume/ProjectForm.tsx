@@ -3,6 +3,8 @@ import React, { useEffect, useRef, useState } from "react";
 import { SparklesIcon, PlusIcon } from "@heroicons/react/24/outline";
 import Loader from "../Loader";
 import { Project } from "@/utils/api/types/resume.types";
+import { useToast } from "@/components/toast/ToastContext";
+import { ToastStates } from "@/utils/enums/enums";
 
 export default function ProjectsForm({
   projects,
@@ -26,6 +28,7 @@ export default function ProjectsForm({
 
   const [loading, setLoading] = useState(false);
   const [keywords, setKeywords] = useState("");
+  const { showToast } = useToast();
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -83,10 +86,19 @@ export default function ProjectsForm({
   const handleAIEnhance = async (
     setter: (val: string) => void,
     value: string,
-    type: "polish" | "concise" | "technical" | "recruiter"
+    type: "polish" | "concise" | "technical" | "recruiter",
   ) => {
+    setShowDropdown(false);
+
+    if (!value.trim()) {
+      showToast(
+        ToastStates.ERROR,
+        "Please enter some text before using AI Enhance",
+      );
+      return;
+    }
+
     try {
-      setShowDropdown(false);
       setLoading(true);
 
       const kwArr = keywords
@@ -98,7 +110,7 @@ export default function ProjectsForm({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          description: value || "",
+          description: value,
           keywords: kwArr,
           tone: "neutral",
           type,
@@ -110,20 +122,26 @@ export default function ProjectsForm({
       });
 
       if (!resp.ok) {
-        setter(
-          value
-            ? `${value} — (AI enhance failed, kept original)`
-            : "AI enhance failed."
+        showToast(
+          ToastStates.ERROR,
+          "Failed to enhance text. Please try again.",
         );
         return;
       }
 
       const data = await resp.json();
-      setter(data?.modified?.trim() || value);
+      const modified = data?.modified?.trim();
+
+      if (!modified) {
+        showToast(
+          ToastStates.ERROR,
+          "Failed to enhance text. Please try again.",
+        );
+      } else {
+        setter(modified);
+      }
     } catch {
-      setter(
-        value ? `${value} — (AI network error)` : "AI enhance network error"
-      );
+      showToast(ToastStates.ERROR, "Failed to enhance text. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -162,9 +180,9 @@ export default function ProjectsForm({
             <button
               type="button"
               onClick={addProject}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-yellow-300 text-white shadow-sm hover:bg-yellow-400"
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-yellow-400 text-white shadow-sm hover:bg-yellow-500"
             >
-              <PlusIcon className="w-4 h-4" strokeWidth={2.5} />
+              <PlusIcon className="w-4 h-4" strokeWidth={3} />
             </button>
           </div>
         </div>
@@ -178,7 +196,12 @@ export default function ProjectsForm({
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setShowDropdown((prev) => !prev)}
-                className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium text-gray-800 bg-gradient-to-r from-purple-100 via-pink-100 to-orange-100 shadow-sm hover:shadow-md"
+                disabled={loading || !newProj.description.trim()}
+                className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium shadow-sm ${
+                  loading || !newProj.description.trim()
+                    ? "text-gray-400 bg-gray-100 cursor-not-allowed"
+                    : "text-gray-800 bg-gradient-to-r from-purple-100 via-pink-100 to-orange-100 hover:shadow-md"
+                }`}
                 type="button"
               >
                 <SparklesIcon className="w-3 h-3 text-pink-500" /> AI Enhance
@@ -198,7 +221,7 @@ export default function ProjectsForm({
                         handleAIEnhance(
                           (val) => setNewProj({ ...newProj, description: val }),
                           newProj.description,
-                          type as any
+                          type as any,
                         )
                       }
                       className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-yellow-50"

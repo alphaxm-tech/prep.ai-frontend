@@ -251,6 +251,7 @@ export default function CreativeResumePDF({ data }: { data: ResumeData }) {
                     <Text style={styles.entryMeta}>
                       {formatDuration(ed.start_year, ed.end_year)}
                       {ed.location ? ` · ${ed.location}` : ""}
+                      {ed.grade ? ` · GPA: ${ed.grade}` : ""}
                     </Text>
                   </View>
                 ))}

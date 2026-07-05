@@ -122,10 +122,10 @@ export default function StandardResumeTemplate({
             </h2>
 
             <div className="flex flex-wrap gap-2">
-              {allSkills.length
-                ? allSkills.map((s, i) => (
+              {skills?.length
+                ? skills.map((s, i) => (
                     <span
-                      key={i}
+                      key={`tech-${i}`}
                       className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded"
                     >
                       {s}
@@ -139,10 +139,23 @@ export default function StandardResumeTemplate({
                       <span className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded">
                         TypeScript
                       </span>
-                      <span className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded">
+                    </>
+                  )}
+              {softskills?.length
+                ? softskills.map((s, i) => (
+                    <span
+                      key={`soft-${i}`}
+                      className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded"
+                    >
+                      {s}
+                    </span>
+                  ))
+                : showPlaceholders && (
+                    <>
+                      <span className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded">
                         Communication
                       </span>
-                      <span className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded">
+                      <span className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded">
                         Ownership
                       </span>
                     </>
@@ -150,36 +163,6 @@ export default function StandardResumeTemplate({
             </div>
           </section>
         )}
-
-        {/* Skills (soft only) */}
-        {/* {(softskills?.length || showPlaceholders) && (
-          <section>
-            <h2 className="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-1 mb-2">
-              Skills
-            </h2>
-            <div className="flex flex-wrap gap-2">
-              {softskills?.length
-                ? softskills.map((s, i) => (
-                    <span
-                      key={i}
-                      className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded"
-                    >
-                      {s}
-                    </span>
-                  ))
-                : showPlaceholders && (
-                    <>
-                      <span className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded">
-                        Communication
-                      </span>
-                      <span className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded">
-                        Ownership
-                      </span>
-                    </>
-                  )}
-            </div>
-          </section>
-        )} */}
 
         {/* Education */}
         <section>

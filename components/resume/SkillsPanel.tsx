@@ -228,9 +228,9 @@ export function SkillsPanel({
 
           <button
             onClick={handleAddSkill}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-yellow-300 text-white shadow-sm hover:bg-yellow-400"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-yellow-400 text-white shadow-sm hover:bg-yellow-500"
           >
-            <PlusIcon className="w-4 h-4" strokeWidth={2.5} />
+            <PlusIcon className="w-4 h-4" strokeWidth={3} />
           </button>
         </div>
 
@@ -284,9 +284,9 @@ export function SkillsPanel({
           />
           <button
             onClick={handleAddSoftSkill}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-yellow-300 text-white shadow-sm hover:bg-yellow-400"
+            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-yellow-400 text-white shadow-sm hover:bg-yellow-500"
           >
-            <PlusIcon className="w-4 h-4" strokeWidth={2.5} />
+            <PlusIcon className="w-4 h-4" strokeWidth={3} />
           </button>
         </div>
 

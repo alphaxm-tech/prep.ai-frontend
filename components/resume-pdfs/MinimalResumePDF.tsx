@@ -97,6 +97,19 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
 
+  softSkillTag: {
+    fontSize: 8,
+    paddingVertical: 3,
+    paddingHorizontal: 6,
+    backgroundColor: "#ffffff",
+    color: "#475569", // slate-600
+    borderRadius: 3,
+    borderWidth: 1,
+    borderColor: "#cbd5e1", // slate-300
+    marginRight: 6,
+    marginBottom: 6,
+  },
+
   entryRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -193,7 +206,7 @@ export default function MinimalResumePDF({ data }: { data: ResumeData }) {
                 </Text>
               ))}
               {(data.softSkills ?? []).map((s, i) => (
-                <Text key={`soft-${i}`} style={styles.skillTag}>
+                <Text key={`soft-${i}`} style={styles.softSkillTag}>
                   {s}
                 </Text>
               ))}

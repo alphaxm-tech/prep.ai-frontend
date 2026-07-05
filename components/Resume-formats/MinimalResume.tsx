@@ -123,7 +123,7 @@ export default function MinimalResumeTemplate({
             {softskills?.map((s, i) => (
               <span
                 key={`soft-${i}`}
-                className="text-xs px-2 py-1 bg-slate-100 rounded text-slate-700"
+                className="text-xs px-2 py-1 bg-white border border-slate-300 rounded text-slate-600"
               >
                 {s}
               </span>

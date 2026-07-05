@@ -162,6 +162,7 @@ export default function CreativeResumeTemplate({
                     <div className="text-sm text-slate-600">{ed.institute}</div>
                     <div className="text-xs text-slate-500">
                       {ed.start_year} – {ed.end_year} · {ed.location}
+                      {ed.grade ? ` · GPA: ${ed.grade}` : ""}
                     </div>
                   </div>
                 ))

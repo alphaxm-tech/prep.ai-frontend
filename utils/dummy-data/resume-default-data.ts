@@ -27,9 +27,8 @@ export const DEFAULT_SAMPLE = {
       degree: "Degree (e.g., B.Tech)",
       institute: "Your College Name",
       location: "City",
-      // duration: "Start–End (e.g., 2019–2023)",
-      startYear: "2016",
-      endYear: "2020",
+      start_year: "2016",
+      end_year: "2020",
       grade: "CGPA/Percentage (e.g., 8.0)",
     },
   ],
@@ -38,16 +37,16 @@ export const DEFAULT_SAMPLE = {
     {
       company: "Company Name",
       role: "Your Role (e.g., Fullstack Developer)",
-      duration: "2023 – Present",
+      start_year: "2023",
+      end_year: "Present",
       description:
         "Describe your impact. Example: Built features, improved performance, collaborated across teams, etc.",
-      logo: "",
     },
   ],
 
   projects: [
     {
-      title: "Project Title",
+      name: "Project Title",
       description:
         "Describe what the project does, why you built it, and what tech you used.",
     },

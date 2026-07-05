@@ -80,6 +80,18 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     paddingHorizontal: 6,
     backgroundColor: "#f3f4f6",
+    color: "#374151",
+    borderRadius: 3,
+    marginRight: 6,
+    marginBottom: 6,
+  },
+
+  softSkillTag: {
+    fontSize: 9,
+    paddingVertical: 3,
+    paddingHorizontal: 6,
+    backgroundColor: "#eff6ff",
+    color: "#1d4ed8",
     borderRadius: 3,
     marginRight: 6,
     marginBottom: 6,
@@ -158,7 +170,7 @@ export default function StandardResumePDF({ data }: { data: ResumeData }) {
                 </Text>
               ))}
               {(data.softSkills ?? []).map((s, i) => (
-                <Text key={`soft-${i}`} style={styles.skillTag}>
+                <Text key={`soft-${i}`} style={styles.softSkillTag}>
                   {s}
                 </Text>
               ))}

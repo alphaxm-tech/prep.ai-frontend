@@ -5,6 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import { SparklesIcon } from "@heroicons/react/24/outline";
 import Loader from "../Loader";
 import { capitalizeFullName } from "../../lib/capitalize-fullname";
+import { useToast } from "@/components/toast/ToastContext";
+import { ToastStates } from "@/utils/enums/enums";
 
 type Props = {
   isDefault: boolean;
@@ -58,6 +60,7 @@ export default function BasicDetails({
   const [tone] = useState("neutral");
   const [loading, setLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { showToast } = useToast();
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -81,8 +84,17 @@ export default function BasicDetails({
   const inputInvalid = "border-red-400 ring-1 ring-red-200";
 
   const handleAIEnhance = async (value: string, type: string) => {
+    setShowDropdown(false);
+
+    if (!value.trim()) {
+      showToast(
+        ToastStates.ERROR,
+        "Please enter some text before using AI Enhance"
+      );
+      return;
+    }
+
     try {
-      setShowDropdown(false);
       setLoading(true);
 
       const kwArr = keywords
@@ -107,7 +119,7 @@ export default function BasicDetails({
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({}));
         console.error("Modify description error:", err);
-        setSummary("❌ Failed to enhance text (server error)");
+        showToast(ToastStates.ERROR, "Failed to enhance text. Please try again.");
         return;
       }
 
@@ -115,13 +127,13 @@ export default function BasicDetails({
       const modified = data?.modified ?? "";
 
       if (!modified) {
-        setSummary("❌ Failed to enhance text (empty response)");
+        showToast(ToastStates.ERROR, "Failed to enhance text. Please try again.");
       } else {
         setSummary(modified.trim());
       }
     } catch (e) {
       console.error("handleAIEnhance error:", e);
-      setSummary("❌ Failed to enhance text (network error)");
+      showToast(ToastStates.ERROR, "Failed to enhance text. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -323,7 +335,12 @@ export default function BasicDetails({
           <div className="relative" ref={dropdownRef}>
             <button
               onClick={() => setShowDropdown((prev) => !prev)}
-              className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium text-gray-800 bg-gradient-to-r from-purple-100 via-pink-100 to-orange-100 shadow-sm hover:shadow-md transition-transform transform hover:-translate-y-0.5 hover:brightness-105"
+              disabled={loading || !summary.trim()}
+              className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium shadow-sm transition-transform transform ${
+                loading || !summary.trim()
+                  ? "text-gray-400 bg-gray-100 cursor-not-allowed"
+                  : "text-gray-800 bg-gradient-to-r from-purple-100 via-pink-100 to-orange-100 hover:shadow-md hover:-translate-y-0.5 hover:brightness-105"
+              }`}
               type="button"
             >
               <SparklesIcon className="w-3 h-3 text-pink-500" /> AI Enhance
