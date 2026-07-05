@@ -2,21 +2,29 @@
 import { NextResponse } from "next/server";
 import { renderToBuffer } from "@react-pdf/renderer";
 import ProfessionalResumePDF from "@/components/resume-pdfs/ProfessionalResumePDF";
+import ModernResumePDF from "@/components/resume-pdfs/ModernResumePDF";
+import CreativeResumePDF from "@/components/resume-pdfs/CreativeResumePDF";
+import MinimalResumePDF from "@/components/resume-pdfs/MinimalResumePDF";
+import StandardResumePDF from "@/components/resume-pdfs/StandardResumePDF";
+
+const TEMPLATES_BY_FORMAT: Record<string, typeof ProfessionalResumePDF> = {
+  MODERN: ModernResumePDF,
+  CLASSIC: ProfessionalResumePDF,
+  CREATIVE: CreativeResumePDF,
+  MINIMAL: MinimalResumePDF,
+  STANDARD: StandardResumePDF,
+};
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
+    const { resumeFormat, ...data } = body;
 
-    const pdfBuffer = await renderToBuffer(
-      <ProfessionalResumePDF data={body} />
-    );
+    const PdfTemplate =
+      TEMPLATES_BY_FORMAT[String(resumeFormat).toUpperCase()] ??
+      StandardResumePDF;
 
-    // return new NextResponse(pdfBuffer, {
-    //   headers: {
-    //     "Content-Type": "application/pdf",
-    //     "Content-Disposition": 'attachment; filename="resume.pdf"',
-    //   },
-    // });
+    const pdfBuffer = await renderToBuffer(<PdfTemplate data={data} />);
 
     return new NextResponse(new Uint8Array(pdfBuffer), {
       headers: {

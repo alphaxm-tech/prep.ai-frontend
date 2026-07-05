@@ -43,7 +43,7 @@ export default function StandardResumeTemplate({
       {/* Header */}
       <header className="border-b border-gray-300 pb-4 mb-6 text-center">
         <h1 className="text-3xl font-bold text-gray-900">
-          {ph(fullName, "Resume Title")}
+          {ph(fullName, "Your Name")}
         </h1>
 
         <div className="mt-2 flex flex-wrap justify-center gap-4 text-sm text-gray-600">
@@ -51,6 +51,54 @@ export default function StandardResumeTemplate({
           <span>📞 {ph(user?.phone, "+91-0000000000")}</span>
           <span>📍 {ph(user?.location, "City, Country")}</span>
         </div>
+
+        {(user?.portfolio_website_url ||
+          user?.github_url ||
+          user?.linkedin_url ||
+          showPlaceholders) && (
+          <div className="mt-2 flex flex-wrap justify-center gap-4 text-sm text-blue-700">
+            {user?.portfolio_website_url ? (
+              <a
+                href={user.portfolio_website_url}
+                target="_blank"
+                rel="noreferrer"
+                className="hover:underline"
+              >
+                Portfolio
+              </a>
+            ) : (
+              showPlaceholders && (
+                <span className="text-gray-400">Portfolio</span>
+              )
+            )}
+            {user?.github_url ? (
+              <a
+                href={user.github_url}
+                target="_blank"
+                rel="noreferrer"
+                className="hover:underline"
+              >
+                GitHub
+              </a>
+            ) : (
+              showPlaceholders && <span className="text-gray-400">GitHub</span>
+            )}
+            {user?.linkedin_url ? (
+              <a
+                href={user.linkedin_url}
+                target="_blank"
+                rel="noreferrer"
+                className="hover:underline"
+              >
+                LinkedIn
+              </a>
+            ) : (
+              showPlaceholders && (
+                <span className="text-gray-400">LinkedIn</span>
+              )
+            )}
+          </div>
+        )}
       </header>
 
       <main className="space-y-6">
@@ -62,7 +110,7 @@ export default function StandardResumeTemplate({
           <p className="text-sm text-gray-700 leading-relaxed">
             {ph(
               user?.objective,
-              "Brief summary about your focus, technologies, and impact."
+              "Brief summary about your focus, technologies, and impact.",
             )}
           </p>
         </section>
@@ -74,10 +122,10 @@ export default function StandardResumeTemplate({
             </h2>
 
             <div className="flex flex-wrap gap-2">
-              {allSkills.length
-                ? allSkills.map((s, i) => (
+              {skills?.length
+                ? skills.map((s, i) => (
                     <span
-                      key={i}
+                      key={`tech-${i}`}
                       className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded"
                     >
                       {s}
@@ -91,10 +139,23 @@ export default function StandardResumeTemplate({
                       <span className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded">
                         TypeScript
                       </span>
-                      <span className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded">
+                    </>
+                  )}
+              {softskills?.length
+                ? softskills.map((s, i) => (
+                    <span
+                      key={`soft-${i}`}
+                      className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded"
+                    >
+                      {s}
+                    </span>
+                  ))
+                : showPlaceholders && (
+                    <>
+                      <span className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded">
                         Communication
                       </span>
-                      <span className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded">
+                      <span className="text-xs px-2 py-1 bg-blue-50 text-blue-700 rounded">
                         Ownership
                       </span>
                     </>
@@ -102,36 +163,6 @@ export default function StandardResumeTemplate({
             </div>
           </section>
         )}
-
-        {/* Skills (soft only) */}
-        {/* {(softskills?.length || showPlaceholders) && (
-          <section>
-            <h2 className="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-1 mb-2">
-              Skills
-            </h2>
-            <div className="flex flex-wrap gap-2">
-              {softskills?.length
-                ? softskills.map((s, i) => (
-                    <span
-                      key={i}
-                      className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded"
-                    >
-                      {s}
-                    </span>
-                  ))
-                : showPlaceholders && (
-                    <>
-                      <span className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded">
-                        Communication
-                      </span>
-                      <span className="text-xs px-2 py-1 bg-gray-100 text-gray-700 rounded">
-                        Ownership
-                      </span>
-                    </>
-                  )}
-            </div>
-          </section>
-        )} */}
 
         {/* Education */}
         <section>
@@ -241,7 +272,7 @@ export default function StandardResumeTemplate({
       </main>
 
       <footer className="mt-6 text-xs text-gray-500 text-center">
-        Standard resume template · Clean & professional
+        {/* Standard resume template · Clean & professional */}
         <br />
         <span className="italic">Created by AI Prep Buddy</span>
       </footer>

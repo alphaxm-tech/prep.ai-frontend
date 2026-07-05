@@ -17,8 +17,15 @@ export default function ModernResumeTemplate({
   fullName?: string;
   email?: string;
 }) {
-  const { resume_details, user, softskills, experience, education, projects } =
-    data;
+  const {
+    resume_details,
+    user,
+    skills,
+    softskills,
+    experience,
+    education,
+    projects,
+  } = data;
 
   const ph = (val?: string, fallback = "") =>
     val && val.trim() ? val : showPlaceholders ? fallback : "";
@@ -28,7 +35,7 @@ export default function ModernResumeTemplate({
       {/* Header */}
       <header className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white px-8 py-10">
         <h1 className="text-3xl md:text-4xl font-bold">
-          {ph(fullName, "Resume Title")}
+          {ph(fullName, "Your Name")}
         </h1>
 
         <div className="flex flex-wrap gap-4 text-sm mt-4 opacity-90">
@@ -47,7 +54,7 @@ export default function ModernResumeTemplate({
           <p className="text-gray-700 leading-relaxed">
             {ph(
               user.objective,
-              "Write a short professional summary describing your focus and strengths."
+              "Write a short professional summary describing your focus and strengths.",
             )}
           </p>
         </section>
@@ -92,31 +99,41 @@ export default function ModernResumeTemplate({
           </div>
         </section>
 
-        {/* Skills (soft only for now) */}
+        {/* Skills */}
         <section>
           <h2 className="text-xl font-semibold text-gray-900 border-b-2 border-indigo-100 pb-1 mb-3">
             Skills
           </h2>
           <div className="flex flex-wrap gap-2">
-            {softskills?.length ? (
-              softskills.map((s, i) => (
-                <span
-                  key={i}
-                  className="px-3 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-full"
-                >
-                  {s}
-                </span>
-              ))
-            ) : showPlaceholders ? (
-              <>
-                {/* <span className="px-3 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-full">
-                  Communication
-                </span>
-                <span className="px-3 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-full">
-                  Ownership
-                </span> */}
-              </>
-            ) : (
+            {skills?.length
+              ? skills.map((s, i) => (
+                  <span
+                    key={`tech-${i}`}
+                    className="px-3 py-1 text-xs font-medium bg-indigo-50 text-indigo-700 rounded-full"
+                  >
+                    {s}
+                  </span>
+                ))
+              : showPlaceholders && (
+                  <span className="px-3 py-1 text-xs font-medium bg-indigo-50 text-indigo-700 rounded-full">
+                    React
+                  </span>
+                )}
+            {softskills?.length
+              ? softskills.map((s, i) => (
+                  <span
+                    key={`soft-${i}`}
+                    className="px-3 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-full"
+                  >
+                    {s}
+                  </span>
+                ))
+              : showPlaceholders && (
+                  <span className="px-3 py-1 text-xs font-medium bg-gray-100 text-gray-700 rounded-full">
+                    Communication
+                  </span>
+                )}
+            {!skills?.length && !softskills?.length && !showPlaceholders && (
               <span className="text-sm text-gray-400">No skills added</span>
             )}
           </div>
@@ -246,7 +263,7 @@ export default function ModernResumeTemplate({
       </main>
 
       <footer className="mt-6 mb-8 text-xs text-gray-500 text-center">
-        Modern resume template
+        {/* Modern resume template */}
         <br />
         <span className="italic">Created by AI Prep Buddy</span>
       </footer>

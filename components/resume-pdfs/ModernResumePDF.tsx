@@ -1,6 +1,7 @@
 // components/resume-pdfs/ModernResumePDF.tsx
 import React from "react";
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import { ResumeData, formatDuration } from "./types";
 
 /**
  * MODERN RESUME PDF
@@ -9,43 +10,6 @@ import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
  * - Clean, modern layout
  * - No Tailwind / No DOM styles
  */
-
-type Education = {
-  level: string;
-  institute: string;
-  location: string;
-  duration: string;
-  grade?: string;
-};
-
-type WorkExperience = {
-  company: string;
-  role: string;
-  duration: string;
-  description: string;
-};
-
-type Project = {
-  title: string;
-  description: string;
-};
-
-export type ResumeData = {
-  fullName: string;
-  title?: string;
-  email?: string;
-  phone?: string;
-  location?: string;
-  objective?: string;
-  portfolioLink?: string;
-  githubLink?: string;
-  linkedinLink?: string;
-  technicalSkills?: string[];
-  softSkills?: string[];
-  educations?: Education[];
-  experiences?: WorkExperience[];
-  projects?: Project[];
-};
 
 const styles = StyleSheet.create({
   page: {
@@ -79,13 +43,14 @@ const styles = StyleSheet.create({
   contactRow: {
     flexDirection: "row",
     flexWrap: "wrap",
-    marginTop: 8,
+    marginTop: 10,
   },
 
   contactItem: {
     fontSize: 9,
     color: "#e0e7ff",
     marginRight: 12,
+    marginBottom: 4,
   },
 
   /* SECTION */
@@ -183,52 +148,52 @@ export default function ModernResumePDF({ data }: { data: ResumeData }) {
       <Page size="A4" style={styles.page}>
         {/* HEADER */}
         <View style={styles.header}>
-          <Text style={styles.name}>{data.fullName}</Text>
-          {data.title && <Text style={styles.title}>{data.title}</Text>}
+          <Text style={styles.name}>{data.fullName || "Your Name"}</Text>
+          {data.title ? <Text style={styles.title}>{data.title}</Text> : null}
 
           <View style={styles.contactRow}>
-            {data.email && (
+            {data.email ? (
               <Text style={styles.contactItem}>✉ {data.email}</Text>
-            )}
-            {data.phone && (
+            ) : null}
+            {data.phone ? (
               <Text style={styles.contactItem}>📞 {data.phone}</Text>
-            )}
-            {data.location && (
+            ) : null}
+            {data.location ? (
               <Text style={styles.contactItem}>📍 {data.location}</Text>
-            )}
+            ) : null}
           </View>
         </View>
 
         {/* ABOUT / SUMMARY */}
-        {data.objective && (
+        {data.objective ? (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>About Me</Text>
             <Text style={styles.summaryText}>{data.objective}</Text>
           </View>
-        )}
+        ) : null}
 
         {/* LINKS */}
-        {(data.portfolioLink || data.githubLink || data.linkedinLink) && (
+        {data.portfolioLink || data.githubLink || data.linkedinLink ? (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Links</Text>
-            {data.portfolioLink && (
+            {data.portfolioLink ? (
               <Text style={styles.summaryText}>🌐 {data.portfolioLink}</Text>
-            )}
-            {data.githubLink && (
+            ) : null}
+            {data.githubLink ? (
               <Text style={styles.summaryText}>🐙 {data.githubLink}</Text>
-            )}
-            {data.linkedinLink && (
+            ) : null}
+            {data.linkedinLink ? (
               <Text style={styles.summaryText}>💼 {data.linkedinLink}</Text>
-            )}
+            ) : null}
           </View>
-        )}
+        ) : null}
 
         {/* SKILLS */}
-        {(data.technicalSkills?.length || data.softSkills?.length) && (
+        {data.technicalSkills?.length || data.softSkills?.length ? (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Skills</Text>
 
-            {data.technicalSkills?.length && (
+            {data.technicalSkills?.length ? (
               <View style={styles.skillWrap}>
                 {data.technicalSkills.map((s, i) => (
                   <Text key={i} style={styles.skillTag}>
@@ -236,9 +201,9 @@ export default function ModernResumePDF({ data }: { data: ResumeData }) {
                   </Text>
                 ))}
               </View>
-            )}
+            ) : null}
 
-            {data.softSkills?.length && (
+            {data.softSkills?.length ? (
               <View style={[styles.skillWrap, { marginTop: 6 }]}>
                 {data.softSkills.map((s, i) => (
                   <Text key={i} style={[styles.skillTag, styles.softSkillTag]}>
@@ -246,59 +211,68 @@ export default function ModernResumePDF({ data }: { data: ResumeData }) {
                   </Text>
                 ))}
               </View>
-            )}
+            ) : null}
           </View>
-        )}
+        ) : null}
 
         {/* EDUCATION */}
-        {data.educations?.length && (
+        {data.educations?.length ? (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Education</Text>
             {data.educations.map((ed, i) => (
               <View key={i} style={styles.card}>
-                <Text style={styles.cardTitle}>{ed.level}</Text>
-                <Text style={styles.cardSubtitle}>{ed.institute}</Text>
+                <Text style={styles.cardTitle}>{ed.degree}</Text>
+                {ed.institute ? (
+                  <Text style={styles.cardSubtitle}>{ed.institute}</Text>
+                ) : null}
                 <Text style={styles.cardMeta}>
-                  {ed.duration} • {ed.location}
+                  {formatDuration(ed.start_year, ed.end_year)}
+                  {ed.location ? ` • ${ed.location}` : ""}
                   {ed.grade ? ` • GPA: ${ed.grade}` : ""}
                 </Text>
               </View>
             ))}
           </View>
-        )}
+        ) : null}
 
         {/* EXPERIENCE */}
-        {data.experiences?.length && (
+        {data.experiences?.length ? (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Experience</Text>
             {data.experiences.map((ex, i) => (
               <View key={i} style={styles.card}>
                 <Text style={styles.cardTitle}>{ex.role}</Text>
                 <Text style={styles.cardSubtitle}>{ex.company}</Text>
-                <Text style={styles.cardMeta}>{ex.duration}</Text>
-                <Text style={styles.description}>{ex.description}</Text>
+                <Text style={styles.cardMeta}>
+                  {formatDuration(ex.start_year, ex.end_year)}
+                </Text>
+                {ex.description ? (
+                  <Text style={styles.description}>{ex.description}</Text>
+                ) : null}
               </View>
             ))}
           </View>
-        )}
+        ) : null}
 
         {/* PROJECTS */}
-        {data.projects?.length && (
+        {data.projects?.length ? (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Projects</Text>
             {data.projects.map((p, i) => (
               <View key={i} style={styles.card}>
-                <Text style={styles.cardTitle}>{p.title}</Text>
-                <Text style={styles.description}>{p.description}</Text>
+                <Text style={styles.cardTitle}>{p.name}</Text>
+                {p.description ? (
+                  <Text style={styles.description}>{p.description}</Text>
+                ) : null}
               </View>
             ))}
           </View>
-        )}
+        ) : null}
 
         {/* FOOTER */}
         <View style={styles.footer}>
           <Text style={styles.muted}>
-            Modern resume template · Created by AI Prep Buddy
+            {/* Modern resume template · Created by AI Prep Buddy */}
           </Text>
         </View>
       </Page>

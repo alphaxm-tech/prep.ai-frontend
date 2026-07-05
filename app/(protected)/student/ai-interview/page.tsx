@@ -7,6 +7,7 @@ import { useGetAllAssessments } from "@/utils/queries/assessment.queries";
 import Loader from "@/components/Loader";
 import WorkInProgressBanner from "@/components/WorkInProgressBanner";
 import { ASSESSMENT_TYPES } from "@/utils/api/types/assessment.types";
+import { AIINTERVIEW } from "@/utils/api/endpoints";
 
 type InterviewType = {
   id: string; // NEW: stable identifier
@@ -176,7 +177,7 @@ export default function AIInterviewPage() {
     )}&company=${encodeURIComponent(p.company)}&title=${encodeURIComponent(
       p.title,
     )}`;
-    router.push(`/ai-interview/interview${qs}`);
+    router.push(`/${AIINTERVIEW}/interview${qs}`);
   };
 
   return (

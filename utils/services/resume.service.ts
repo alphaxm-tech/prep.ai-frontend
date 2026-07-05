@@ -13,6 +13,7 @@ import {
   GetResumeFormatsResponse,
   GetSkillsMasterResponse,
   ResumeFormat,
+  ResumeResponse,
   UsersResumeResponse,
 } from "../api/types/resume.types";
 
@@ -48,7 +49,7 @@ export const resumeService = {
     return response.data;
   },
 
-  getCompleteResumeByID: async (resumeId: string) => {
+  getCompleteResumeByID: async (resumeId: string): Promise<ResumeResponse> => {
     const response = await api.get(
       `${BASE_API_URL}/${RESUME}/${GET_COMPLETE_RESUME_BY_ID}/${resumeId}`
     );

@@ -1,6 +1,7 @@
 // components/resume/EducationForm.tsx
 import { Education } from "@/utils/api/types/resume.types";
 import React, { useState } from "react";
+import { PlusIcon } from "@heroicons/react/24/outline";
 
 export default function EducationForm({
   educations,
@@ -78,9 +79,16 @@ export default function EducationForm({
 
   return (
     <div>
+      <h4 className="text-sm font-semibold mb-2 text-gray-800">
+        Education
+        <span className="ml-1.5 text-[11px] font-normal text-gray-400">
+          At least 1 is mandatory
+        </span>
+      </h4>
+
       {/* --- Add New Education Form --- */}
       <div
-        className={`mb-6 p-4 bg-gray-50/40 rounded-xl border shadow-sm space-y-3 ${
+        className={`p-4 bg-gray-50/40 rounded-xl border shadow-sm flex flex-col gap-3 mb-6 ${
           sectionInvalid ? invalidBorder : baseBorder
         }`}
         onKeyDown={(e) => {
@@ -190,9 +198,9 @@ export default function EducationForm({
             <button
               type="button"
               onClick={addEducation}
-              className="flex items-center justify-center w-10 h-10 rounded-full bg-yellow-300 text-white text-xl shadow-sm hover:bg-yellow-400"
+              className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-yellow-400 text-white shadow-sm hover:bg-yellow-500"
             >
-              +
+              <PlusIcon className="w-4 h-4" strokeWidth={3} />
             </button>
           </div>
         </div>
@@ -206,27 +214,65 @@ export default function EducationForm({
             className="p-4 bg-gray-50/40 rounded-xl border border-gray-200 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3"
           >
             {editIndex === index && editEdu ? (
-              <div className="flex flex-wrap items-center gap-3 flex-1">
-                {(
-                  [
-                    "degree",
-                    "institute",
-                    "location",
-                    "start_year",
-                    "end_year",
-                    "grade",
-                  ] as (keyof Education)[]
-                ).map((field) => (
+              <div className="flex-1 flex flex-col gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <input
-                    key={field}
                     type="text"
-                    value={editEdu[field]}
+                    value={editEdu.degree}
                     onChange={(e) =>
-                      setEditEdu({ ...editEdu, [field]: e.target.value })
+                      setEditEdu({ ...editEdu, degree: e.target.value })
                     }
-                    className={`w-full sm:w-1/6 ${inputClasses} ${baseBorder}`}
+                    placeholder="Degree"
+                    className={`w-full ${inputClasses} ${baseBorder}`}
                   />
-                ))}
+                  <input
+                    type="text"
+                    value={editEdu.institute}
+                    onChange={(e) =>
+                      setEditEdu({ ...editEdu, institute: e.target.value })
+                    }
+                    placeholder="Institute"
+                    className={`w-full ${inputClasses} ${baseBorder}`}
+                  />
+                  <input
+                    type="text"
+                    value={editEdu.location}
+                    onChange={(e) =>
+                      setEditEdu({ ...editEdu, location: e.target.value })
+                    }
+                    placeholder="Location"
+                    className={`w-full ${inputClasses} ${baseBorder}`}
+                  />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <input
+                    type="number"
+                    value={editEdu.start_year}
+                    onChange={(e) =>
+                      setEditEdu({ ...editEdu, start_year: e.target.value })
+                    }
+                    placeholder="Start Year"
+                    className={`w-full ${inputClasses} ${baseBorder}`}
+                  />
+                  <input
+                    type="number"
+                    value={editEdu.end_year}
+                    onChange={(e) =>
+                      setEditEdu({ ...editEdu, end_year: e.target.value })
+                    }
+                    placeholder="End Year"
+                    className={`w-full ${inputClasses} ${baseBorder}`}
+                  />
+                  <input
+                    type="text"
+                    value={editEdu.grade}
+                    onChange={(e) =>
+                      setEditEdu({ ...editEdu, grade: e.target.value })
+                    }
+                    placeholder="Grade / CGPA"
+                    className={`w-full ${inputClasses} ${baseBorder}`}
+                  />
+                </div>
               </div>
             ) : (
               <div className="flex-1">

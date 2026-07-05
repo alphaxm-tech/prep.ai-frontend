@@ -207,82 +207,59 @@ export default function CodeEditorListPage() {
             </div>
           )} */}
 
-          {/* Filters */}
-          <div
-            className="
-    flex items-center justify-between
-    bg-white/70
-    backdrop-blur-xl
-    border border-white/60
-    rounded-xl
-    px-5 py-3
-    my-6
-    shadow-[0_4px_20px_rgba(0,0,0,0.04)]
-  "
-          >
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <span>🎯</span>
-                <span className="text-sm font-medium text-gray-500">
-                  Difficulty
-                </span>
-              </div>
-
-              <div className="flex flex-wrap gap-2">
+          {/* PROGRESS + FILTER BAR */}
+          <div className="max-w-6xl mx-auto mb-8">
+            <div
+              className="
+              flex flex-col lg:flex-row
+              lg:items-center lg:justify-between
+              gap-6
+              bg-white/70 backdrop-blur-md
+              border border-white/40
+              rounded-2xl
+              px-4 py-2
+              shadow-sm
+            "
+            >
+              {/* LEFT SIDE — Filters */}
+              <div className="flex flex-wrap gap-3">
                 {["ALL", "EASY", "MEDIUM", "HARD"].map((level) => {
                   const active = difficultyFilter === level;
 
-                  const styles = active
-                    ? level === "EASY"
-                      ? "bg-green-500/10 text-green-700 border border-green-200 shadow-sm"
-                      : level === "MEDIUM"
-                        ? "bg-yellow-500/10 text-yellow-700 border border-yellow-200 shadow-sm"
-                        : level === "HARD"
-                          ? "bg-red-500/10 text-red-700 border border-red-200 shadow-sm"
-                          : "bg-slate-900 text-white border border-slate-900 shadow-sm"
-                    : `
-              bg-white/70
-              backdrop-blur-sm
-              border border-gray-200
-              text-gray-600
-              hover:bg-gray-50
-              hover:border-gray-300
-            `;
+                  const colors = {
+                    ALL: active
+                      ? "bg-slate-900 text-white"
+                      : "bg-slate-100 text-slate-700",
+                    EASY: active
+                      ? "bg-green-500 text-white"
+                      : "bg-green-50 text-green-700",
+                    MEDIUM: active
+                      ? "bg-yellow-500 text-white"
+                      : "bg-yellow-50 text-yellow-700",
+                    HARD: active
+                      ? "bg-red-500 text-white"
+                      : "bg-red-50 text-red-700",
+                  };
 
                   return (
                     <button
                       key={level}
                       onClick={() => setDifficultyFilter(level)}
                       className={`
-              px-3 py-1.5
-              rounded-2xl
-              text-sm
-              font-medium
-              transition-all
-              duration-200
-              hover:scale-[1.02]
-              ${styles}
-            `}
+          px-4 py-2 rounded-full text-sm font-medium
+          transition-all duration-200
+          hover:scale-105
+          ${colors[level as keyof typeof colors]}
+        `}
                     >
                       {level}
                     </button>
                   );
                 })}
               </div>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <div className="h-5 w-px bg-gray-300 mr-1" />
-
-              <span className="text-sm font-semibold text-gray-700">
-                {filteredQuizzes.length}
-              </span>
-
-              <span className="text-sm text-gray-500">
-                {filteredQuizzes.length === 1
-                  ? "active quiz"
-                  : "active quizzes"}
-              </span>
+              <p className="text-sm text-gray-500">
+                {filteredQuizzes.length} quizzes found
+              </p>
             </div>
           </div>
 

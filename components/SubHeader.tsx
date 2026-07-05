@@ -22,7 +22,7 @@ export function SubHeader({ user }: { user: any }) {
     string,
     { label: string; route: string }[]
   > = {
-    STUDENT: [
+    student: [
       { label: "Home", route: STUDENT_ROUTE },
       { label: "Resume Builder", route: RESUME_BUILDER_ROUTE },
 
@@ -33,7 +33,7 @@ export function SubHeader({ user }: { user: any }) {
       { label: "Study Materials", route: STUDY_MATERIAL_ROUTE },
     ],
 
-    ADMIN: [
+    college_admin: [
       {
         label: "Home",
         route: "/college/1",
@@ -52,7 +52,7 @@ export function SubHeader({ user }: { user: any }) {
       { label: "Communication", route: "/college/communication" },
     ],
 
-    SUPER_ADMIN: [
+    super_admin: [
       { label: "Dashboard", route: "/admin/dashboard" },
       { label: "Colleges", route: "/admin/colleges" },
       { label: "Users", route: "/admin/users" },

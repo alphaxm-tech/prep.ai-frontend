@@ -17,8 +17,15 @@ export default function MinimalResumeTemplate({
   fullName?: string;
   email?: string;
 }) {
-  const { resume_details, user, experience, projects, education, softskills } =
-    data;
+  const {
+    resume_details,
+    user,
+    experience,
+    projects,
+    education,
+    skills,
+    softskills,
+  } = data;
 
   return (
     <div className="max-w-4xl mx-auto my-8 bg-white print:bg-white text-slate-800 font-sans">
@@ -27,13 +34,19 @@ export default function MinimalResumeTemplate({
       {/* Header */}
       <header className="text-center pb-4">
         <h1 className="text-2xl font-semibold tracking-tight">
-          {fullName || (showPlaceholders ? "Your Resume Title" : "")}
+          {fullName || (showPlaceholders ? "Your Name" : "")}
         </h1>
 
         <div className="mt-3 text-xs text-slate-500 flex flex-wrap justify-center gap-4">
-          {email || (showPlaceholders ? "example@gmail.com" : "")}
-          {user.phone || (showPlaceholders ? "📞 +91-0000000000" : "")}
-          {user.location || (showPlaceholders ? "📍 Your Location" : "")}
+          {(email || showPlaceholders) && (
+            <span>{email || "example@gmail.com"}</span>
+          )}
+          {(user.phone || showPlaceholders) && (
+            <span>{user.phone || "📞 +91-0000000000"}</span>
+          )}
+          {(user.location || showPlaceholders) && (
+            <span>{user.location || "📍 Your Location"}</span>
+          )}
         </div>
       </header>
 
@@ -93,21 +106,29 @@ export default function MinimalResumeTemplate({
             )}
         </section>
 
-        {/* Soft Skills */}
+        {/* Skills */}
         <section>
           <h3 className="text-xs font-medium text-slate-600 uppercase tracking-wide mb-2">
             Skills
           </h3>
           <div className="flex flex-wrap gap-2">
-            {softskills?.map((s, i) => (
+            {skills?.map((s, i) => (
               <span
-                key={i}
+                key={`tech-${i}`}
                 className="text-xs px-2 py-1 bg-slate-100 rounded text-slate-700"
               >
                 {s}
               </span>
             ))}
-            {!softskills?.length && showPlaceholders && (
+            {softskills?.map((s, i) => (
+              <span
+                key={`soft-${i}`}
+                className="text-xs px-2 py-1 bg-white border border-slate-300 rounded text-slate-600"
+              >
+                {s}
+              </span>
+            ))}
+            {!skills?.length && !softskills?.length && showPlaceholders && (
               <div className="text-xs text-slate-400">No skills added</div>
             )}
           </div>
@@ -134,8 +155,8 @@ export default function MinimalResumeTemplate({
                     {ed.start_year && ed.end_year
                       ? `${ed.start_year} - ${ed.end_year}`
                       : showPlaceholders
-                      ? "YYYY-YYYY"
-                      : ""}
+                        ? "YYYY-YYYY"
+                        : ""}
                   </div>
                   <div>
                     {ed.location || (showPlaceholders ? "City, Country" : "")}
@@ -170,8 +191,8 @@ export default function MinimalResumeTemplate({
                     {exp.start_year && exp.end_year
                       ? `${exp.start_year} - ${exp.end_year}`
                       : showPlaceholders
-                      ? "YYYY-YYYY"
-                      : ""}
+                        ? "YYYY-YYYY"
+                        : ""}
                   </div>
                 </div>
                 <p className="text-sm text-slate-700 leading-snug">
@@ -215,7 +236,7 @@ export default function MinimalResumeTemplate({
       </main>
 
       <footer className="mt-6 text-xs text-gray-500 text-center">
-        Minimal resume · Clean · Print friendly
+        {/* Minimal resume · Clean · Print friendly */}
         <br />
         <span className="italic">Created by AI Prep Buddy</span>
       </footer>

@@ -18,13 +18,18 @@ export default function CreativeResumeTemplate({
   fullName?: string;
   email?: string;
 }) {
-  const { resume_details, user, experience, projects, education, softskills } =
-    data;
+  const {
+    resume_details,
+    user,
+    experience,
+    projects,
+    education,
+    skills,
+    softskills,
+  } = data;
 
   const ph = (val?: string, fallback = "") =>
     val && val.trim() ? val : showPlaceholders ? fallback : "";
-
-  console.log(data);
 
   return (
     <div className="max-w-4xl mx-auto my-10 p-6 bg-gradient-to-b from-white to-slate-50 rounded-2xl shadow-lg border border-gray-100">
@@ -36,7 +41,7 @@ export default function CreativeResumeTemplate({
       {/* HEADER */}
       <header className="text-center mb-6">
         <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900">
-          {ph(fullName, "Resume Title")}
+          {ph(fullName, "Your Name")}
         </h1>
 
         <div className="mt-2 text-sm md:text-base text-slate-600 flex flex-wrap justify-center gap-4">
@@ -114,22 +119,29 @@ export default function CreativeResumeTemplate({
             </ul>
           </div>
 
-          {/* Skills (soft only — technical is ID based now) */}
+          {/* Skills */}
           <div className="p-4 rounded-xl bg-white border shadow-sm">
             <h3 className="text-sm font-semibold text-slate-700">Skills</h3>
             <div className="mt-2 flex flex-wrap gap-2">
-              {softskills?.length ? (
-                softskills.map((s, i) => (
-                  <span
-                    key={i}
-                    className="text-xs px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full"
-                  >
-                    {s}
-                  </span>
-                ))
-              ) : showPlaceholders ? (
+              {skills?.map((s, i) => (
+                <span
+                  key={`tech-${i}`}
+                  className="text-xs px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full"
+                >
+                  {s}
+                </span>
+              ))}
+              {softskills?.map((s, i) => (
+                <span
+                  key={`soft-${i}`}
+                  className="text-xs px-3 py-1 bg-rose-50 text-rose-700 rounded-full"
+                >
+                  {s}
+                </span>
+              ))}
+              {!skills?.length && !softskills?.length && showPlaceholders && (
                 <span className="text-xs text-slate-400">No skills added</span>
-              ) : null}
+              )}
             </div>
           </div>
         </aside>
@@ -150,6 +162,7 @@ export default function CreativeResumeTemplate({
                     <div className="text-sm text-slate-600">{ed.institute}</div>
                     <div className="text-xs text-slate-500">
                       {ed.start_year} – {ed.end_year} · {ed.location}
+                      {ed.grade ? ` · GPA: ${ed.grade}` : ""}
                     </div>
                   </div>
                 ))
@@ -216,7 +229,7 @@ export default function CreativeResumeTemplate({
       </div>
 
       <footer className="mt-8 text-xs text-slate-500 text-center">
-        Creative resume · Modern · Print friendly
+        {/* Creative resume · Modern · Print friendly */}
         <br />
         <span className="italic">Created by AI Prep Buddy</span>
       </footer>
