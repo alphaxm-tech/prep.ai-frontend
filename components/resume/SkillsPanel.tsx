@@ -168,7 +168,12 @@ export function SkillsPanel({
       <div
         className={`p-4 rounded-xl border bg-gray-50/40 shadow-sm border-gray-200`}
       >
-        <h4 className="text-sm font-semibold mb-2 text-gray-800">Skills</h4>
+        <h4 className="text-sm font-semibold mb-2 text-gray-800">
+          Skills
+          <span className="ml-1.5 text-[11px] font-normal text-gray-400">
+            At least 1 is mandatory
+          </span>
+        </h4>
 
         <div className="flex items-center gap-2" ref={skillRowRef}>
           <input
@@ -268,6 +273,9 @@ export function SkillsPanel({
       >
         <h4 className="text-sm font-semibold mb-2 text-gray-800">
           Soft Skills
+          <span className="ml-1.5 text-[11px] font-normal text-gray-400">
+            At least 1 is mandatory
+          </span>
         </h4>
 
         <div className="flex items-center gap-2">

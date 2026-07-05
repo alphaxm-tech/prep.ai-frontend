@@ -42,13 +42,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "center",
-    marginTop: 6,
+    marginTop: 8,
   },
 
   contactItem: {
     fontSize: 8,
     color: "#64748b", // slate-500
     marginHorizontal: 6,
+    marginBottom: 3,
   },
 
   section: {
@@ -79,6 +80,7 @@ const styles = StyleSheet.create({
     color: "#334155",
     textDecoration: "underline",
     marginRight: 14,
+    marginBottom: 4,
   },
 
   skillWrap: {
@@ -286,7 +288,7 @@ export default function MinimalResumePDF({ data }: { data: ResumeData }) {
         {/* FOOTER */}
         <View style={styles.footer}>
           <Text style={styles.muted}>
-            Minimal resume · Clean · Print friendly
+            {/* Minimal resume · Clean · Print friendly */}
           </Text>
           <Text style={styles.muted}>Created by AI Prep Buddy</Text>
         </View>

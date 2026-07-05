@@ -43,13 +43,14 @@ const styles = StyleSheet.create({
   contactRow: {
     flexDirection: "row",
     flexWrap: "wrap",
-    marginTop: 8,
+    marginTop: 10,
   },
 
   contactItem: {
     fontSize: 9,
     color: "#e0e7ff",
     marginRight: 12,
+    marginBottom: 4,
   },
 
   /* SECTION */
@@ -271,7 +272,7 @@ export default function ModernResumePDF({ data }: { data: ResumeData }) {
         {/* FOOTER */}
         <View style={styles.footer}>
           <Text style={styles.muted}>
-            Modern resume template · Created by AI Prep Buddy
+            {/* Modern resume template · Created by AI Prep Buddy */}
           </Text>
         </View>
       </Page>

@@ -110,7 +110,7 @@ export default function StandardResumeTemplate({
           <p className="text-sm text-gray-700 leading-relaxed">
             {ph(
               user?.objective,
-              "Brief summary about your focus, technologies, and impact."
+              "Brief summary about your focus, technologies, and impact.",
             )}
           </p>
         </section>
@@ -272,7 +272,7 @@ export default function StandardResumeTemplate({
       </main>
 
       <footer className="mt-6 text-xs text-gray-500 text-center">
-        Standard resume template · Clean & professional
+        {/* Standard resume template · Clean & professional */}
         <br />
         <span className="italic">Created by AI Prep Buddy</span>
       </footer>

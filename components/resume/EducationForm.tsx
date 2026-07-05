@@ -79,6 +79,13 @@ export default function EducationForm({
 
   return (
     <div>
+      <h4 className="text-sm font-semibold mb-2 text-gray-800">
+        Education
+        <span className="ml-1.5 text-[11px] font-normal text-gray-400">
+          At least 1 is mandatory
+        </span>
+      </h4>
+
       {/* --- Add New Education Form --- */}
       <div
         className={`p-4 bg-gray-50/40 rounded-xl border shadow-sm flex flex-col gap-3 mb-6 ${

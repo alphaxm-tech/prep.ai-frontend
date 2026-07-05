@@ -155,8 +155,8 @@ export default function MinimalResumeTemplate({
                     {ed.start_year && ed.end_year
                       ? `${ed.start_year} - ${ed.end_year}`
                       : showPlaceholders
-                      ? "YYYY-YYYY"
-                      : ""}
+                        ? "YYYY-YYYY"
+                        : ""}
                   </div>
                   <div>
                     {ed.location || (showPlaceholders ? "City, Country" : "")}
@@ -191,8 +191,8 @@ export default function MinimalResumeTemplate({
                     {exp.start_year && exp.end_year
                       ? `${exp.start_year} - ${exp.end_year}`
                       : showPlaceholders
-                      ? "YYYY-YYYY"
-                      : ""}
+                        ? "YYYY-YYYY"
+                        : ""}
                   </div>
                 </div>
                 <p className="text-sm text-slate-700 leading-snug">
@@ -236,7 +236,7 @@ export default function MinimalResumeTemplate({
       </main>
 
       <footer className="mt-6 text-xs text-gray-500 text-center">
-        Minimal resume · Clean · Print friendly
+        {/* Minimal resume · Clean · Print friendly */}
         <br />
         <span className="italic">Created by AI Prep Buddy</span>
       </footer>

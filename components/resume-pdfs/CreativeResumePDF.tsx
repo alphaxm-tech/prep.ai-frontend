@@ -43,13 +43,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "center",
-    marginTop: 6,
+    marginTop: 8,
   },
 
   contactItem: {
     fontSize: 9,
     color: "#475569",
     marginHorizontal: 6,
+    marginBottom: 3,
   },
 
   body: {
@@ -303,7 +304,7 @@ export default function CreativeResumePDF({ data }: { data: ResumeData }) {
         {/* FOOTER */}
         <View style={styles.footer}>
           <Text style={styles.muted}>
-            Creative resume · Modern · Print friendly
+            {/* Creative resume · Modern · Print friendly */}
           </Text>
           <Text style={styles.muted}>Created by AI Prep Buddy</Text>
         </View>

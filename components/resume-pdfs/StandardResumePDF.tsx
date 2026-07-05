@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "center",
-    marginTop: 8,
+    marginTop: 10,
   },
 
   contactItem: {
@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "center",
-    marginTop: 6,
+    marginTop: 8,
   },
 
   linkItem: {
@@ -228,9 +228,9 @@ export default function StandardResumePDF({ data }: { data: ResumeData }) {
 
         {/* FOOTER */}
         <View style={styles.footer}>
-          <Text style={styles.muted}>
+          {/* <Text style={styles.muted}>
             Standard resume template · Clean & professional
-          </Text>
+          </Text> */}
           <Text style={styles.muted}>Created by AI Prep Buddy</Text>
         </View>
       </Page>

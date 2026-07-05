@@ -39,11 +39,12 @@ const styles = StyleSheet.create({
   contactRow: {
     flexDirection: "row",
     flexWrap: "wrap",
-    marginTop: 8,
+    marginTop: 10,
   },
 
   contactItem: {
     marginRight: 12,
+    marginBottom: 4,
     fontSize: 10,
   },
 
@@ -73,6 +74,7 @@ const styles = StyleSheet.create({
     fontSize: 9,
     color: "#1d4ed8",
     marginRight: 12,
+    marginBottom: 4,
   },
 
   skillWrap: {

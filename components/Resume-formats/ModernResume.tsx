@@ -54,7 +54,7 @@ export default function ModernResumeTemplate({
           <p className="text-gray-700 leading-relaxed">
             {ph(
               user.objective,
-              "Write a short professional summary describing your focus and strengths."
+              "Write a short professional summary describing your focus and strengths.",
             )}
           </p>
         </section>
@@ -263,7 +263,7 @@ export default function ModernResumeTemplate({
       </main>
 
       <footer className="mt-6 mb-8 text-xs text-gray-500 text-center">
-        Modern resume template
+        {/* Modern resume template */}
         <br />
         <span className="italic">Created by AI Prep Buddy</span>
       </footer>

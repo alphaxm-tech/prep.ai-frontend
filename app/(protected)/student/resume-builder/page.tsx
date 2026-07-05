@@ -429,12 +429,12 @@ export default function ResumeBuilderPage() {
       phone: assembledData.phone?.trim() || DEFAULT_SAMPLE.phone,
       location: assembledData.location?.trim() || DEFAULT_SAMPLE.location,
       objective: assembledData.objective?.trim() || DEFAULT_SAMPLE.objective,
-      portfolioLink:
-        assembledData.portfolioLink?.trim() || DEFAULT_SAMPLE.portfolioLink,
-      githubLink:
-        assembledData.githubLink?.trim() || DEFAULT_SAMPLE.githubLink,
-      linkedinLink:
-        assembledData.linkedinLink?.trim() || DEFAULT_SAMPLE.linkedinLink,
+      // Links have no meaningful placeholder — only include what the user
+      // actually entered so templates correctly omit unset links instead of
+      // rendering sample URLs in the real, downloaded PDF.
+      portfolioLink: assembledData.portfolioLink?.trim() || "",
+      githubLink: assembledData.githubLink?.trim() || "",
+      linkedinLink: assembledData.linkedinLink?.trim() || "",
 
       technicalSkills:
         assembledData.technicalSkills.length > 0
@@ -505,6 +505,7 @@ export default function ResumeBuilderPage() {
       github_url: githubLink,
     },
     skills: technicalSkillIds,
+    softskills: softSkills.map((s) => s.text),
     education: educations.map((e) => ({
       ...e,
       start_year: yearToISODate(e.start_year),
@@ -708,6 +709,8 @@ export default function ResumeBuilderPage() {
   // ---------------------- Download logic additions (iframe print) ----------------------
   const modalRef = useRef<HTMLDivElement | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isDownloadingSavedResume, setIsDownloadingSavedResume] =
+    useState(false);
 
   /**
    * Frontend-only print -> PDF via hidden iframe.
@@ -1039,6 +1042,80 @@ export default function ResumeBuilderPage() {
     isLoading: isCompleteResumeLoading,
     error: completeResumeError,
   } = useGetCompleteResumeByID(resumeId);
+
+  // PDF-shape equivalent of mapCompleteResumeToTemplateData above — same
+  // source data, but flattened into the ResumeData shape the /api/resume/pdf
+  // route + react-pdf templates expect (mirrors assembledDataForPdf).
+  const mapCompleteResumeToPdfData = (
+    resume: ResumeResponse,
+    formatKey: string,
+  ) => ({
+    fullName: fullName || user?.user?.full_name || "",
+    title: resume.title ?? "",
+    email: email || user?.user?.email || "",
+    phone: resume.user?.phone ?? "",
+    location: resume.user?.location ?? "",
+    objective: resume.user?.objective ?? "",
+    portfolioLink: resume.user?.portfolio_link ?? "",
+    githubLink: resume.user?.github_link ?? "",
+    linkedinLink: resume.user?.linkedin_link ?? "",
+    technicalSkills: (resume.skills ?? []).map(
+      (skill) => skill.display_name || skill.skill_key,
+    ),
+    softSkills: resume.soft_skills ?? [],
+    educations: (resume.education ?? []).map((ed) => ({
+      degree: ed.degree,
+      institute: ed.institute ?? "",
+      location: ed.location ?? "",
+      start_year: isoDateToYear(ed.start_date),
+      end_year: isoDateToYear(ed.end_date) || "Present",
+      grade: ed.grade ?? "",
+    })),
+    experiences: (resume.work_experience ?? []).map((exp) => ({
+      company: exp.company,
+      role: exp.role,
+      start_year: isoDateToYear(exp.start_date),
+      end_year: isoDateToYear(exp.end_date) || "Present",
+      description: exp.description ?? "",
+    })),
+    projects: (resume.projects ?? []).map((p) => ({
+      name: p.title,
+      description: p.description ?? "",
+    })),
+    resumeFormat: formatKey,
+  });
+
+  const handleDownloadSavedResumePdf = async () => {
+    if (!userResumeByIDData) return;
+
+    const formatKey =
+      formatIdToFormatKey[userResumeByIDData.format_id] ??
+      FALLBACK_FORMAT_ID_TO_KEY[userResumeByIDData.format_id] ??
+      ResumeFormats.STANDARD;
+
+    setIsDownloadingSavedResume(true);
+    try {
+      const res = await fetch("/api/resume/pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(
+          mapCompleteResumeToPdfData(userResumeByIDData, formatKey),
+        ),
+      });
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${userResumeByIDData.title || selectedResume?.Title || "resume"}.pdf`;
+      a.click();
+
+      URL.revokeObjectURL(url);
+    } finally {
+      setIsDownloadingSavedResume(false);
+    }
+  };
 
   if (!user?.services?.[0]?.service_config?.max_resumes_per_user) {
     return <Loader show message="Loading your profile..." />;
@@ -1479,12 +1556,77 @@ export default function ResumeBuilderPage() {
                   </div>
                 </div>
 
-                <button
-                  onClick={() => setShowResumeViewModal(false)}
-                  className="px-3 py-1.5 rounded-md bg-gray-100 hover:bg-gray-200 text-sm text-gray-700"
-                >
-                  Close
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleDownloadSavedResumePdf}
+                    disabled={
+                      isDownloadingSavedResume ||
+                      isCompleteResumeLoading ||
+                      !userResumeByIDData
+                    }
+                    aria-label="Download resume"
+                    title="Download resume"
+                    className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-md text-white text-sm font-semibold shadow-sm transition-shadow focus:outline-none focus:ring-2 focus:ring-blue-300 ${
+                      isDownloadingSavedResume ||
+                      isCompleteResumeLoading ||
+                      !userResumeByIDData
+                        ? "bg-blue-300 cursor-not-allowed"
+                        : "bg-blue-500 hover:bg-blue-600 focus:bg-blue-700"
+                    }`}
+                  >
+                    {isDownloadingSavedResume ? (
+                      <>
+                        <svg
+                          className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8v8z"
+                          ></path>
+                        </svg>
+                        Preparing PDF...
+                      </>
+                    ) : (
+                      <>
+                        <svg
+                          className="w-4 h-4"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          aria-hidden="true"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5m0 0l5-5m-5 5V4"
+                          />
+                        </svg>
+                        Download
+                      </>
+                    )}
+                  </button>
+
+                  <button
+                    onClick={() => setShowResumeViewModal(false)}
+                    className="px-3 py-1.5 rounded-md bg-gray-100 hover:bg-gray-200 text-sm text-gray-700"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
 
               {/* Content */}

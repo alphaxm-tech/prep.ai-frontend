@@ -58,7 +58,7 @@ export default function ProfessionalResumeTemplateVertical({
           <p className="mt-2 text-sm text-slate-700 leading-relaxed">
             {ph(
               user.objective,
-              "Short summary describing your role, strengths, and impact."
+              "Short summary describing your role, strengths, and impact.",
             )}
           </p>
         </section>
@@ -271,7 +271,7 @@ export default function ProfessionalResumeTemplateVertical({
         </section>
 
         <footer className="mt-6 text-xs text-gray-500 text-center">
-          Generated with a professional vertical · Print friendly
+          {/* Generated with a professional vertical · Print friendly */}
           <br />
           <span className="italic">Created by AI Prep Buddy</span>
         </footer>
