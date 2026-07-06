@@ -114,6 +114,12 @@ const styles = StyleSheet.create({
     marginTop: 24,
     textAlign: "center",
   },
+
+  sup: {
+    fontSize: 6,
+    position: "relative",
+    top: -2,
+  },
 });
 
 export default function StandardResumePDF({ data }: { data: ResumeData }) {
@@ -231,7 +237,10 @@ export default function StandardResumePDF({ data }: { data: ResumeData }) {
           {/* <Text style={styles.muted}>
             Standard resume template · Clean & professional
           </Text> */}
-          <Text style={styles.muted}>Created by AI Prep Buddy</Text>
+          <Text style={styles.muted}>
+            PrepBuddy
+            <Text style={styles.sup}>AI</Text>
+          </Text>
         </View>
       </Page>
     </Document>

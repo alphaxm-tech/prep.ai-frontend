@@ -2,6 +2,12 @@
 import { Education } from "@/utils/api/types/resume.types";
 import React, { useState } from "react";
 import { PlusIcon } from "@heroicons/react/24/outline";
+import YearDropdown from "./YearDropdown";
+
+const CURRENT_YEAR = new Date().getFullYear();
+const YEAR_OPTIONS = Array.from({ length: CURRENT_YEAR - 1995 + 1 }, (_, i) =>
+  String(CURRENT_YEAR - i),
+);
 
 export default function EducationForm({
   educations,
@@ -155,14 +161,11 @@ export default function EducationForm({
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Start Year
             </label>
-            <input
-              type="number"
-              placeholder="2018"
+            <YearDropdown
               value={newEdu.start_year}
-              onChange={(e) => handleNewChange("start_year", e.target.value)}
-              className={`w-full ${inputClasses} ${baseBorder}`}
-              min={1995}
-              max={new Date().getFullYear()}
+              onChange={(year) => handleNewChange("start_year", year)}
+              options={YEAR_OPTIONS}
+              className={`${inputClasses} ${baseBorder}`}
             />
           </div>
 
@@ -170,14 +173,11 @@ export default function EducationForm({
             <label className="block text-sm font-medium text-gray-700 mb-2">
               End Year
             </label>
-            <input
-              type="number"
-              placeholder="2022"
+            <YearDropdown
               value={newEdu.end_year}
-              onChange={(e) => handleNewChange("end_year", e.target.value)}
-              className={`w-full ${inputClasses} ${baseBorder}`}
-              min={newEdu.start_year || 1950}
-              max={new Date().getFullYear() + 5}
+              onChange={(year) => handleNewChange("end_year", year)}
+              options={YEAR_OPTIONS}
+              className={`${inputClasses} ${baseBorder}`}
             />
           </div>
 
@@ -245,23 +245,21 @@ export default function EducationForm({
                   />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <input
-                    type="number"
+                  <YearDropdown
                     value={editEdu.start_year}
-                    onChange={(e) =>
-                      setEditEdu({ ...editEdu, start_year: e.target.value })
+                    onChange={(year) =>
+                      setEditEdu({ ...editEdu, start_year: year })
                     }
-                    placeholder="Start Year"
-                    className={`w-full ${inputClasses} ${baseBorder}`}
+                    options={YEAR_OPTIONS}
+                    className={`${inputClasses} ${baseBorder}`}
                   />
-                  <input
-                    type="number"
+                  <YearDropdown
                     value={editEdu.end_year}
-                    onChange={(e) =>
-                      setEditEdu({ ...editEdu, end_year: e.target.value })
+                    onChange={(year) =>
+                      setEditEdu({ ...editEdu, end_year: year })
                     }
-                    placeholder="End Year"
-                    className={`w-full ${inputClasses} ${baseBorder}`}
+                    options={YEAR_OPTIONS}
+                    className={`${inputClasses} ${baseBorder}`}
                   />
                   <input
                     type="text"

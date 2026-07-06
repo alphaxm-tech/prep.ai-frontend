@@ -231,7 +231,9 @@ export default function CreativeResumeTemplate({
       <footer className="mt-8 text-xs text-slate-500 text-center">
         {/* Creative resume · Modern · Print friendly */}
         <br />
-        <span className="italic">Created by AI Prep Buddy</span>
+        <span className="italic">
+          PrepBuddy<sup className="text-[0.65em]">AI</sup>
+        </span>
       </footer>
     </div>
   );

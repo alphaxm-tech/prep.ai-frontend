@@ -238,7 +238,9 @@ export default function MinimalResumeTemplate({
       <footer className="mt-6 text-xs text-gray-500 text-center">
         {/* Minimal resume · Clean · Print friendly */}
         <br />
-        <span className="italic">Created by AI Prep Buddy</span>
+        <span className="italic">
+          PrepBuddy<sup className="text-[0.65em]">AI</sup>
+        </span>
       </footer>
     </div>
   );

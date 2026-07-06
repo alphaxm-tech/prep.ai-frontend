@@ -4,7 +4,7 @@
 import { useEffect, useRef, useState } from "react";
 import { SparklesIcon } from "@heroicons/react/24/outline";
 import Loader from "../Loader";
-import { capitalizeFullName } from "../../lib/capitalize-fullname";
+import { formatFullName } from "../../lib/format-fullname";
 import { useToast } from "@/components/toast/ToastContext";
 import { ToastStates } from "@/utils/enums/enums";
 
@@ -89,7 +89,7 @@ export default function BasicDetails({
     if (!value.trim()) {
       showToast(
         ToastStates.ERROR,
-        "Please enter some text before using AI Enhance"
+        "Please enter some text before using AI Enhance",
       );
       return;
     }
@@ -119,7 +119,10 @@ export default function BasicDetails({
       if (!resp.ok) {
         const err = await resp.json().catch(() => ({}));
         console.error("Modify description error:", err);
-        showToast(ToastStates.ERROR, "Failed to enhance text. Please try again.");
+        showToast(
+          ToastStates.ERROR,
+          "Failed to enhance text. Please try again.",
+        );
         return;
       }
 
@@ -127,7 +130,10 @@ export default function BasicDetails({
       const modified = data?.modified ?? "";
 
       if (!modified) {
-        showToast(ToastStates.ERROR, "Failed to enhance text. Please try again.");
+        showToast(
+          ToastStates.ERROR,
+          "Failed to enhance text. Please try again.",
+        );
       } else {
         setSummary(modified.trim());
       }
@@ -176,18 +182,24 @@ export default function BasicDetails({
         {/* Input */}
         <input
           value={resumeTitle}
-          onChange={(e) => setResumeTitle(e.target.value)}
+          onChange={(e) => setResumeTitle(e.target.value.slice(0, 25))}
           className={`${inputBase} ${
             invalid("resumeTitle") ? inputInvalid : inputNormal
           } font-medium`}
           placeholder="e.g. Frontend Developer Resume"
+          maxLength={25}
           aria-invalid={invalid("resumeTitle")}
         />
 
-        {/* Error */}
-        {invalid("resumeTitle") && (
-          <p className="mt-1 text-xs text-red-600">Resume title is required.</p>
-        )}
+        {/* Error / char count */}
+        <div className="mt-1 flex items-center justify-between">
+          {invalid("resumeTitle") ? (
+            <p className="text-xs text-red-600">Resume title is required.</p>
+          ) : (
+            <span />
+          )}
+          <p className="text-xs text-gray-400">{resumeTitle.length}/25</p>
+        </div>
       </div>
 
       {/* Full Name + Location */}
@@ -199,7 +211,7 @@ export default function BasicDetails({
 
           <div className="relative">
             <input
-              value={capitalizeFullName(fullName) ?? ""}
+              value={formatFullName(fullName) ?? ""}
               readOnly
               placeholder="Not available"
               className={`
@@ -213,7 +225,7 @@ export default function BasicDetails({
                   focus:outline-none
                   text-sm
                   ${
-                    capitalizeFullName(fullName)
+                    formatFullName(fullName)
                       ? "bg-gray-100 cursor-not-allowed"
                       : "bg-gray-50 text-gray-400 italic"
                   }
@@ -222,11 +234,11 @@ export default function BasicDetails({
             />
 
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-              {capitalizeFullName(fullName) ? "🔒" : "—"}
+              {formatFullName(fullName) ? "🔒" : "—"}
             </span>
           </div>
 
-          {!capitalizeFullName(fullName) && (
+          {!formatFullName(fullName) && (
             <p className="mt-1 text-xs text-gray-500">
               Name couldn’t be loaded. Please try again later.
             </p>

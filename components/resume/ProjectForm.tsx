@@ -20,6 +20,8 @@ export default function ProjectsForm({
     description: "",
   });
 
+  const [attemptedAdd, setAttemptedAdd] = useState(false);
+
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [editProj, setEditProj] = useState<Project | null>(null);
 
@@ -48,8 +50,13 @@ export default function ProjectsForm({
   };
 
   const addProject = () => {
-    if (!newProj.name.trim()) return;
+    if (!newProj.name.trim() || !newProj.description.trim()) {
+      setAttemptedAdd(true);
+      showToast(ToastStates.ERROR, "Please add all the mandatory fields");
+      return;
+    }
 
+    setAttemptedAdd(false);
     setProjects([...projects, newProj]);
     setNewProj({ name: "", description: "" });
   };
@@ -82,6 +89,10 @@ export default function ProjectsForm({
     "px-3 py-2 border text-sm font-medium bg-white rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-200 focus:border-yellow-300";
 
   const baseBorder = "border-gray-200";
+  const invalidBorder = "border-red-400 ring-1 ring-red-200";
+
+  const fieldBorder = (value: string) =>
+    attemptedAdd && !value.trim() ? invalidBorder : baseBorder;
 
   const handleAIEnhance = async (
     setter: (val: string) => void,
@@ -175,7 +186,7 @@ export default function ProjectsForm({
               placeholder="Add a title for your project"
               value={newProj.name}
               onChange={(e) => handleNewChange("name", e.target.value)}
-              className={`flex-1 ${inputClasses} ${baseBorder}`}
+              className={`flex-1 ${inputClasses} ${fieldBorder(newProj.name)}`}
             />
             <button
               type="button"
@@ -239,7 +250,7 @@ export default function ProjectsForm({
             value={newProj.description}
             onChange={(e) => handleNewChange("description", e.target.value)}
             rows={3}
-            className={`mt-2 w-full ${inputClasses} ${baseBorder}`}
+            className={`mt-2 w-full ${inputClasses} ${fieldBorder(newProj.description)}`}
           />
         </div>
       </div>
