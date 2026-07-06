@@ -1,10 +1,11 @@
 // components/resume/ProjectForm.tsx
-import React, { useEffect, useRef, useState } from "react";
-import { SparklesIcon, PlusIcon } from "@heroicons/react/24/outline";
+import React, { useState } from "react";
+import { PlusIcon } from "@heroicons/react/24/outline";
 import Loader from "../Loader";
 import { Project } from "@/utils/api/types/resume.types";
 import { useToast } from "@/components/toast/ToastContext";
 import { ToastStates } from "@/utils/enums/enums";
+import AIEnhanceMenu, { AIEnhanceType } from "./AIEnhanceMenu";
 
 export default function ProjectsForm({
   projects,
@@ -25,25 +26,9 @@ export default function ProjectsForm({
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [editProj, setEditProj] = useState<Project | null>(null);
 
-  const [showDropdown, setShowDropdown] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
   const [loading, setLoading] = useState(false);
   const [keywords, setKeywords] = useState("");
   const { showToast } = useToast();
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
-      ) {
-        setShowDropdown(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
 
   const handleNewChange = (field: keyof Project, value: string) => {
     setNewProj({ ...newProj, [field]: value });
@@ -97,10 +82,9 @@ export default function ProjectsForm({
   const handleAIEnhance = async (
     setter: (val: string) => void,
     value: string,
-    type: "polish" | "concise" | "technical" | "recruiter",
+    type: AIEnhanceType,
+    context: { title: string },
   ) => {
-    setShowDropdown(false);
-
     if (!value.trim()) {
       showToast(
         ToastStates.ERROR,
@@ -126,9 +110,7 @@ export default function ProjectsForm({
           tone: "neutral",
           type,
           section: "project",
-          context: {
-            title: newProj.name,
-          },
+          context,
         }),
       });
 
@@ -204,45 +186,17 @@ export default function ProjectsForm({
               Project Description
             </label>
 
-            <div className="relative" ref={dropdownRef}>
-              <button
-                onClick={() => setShowDropdown((prev) => !prev)}
-                disabled={loading || !newProj.description.trim()}
-                className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium shadow-sm ${
-                  loading || !newProj.description.trim()
-                    ? "text-gray-400 bg-gray-100 cursor-not-allowed"
-                    : "text-gray-800 bg-gradient-to-r from-purple-100 via-pink-100 to-orange-100 hover:shadow-md"
-                }`}
-                type="button"
-              >
-                <SparklesIcon className="w-3 h-3 text-pink-500" /> AI Enhance
-              </button>
-
-              {showDropdown && (
-                <div className="absolute right-0 z-50 mt-1 w-44 max-h-56 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg">
-                  {[
-                    ["✨ Polish", "polish"],
-                    ["✂️ Make Concise", "concise"],
-                    ["🔧 More Technical", "technical"],
-                    ["🏢 Recruiter-Friendly", "recruiter"],
-                  ].map(([label, type]) => (
-                    <button
-                      key={type}
-                      onClick={() =>
-                        handleAIEnhance(
-                          (val) => setNewProj({ ...newProj, description: val }),
-                          newProj.description,
-                          type as any,
-                        )
-                      }
-                      className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-yellow-50"
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            <AIEnhanceMenu
+              disabled={loading || !newProj.description.trim()}
+              onSelect={(type) =>
+                handleAIEnhance(
+                  (val) => setNewProj({ ...newProj, description: val }),
+                  newProj.description,
+                  type,
+                  { title: newProj.name },
+                )
+              }
+            />
           </div>
 
           <textarea
@@ -272,6 +226,23 @@ export default function ProjectsForm({
                   }
                   className={`w-full ${inputClasses} ${baseBorder}`}
                 />
+                <div className="flex items-center justify-between">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Project Description
+                  </label>
+                  <AIEnhanceMenu
+                    disabled={loading || !editProj.description.trim()}
+                    onSelect={(type) =>
+                      handleAIEnhance(
+                        (val) =>
+                          setEditProj({ ...editProj, description: val }),
+                        editProj.description,
+                        type,
+                        { title: editProj.name },
+                      )
+                    }
+                  />
+                </div>
                 <textarea
                   value={editProj.description}
                   onChange={(e) =>

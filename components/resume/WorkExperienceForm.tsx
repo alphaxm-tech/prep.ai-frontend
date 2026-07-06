@@ -1,11 +1,12 @@
 // components/resume/WorkExperienceForm.tsx
-import React, { useEffect, useRef, useState } from "react";
-import { SparklesIcon, PlusIcon } from "@heroicons/react/24/outline";
+import React, { useState } from "react";
+import { PlusIcon } from "@heroicons/react/24/outline";
 import Loader from "../Loader";
 import { WorkExperience } from "@/utils/api/types/resume.types";
 import { useToast } from "@/components/toast/ToastContext";
 import { ToastStates } from "@/utils/enums/enums";
 import YearDropdown from "./YearDropdown";
+import AIEnhanceMenu, { AIEnhanceType } from "./AIEnhanceMenu";
 
 const CURRENT_YEAR = new Date().getFullYear();
 const YEAR_OPTIONS = Array.from({ length: CURRENT_YEAR - 1995 + 1 }, (_, i) =>
@@ -35,25 +36,9 @@ export default function WorkExperienceForm({
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [editExp, setEditExp] = useState<WorkExperience | null>(null);
 
-  const [showDropdown, setShowDropdown] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
   const [loading, setLoading] = useState(false);
   const [keywords, setKeywords] = useState("");
   const { showToast } = useToast();
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
-      ) {
-        setShowDropdown(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
 
   const handleNewChange = (field: keyof WorkExperience, value: string) => {
     setNewExp({ ...newExp, [field]: value });
@@ -121,10 +106,14 @@ export default function WorkExperienceForm({
   const handleAIEnhance = async (
     setter: (val: string) => void,
     value: string,
-    type: "polish" | "concise" | "technical" | "recruiter",
+    type: AIEnhanceType,
+    context: {
+      company: string;
+      role: string;
+      start_year: string;
+      end_year: string;
+    },
   ) => {
-    setShowDropdown(false);
-
     if (!value.trim()) {
       showToast(
         ToastStates.ERROR,
@@ -150,12 +139,7 @@ export default function WorkExperienceForm({
           tone: "neutral",
           type,
           section: "experience",
-          context: {
-            company: newExp.company,
-            role: newExp.role,
-            start_year: newExp.start_year,
-            end_year: newExp.end_year,
-          },
+          context,
         }),
       });
 
@@ -271,45 +255,22 @@ export default function WorkExperienceForm({
               Work Experience
             </label>
 
-            <div className="relative" ref={dropdownRef}>
-              <button
-                onClick={() => setShowDropdown((prev) => !prev)}
-                disabled={loading || !newExp.description.trim()}
-                type="button"
-                className={`flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium shadow-sm transition ${
-                  loading || !newExp.description.trim()
-                    ? "text-gray-400 bg-gray-100 cursor-not-allowed"
-                    : "text-gray-800 bg-gradient-to-r from-purple-100 via-pink-100 to-orange-100 hover:shadow-md"
-                }`}
-              >
-                <SparklesIcon className="w-3 h-3 text-pink-500" /> AI Enhance
-              </button>
-
-              {showDropdown && (
-                <div className="absolute right-0 z-50 mt-1 w-44 max-h-56 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg">
-                  {[
-                    ["✨ Polish", "polish"],
-                    ["✂️ Make Concise", "concise"],
-                    ["🔧 More Technical", "technical"],
-                    ["🏢 Recruiter-Friendly", "recruiter"],
-                  ].map(([label, type]) => (
-                    <button
-                      key={type}
-                      onClick={() =>
-                        handleAIEnhance(
-                          (val) => setNewExp({ ...newExp, description: val }),
-                          newExp.description,
-                          type as any,
-                        )
-                      }
-                      className="block w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-yellow-50"
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+            <AIEnhanceMenu
+              disabled={loading || !newExp.description.trim()}
+              onSelect={(type) =>
+                handleAIEnhance(
+                  (val) => setNewExp({ ...newExp, description: val }),
+                  newExp.description,
+                  type,
+                  {
+                    company: newExp.company,
+                    role: newExp.role,
+                    start_year: newExp.start_year,
+                    end_year: newExp.end_year,
+                  },
+                )
+              }
+            />
           </div>
 
           <textarea
@@ -367,6 +328,28 @@ export default function WorkExperienceForm({
                     }
                     options={END_YEAR_OPTIONS}
                     className={`${inputClasses} ${baseBorder}`}
+                  />
+                </div>
+                <div className="flex items-center justify-between">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Work Experience
+                  </label>
+                  <AIEnhanceMenu
+                    disabled={loading || !editExp.description.trim()}
+                    onSelect={(type) =>
+                      handleAIEnhance(
+                        (val) =>
+                          setEditExp({ ...editExp, description: val }),
+                        editExp.description,
+                        type,
+                        {
+                          company: editExp.company,
+                          role: editExp.role,
+                          start_year: editExp.start_year,
+                          end_year: editExp.end_year,
+                        },
+                      )
+                    }
                   />
                 </div>
                 <textarea

@@ -36,13 +36,14 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: "semibold",
     textAlign: "center",
+    marginBottom: 6,
   },
 
   contactRow: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "center",
-    marginTop: 8,
+    marginTop: 12,
   },
 
   contactItem: {

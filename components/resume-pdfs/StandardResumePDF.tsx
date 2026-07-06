@@ -29,13 +29,14 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: "bold",
     textAlign: "center",
+    marginBottom: 6,
   },
 
   contactRow: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "center",
-    marginTop: 10,
+    marginTop: 12,
   },
 
   contactItem: {

@@ -28,6 +28,7 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 22,
     fontWeight: "bold",
+    marginBottom: 6,
   },
 
   title: {
@@ -39,7 +40,7 @@ const styles = StyleSheet.create({
   contactRow: {
     flexDirection: "row",
     flexWrap: "wrap",
-    marginTop: 10,
+    marginTop: 12,
   },
 
   contactItem: {

@@ -76,7 +76,7 @@ export async function POST(req: Request) {
       {
         role: "system",
         content:
-          "You are a helpful professional resume copywriter. Keep answers succinct and suitable for the specified resume section.",
+          "You are a helpful professional resume copywriter. Keep answers succinct and suitable for the specified resume section. Respond with plain text only — no markdown, no asterisks, no bullet symbols, no headers.",
       },
       {
         role: "user",
@@ -108,10 +108,19 @@ export async function POST(req: Request) {
     }
 
     // Extract the assistant text
-    const modified =
+    const rawModified =
       data?.choices && data.choices[0] && data.choices[0].message
         ? (data.choices[0].message.content as string)
         : "";
+
+    // These fields render as plain text, not markdown, so strip any
+    // markdown emphasis/heading syntax the model adds despite instructions.
+    const modified = rawModified
+      .replace(/\*\*(.*?)\*\*/g, "$1")
+      .replace(/(?<!\*)\*(?!\*)(.*?)(?<!\*)\*(?!\*)/g, "$1")
+      .replace(/__(.*?)__/g, "$1")
+      .replace(/^#{1,6}\s+/gm, "")
+      .trim();
 
     return NextResponse.json({ modified }, { status: 200 });
   } catch (err: any) {
