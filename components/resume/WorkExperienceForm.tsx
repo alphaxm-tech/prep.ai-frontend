@@ -5,6 +5,13 @@ import Loader from "../Loader";
 import { WorkExperience } from "@/utils/api/types/resume.types";
 import { useToast } from "@/components/toast/ToastContext";
 import { ToastStates } from "@/utils/enums/enums";
+import YearDropdown from "./YearDropdown";
+
+const CURRENT_YEAR = new Date().getFullYear();
+const YEAR_OPTIONS = Array.from({ length: CURRENT_YEAR - 1995 + 1 }, (_, i) =>
+  String(CURRENT_YEAR - i),
+);
+const END_YEAR_OPTIONS = ["Present", ...YEAR_OPTIONS];
 
 export default function WorkExperienceForm({
   experiences,
@@ -22,6 +29,8 @@ export default function WorkExperienceForm({
     end_year: "",
     description: "",
   });
+
+  const [attemptedAdd, setAttemptedAdd] = useState(false);
 
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [editExp, setEditExp] = useState<WorkExperience | null>(null);
@@ -52,14 +61,17 @@ export default function WorkExperienceForm({
 
   const addExperience = () => {
     if (
-      !newExp.company ||
-      !newExp.role ||
-      !newExp.start_year ||
-      !newExp.end_year ||
-      !newExp.description
+      !newExp.company.trim() ||
+      !newExp.role.trim() ||
+      !newExp.start_year.trim() ||
+      !newExp.end_year.trim() ||
+      !newExp.description.trim()
     ) {
+      setAttemptedAdd(true);
+      showToast(ToastStates.ERROR, "Please add all the mandatory fields");
       return;
     }
+    setAttemptedAdd(false);
     setExperiences([...experiences, newExp]);
     setNewExp({
       company: "",
@@ -102,6 +114,9 @@ export default function WorkExperienceForm({
 
   const sectionInvalid =
     !!validationErrors?.experiences && experiences.length === 0;
+
+  const fieldBorder = (value: string) =>
+    attemptedAdd && !value.trim() ? invalidBorder : baseBorder;
 
   const handleAIEnhance = async (
     setter: (val: string) => void,
@@ -195,7 +210,7 @@ export default function WorkExperienceForm({
               type="text"
               value={newExp.company}
               onChange={(e) => handleNewChange("company", e.target.value)}
-              className={`w-full ${inputClasses} ${baseBorder}`}
+              className={`w-full ${inputClasses} ${fieldBorder(newExp.company)}`}
               placeholder="Google, Microsoft"
             />
           </div>
@@ -208,7 +223,7 @@ export default function WorkExperienceForm({
               type="text"
               value={newExp.role}
               onChange={(e) => handleNewChange("role", e.target.value)}
-              className={`w-full ${inputClasses} ${baseBorder}`}
+              className={`w-full ${inputClasses} ${fieldBorder(newExp.role)}`}
               placeholder="Fullstack developer"
             />
           </div>
@@ -219,16 +234,11 @@ export default function WorkExperienceForm({
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Start Year
             </label>
-            <input
-              type="text"
-              inputMode="numeric"
+            <YearDropdown
               value={newExp.start_year}
-              onChange={(e) =>
-                handleNewChange("start_year", e.target.value.replace(/\D/g, ""))
-              }
-              className={`w-full ${inputClasses} ${baseBorder}`}
-              placeholder="2022"
-              maxLength={4}
+              onChange={(year) => handleNewChange("start_year", year)}
+              options={YEAR_OPTIONS}
+              className={`${inputClasses} ${fieldBorder(newExp.start_year)}`}
             />
           </div>
 
@@ -236,12 +246,11 @@ export default function WorkExperienceForm({
             <label className="block text-sm font-medium text-gray-700 mb-1">
               End Year
             </label>
-            <input
-              type="text"
+            <YearDropdown
               value={newExp.end_year}
-              onChange={(e) => handleNewChange("end_year", e.target.value)}
-              className={`w-full ${inputClasses} ${baseBorder}`}
-              placeholder="2024 or Present"
+              onChange={(year) => handleNewChange("end_year", year)}
+              options={END_YEAR_OPTIONS}
+              className={`${inputClasses} ${fieldBorder(newExp.end_year)}`}
             />
           </div>
 
@@ -308,7 +317,7 @@ export default function WorkExperienceForm({
             onChange={(e) => handleNewChange("description", e.target.value)}
             rows={3}
             placeholder="Describe your work (50–70 words)"
-            className={`w-full ${inputClasses} ${baseBorder}`}
+            className={`w-full ${inputClasses} ${fieldBorder(newExp.description)}`}
           />
         </div>
       </div>
@@ -343,28 +352,21 @@ export default function WorkExperienceForm({
                   />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <input
-                    type="text"
-                    inputMode="numeric"
+                  <YearDropdown
                     value={editExp.start_year}
-                    onChange={(e) =>
-                      setEditExp({
-                        ...editExp,
-                        start_year: e.target.value.replace(/\D/g, ""),
-                      })
+                    onChange={(year) =>
+                      setEditExp({ ...editExp, start_year: year })
                     }
-                    placeholder="Start Year"
-                    maxLength={4}
-                    className={`w-full ${inputClasses} ${baseBorder}`}
+                    options={YEAR_OPTIONS}
+                    className={`${inputClasses} ${baseBorder}`}
                   />
-                  <input
-                    type="text"
+                  <YearDropdown
                     value={editExp.end_year}
-                    onChange={(e) =>
-                      setEditExp({ ...editExp, end_year: e.target.value })
+                    onChange={(year) =>
+                      setEditExp({ ...editExp, end_year: year })
                     }
-                    placeholder="End Year"
-                    className={`w-full ${inputClasses} ${baseBorder}`}
+                    options={END_YEAR_OPTIONS}
+                    className={`${inputClasses} ${baseBorder}`}
                   />
                 </div>
                 <textarea

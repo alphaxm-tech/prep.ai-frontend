@@ -35,7 +35,7 @@ import ProjectsForm from "@/components/resume/ProjectForm";
 import { useToast } from "@/components/toast/ToastContext";
 import { VerticalAccordion } from "@/components/VerticalAccordian";
 import { useUser } from "@/app/context/UserContext";
-import { capitalizeFullName } from "@/lib/capitalize-fullname";
+import { formatFullName } from "@/lib/format-fullname";
 import { ResumeFormats, ResumeTitles } from "@/utils/enums/resume-enums";
 import { DEFAULT_SAMPLE } from "@/utils/dummy-data/resume-default-data";
 import { ToastStates } from "@/utils/enums/enums";
@@ -182,7 +182,7 @@ export default function ResumeBuilderPage() {
   }, []);
 
   useEffect(() => {
-    let fullname = capitalizeFullName(user?.user?.full_name);
+    let fullname = formatFullName(user?.user?.full_name);
     setFullName(fullname);
     setEmail(user?.user?.email);
     // Never clobber a value the user already typed (or that was just
@@ -238,7 +238,7 @@ export default function ResumeBuilderPage() {
   ]);
 
   // const rawName = getUserDetailsAllRes?.user?.full_name ?? "";
-  // const fullName = capitalizeFullName(rawName);
+  // const fullName = formatFullName(rawName);
 
   // const email = getUserDetailsAllRes?.user?.email ?? "";
 
@@ -589,16 +589,17 @@ export default function ResumeBuilderPage() {
         setLoading(false);
 
         if (
-          data?.error ==
+          data?.error?.message ==
           "resume title already exists, please choose a different title"
         ) {
           showToast(
             "error",
             "Resume title already exists, please provide unique one",
           );
+        } else {
+          showToast("error", "Internal error please contact the coordinator");
         }
 
-        // showToast("error", data);
         setLoading(false);
       },
     });
@@ -1004,7 +1005,12 @@ export default function ResumeBuilderPage() {
 
   const renderTemplateByFormatKey = (
     formatKey: string | undefined,
-    props: { data: any; showPlaceholders: boolean; fullName?: string; email?: string },
+    props: {
+      data: any;
+      showPlaceholders: boolean;
+      fullName?: string;
+      email?: string;
+    },
   ) => {
     switch (formatKey) {
       case ResumeFormats.CREATIVE:
