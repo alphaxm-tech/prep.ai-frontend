@@ -11,10 +11,18 @@ export interface GetResumeFormatsResponse {
 
 export interface GetSkillsMasterResponse {
   skills: SkillsMaster[];
+  softskills: SoftSkillsMaster[];
 }
 
 type SkillsMaster = {
   SkillID: number;
+  SkillKey: string;
+  DisplayName: string;
+  Category: string;
+};
+
+type SoftSkillsMaster = {
+  SoftSkillID: number;
   SkillKey: string;
   DisplayName: string;
   Category: string;

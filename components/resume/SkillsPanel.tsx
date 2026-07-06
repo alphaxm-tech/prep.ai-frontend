@@ -31,7 +31,6 @@ export function SkillsPanel({
     softSkillsMissing?: boolean;
   };
 }) {
-  const [inputSoft, setInputSoft] = useState("");
   const [skillQuery, setSkillQuery] = useState("");
   const [showSkillDropdown, setShowSkillDropdown] = useState(false);
   const [dropdownRect, setDropdownRect] = useState<{
@@ -42,6 +41,17 @@ export function SkillsPanel({
   const skillInputRef = useRef<HTMLInputElement>(null);
   const skillRowRef = useRef<HTMLDivElement>(null);
   const skillDropdownRef = useRef<HTMLDivElement>(null);
+
+  const [softSkillQuery, setSoftSkillQuery] = useState("");
+  const [showSoftSkillDropdown, setShowSoftSkillDropdown] = useState(false);
+  const [softDropdownRect, setSoftDropdownRect] = useState<{
+    top: number;
+    left: number;
+    width: number;
+  } | null>(null);
+  const softSkillInputRef = useRef<HTMLInputElement>(null);
+  const softSkillRowRef = useRef<HTMLDivElement>(null);
+  const softSkillDropdownRef = useRef<HTMLDivElement>(null);
 
   const invalid = (k: "skillsMissing" | "softSkillsMissing") => !!validation[k];
 
@@ -87,15 +97,36 @@ export function SkillsPanel({
     });
   }, [skillQuery, skills, skillsMaster]);
 
+  const filteredSoftSkills = useMemo(() => {
+    const already = new Set(softSkills.map((s) => s.skillId));
+    const q = softSkillQuery.trim().toLowerCase();
+    return (skillsMaster?.softskills ?? []).filter((skill: any) => {
+      if (already.has(skill.SoftSkillID)) return false;
+      if (!q) return true;
+      return skill.DisplayName.toLowerCase().includes(q);
+    });
+  }, [softSkillQuery, softSkills, skillsMaster]);
+
   const handleSelectSkill = (skill: any) => {
     addTag(skills, setSkills, skill.DisplayName, skill.SkillID);
     setSkillQuery("");
     setShowSkillDropdown(false);
   };
 
+  const handleSelectSoftSkill = (skill: any) => {
+    addTag(softSkills, setSoftSkills, skill.DisplayName, skill.SoftSkillID);
+    setSoftSkillQuery("");
+    setShowSoftSkillDropdown(false);
+  };
+
   const handleAddSkill = () => {
     if (filteredSkills.length === 0) return;
     handleSelectSkill(filteredSkills[0]);
+  };
+
+  const handleAddSoftSkill = () => {
+    if (filteredSoftSkills.length === 0) return;
+    handleSelectSoftSkill(filteredSoftSkills[0]);
   };
 
   const updateDropdownPosition = () => {
@@ -110,23 +141,26 @@ export function SkillsPanel({
     setShowSkillDropdown(true);
   };
 
-  const handleAddSoftSkill = () => {
-    if (!inputSoft.trim()) return;
-    addTag(softSkills, setSoftSkills, inputSoft, -1);
-    setInputSoft("");
+  const updateSoftDropdownPosition = () => {
+    if (!softSkillRowRef.current || !softSkillInputRef.current) return;
+    const row = softSkillRowRef.current.getBoundingClientRect();
+    const input = softSkillInputRef.current.getBoundingClientRect();
+    setSoftDropdownRect({
+      top: input.bottom + 4,
+      left: row.left,
+      width: row.width,
+    });
+  };
+
+  const openSoftSkillDropdown = () => {
+    updateSoftDropdownPosition();
+    setShowSoftSkillDropdown(true);
   };
 
   const counts = useMemo(
     () => ({ skills: skills.length, soft: softSkills.length }),
     [skills.length, softSkills.length],
   );
-
-  const handleSoftSkillEnter = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault(); // important if inside a form
-      handleAddSoftSkill();
-    }
-  };
 
   const handleSkillKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
@@ -137,6 +171,15 @@ export function SkillsPanel({
     }
   };
 
+  const handleSoftSkillKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAddSoftSkill();
+    } else if (e.key === "Escape") {
+      setShowSoftSkillDropdown(false);
+    }
+  };
+
   // Close the dropdown when the user clicks anywhere outside the input/list.
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -144,6 +187,17 @@ export function SkillsPanel({
       if (skillInputRef.current?.contains(target)) return;
       if (skillDropdownRef.current?.contains(target)) return;
       setShowSkillDropdown(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (softSkillInputRef.current?.contains(target)) return;
+      if (softSkillDropdownRef.current?.contains(target)) return;
+      setShowSoftSkillDropdown(false);
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -161,6 +215,17 @@ export function SkillsPanel({
       window.removeEventListener("resize", updateDropdownPosition);
     };
   }, [showSkillDropdown]);
+
+  useEffect(() => {
+    if (!showSoftSkillDropdown) return;
+    updateSoftDropdownPosition();
+    window.addEventListener("scroll", updateSoftDropdownPosition, true);
+    window.addEventListener("resize", updateSoftDropdownPosition);
+    return () => {
+      window.removeEventListener("scroll", updateSoftDropdownPosition, true);
+      window.removeEventListener("resize", updateSoftDropdownPosition);
+    };
+  }, [showSoftSkillDropdown]);
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -278,18 +343,59 @@ export function SkillsPanel({
           </span>
         </h4>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2" ref={softSkillRowRef}>
           <input
-            value={inputSoft}
-            onChange={(e) => setInputSoft(e.target.value)}
-            placeholder="e.g. Communication"
+            ref={softSkillInputRef}
+            type="text"
+            value={softSkillQuery}
+            onChange={(e) => {
+              setSoftSkillQuery(e.target.value);
+              openSoftSkillDropdown();
+            }}
+            onFocus={openSoftSkillDropdown}
+            onKeyDown={handleSoftSkillKeyDown}
+            placeholder="Search a soft skill..."
             className={`min-w-0 flex-1 rounded-lg bg-white px-4 py-2 text-sm placeholder-gray-400 focus:outline-none focus:ring-2 border ${
               invalid("softSkillsMissing")
                 ? "border-red-400 focus:ring-red-200"
                 : "border-gray-300 focus:ring-yellow-300"
             }`}
-            onKeyDown={handleSoftSkillEnter}
           />
+
+          {showSoftSkillDropdown &&
+            softDropdownRect &&
+            typeof document !== "undefined" &&
+            createPortal(
+              <div
+                ref={softSkillDropdownRef}
+                style={{
+                  position: "fixed",
+                  top: softDropdownRect.top,
+                  left: softDropdownRect.left,
+                  width: softDropdownRect.width,
+                }}
+                className="z-50 max-h-56 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg"
+              >
+                {filteredSoftSkills.length === 0 ? (
+                  <div className="px-4 py-2 text-sm text-gray-400">
+                    No matching soft skills
+                  </div>
+                ) : (
+                  filteredSoftSkills.map((skill: any) => (
+                    <button
+                      type="button"
+                      key={skill.SoftSkillID}
+                      onClick={() => handleSelectSoftSkill(skill)}
+                      className="block w-full break-words px-4 py-2 text-left text-sm text-gray-700 hover:bg-yellow-50"
+                    >
+                      {skill.DisplayName}
+                    </button>
+                  ))
+                )}
+              </div>,
+              document.body,
+            )}
+
           <button
             onClick={handleAddSoftSkill}
             className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-yellow-400 text-white shadow-sm hover:bg-yellow-500"
