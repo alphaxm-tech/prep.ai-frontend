@@ -167,6 +167,12 @@ const styles = StyleSheet.create({
     fontSize: 8,
     color: "#94a3b8",
   },
+
+  sup: {
+    fontSize: 6,
+    position: "relative",
+    top: -2,
+  },
 });
 
 export default function CreativeResumePDF({ data }: { data: ResumeData }) {
@@ -306,7 +312,10 @@ export default function CreativeResumePDF({ data }: { data: ResumeData }) {
           <Text style={styles.muted}>
             {/* Creative resume · Modern · Print friendly */}
           </Text>
-          <Text style={styles.muted}>Created by AI Prep Buddy</Text>
+          <Text style={styles.muted}>
+            PrepBuddy
+            <Text style={styles.sup}>AI</Text>
+          </Text>
         </View>
       </Page>
     </Document>
