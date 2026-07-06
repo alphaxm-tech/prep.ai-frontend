@@ -30,15 +30,25 @@ export default function EducationForm({
   const [editIndex, setEditIndex] = useState<number | null>(null);
   const [editEdu, setEditEdu] = useState<Education | null>(null);
 
+  const [attemptedAdd, setAttemptedAdd] = useState(false);
+
   const handleNewChange = (field: keyof Education, value: string) => {
     setNewEdu({ ...newEdu, [field]: value });
   };
 
   const addEducation = () => {
-    if (!newEdu.degree || !newEdu.institute) {
+    if (
+      !newEdu.degree.trim() ||
+      !newEdu.institute?.trim() ||
+      !newEdu.location.trim() ||
+      !newEdu.start_year.trim() ||
+      !newEdu.end_year.trim()
+    ) {
+      setAttemptedAdd(true);
       return;
     }
 
+    setAttemptedAdd(false);
     setEducations([...educations, newEdu]);
     setNewEdu({
       degree: "",
@@ -83,6 +93,9 @@ export default function EducationForm({
   const sectionInvalid =
     !!validationErrors?.educations && educations.length === 0;
 
+  const fieldBorder = (value?: string) =>
+    attemptedAdd && !value?.trim() ? invalidBorder : baseBorder;
+
   return (
     <div>
       <h4 className="text-sm font-semibold mb-2 text-gray-800">
@@ -125,7 +138,7 @@ export default function EducationForm({
               placeholder="B.Tech"
               value={newEdu.degree}
               onChange={(e) => handleNewChange("degree", e.target.value)}
-              className={`w-full ${inputClasses} ${baseBorder}`}
+              className={`w-full ${inputClasses} ${fieldBorder(newEdu.degree)}`}
             />
           </div>
 
@@ -138,7 +151,7 @@ export default function EducationForm({
               placeholder="IIT Bombay"
               value={newEdu.institute}
               onChange={(e) => handleNewChange("institute", e.target.value)}
-              className={`w-full ${inputClasses} ${baseBorder}`}
+              className={`w-full ${inputClasses} ${fieldBorder(newEdu.institute)}`}
             />
           </div>
 
@@ -151,7 +164,7 @@ export default function EducationForm({
               placeholder="Mumbai"
               value={newEdu.location}
               onChange={(e) => handleNewChange("location", e.target.value)}
-              className={`w-full ${inputClasses} ${baseBorder}`}
+              className={`w-full ${inputClasses} ${fieldBorder(newEdu.location)}`}
             />
           </div>
         </div>
@@ -165,7 +178,7 @@ export default function EducationForm({
               value={newEdu.start_year}
               onChange={(year) => handleNewChange("start_year", year)}
               options={YEAR_OPTIONS}
-              className={`${inputClasses} ${baseBorder}`}
+              className={`${inputClasses} ${fieldBorder(newEdu.start_year)}`}
             />
           </div>
 
@@ -177,7 +190,7 @@ export default function EducationForm({
               value={newEdu.end_year}
               onChange={(year) => handleNewChange("end_year", year)}
               options={YEAR_OPTIONS}
-              className={`${inputClasses} ${baseBorder}`}
+              className={`${inputClasses} ${fieldBorder(newEdu.end_year)}`}
             />
           </div>
 
