@@ -1,4 +1,4 @@
-import { AssessmentResponse } from "@/utils/api/types/assessment.types";
+import { AssessmentResponse } from "@/server-api/api/types/assessment.types";
 
 export default function CompactAssessmentRow({
   quiz,

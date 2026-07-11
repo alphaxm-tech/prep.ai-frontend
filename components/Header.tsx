@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useContext } from "react";
 import { AuthContext } from "@/app/provider";
 import { useUser } from "@/app/context/UserContext";
-import { logout } from "@/utils/mutations/auth.mutations";
+import { logout } from "@/server-api/mutations/auth.mutations";
 
 export function Header() {
   const router = useRouter();

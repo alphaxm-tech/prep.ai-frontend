@@ -2,9 +2,9 @@
 import React, { useState } from "react";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import Loader from "../Loader";
-import { Project } from "@/utils/api/types/resume.types";
+import { Project } from "@/server-api/api/types/resume.types";
 import { useToast } from "@/components/toast/ToastContext";
-import { ToastStates } from "@/utils/enums/enums";
+import { ToastStates } from "@/enums/enums";
 import AIEnhanceMenu, { AIEnhanceType } from "./AIEnhanceMenu";
 
 export default function ProjectsForm({
@@ -234,8 +234,7 @@ export default function ProjectsForm({
                     disabled={loading || !editProj.description.trim()}
                     onSelect={(type) =>
                       handleAIEnhance(
-                        (val) =>
-                          setEditProj({ ...editProj, description: val }),
+                        (val) => setEditProj({ ...editProj, description: val }),
                         editProj.description,
                         type,
                         { title: editProj.name },

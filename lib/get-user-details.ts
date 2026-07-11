@@ -1,6 +1,6 @@
 import { cache } from "react";
 import { cookies } from "next/headers";
-import { BASE_API_URL, HOME, ME } from "@/utils/api/endpoints";
+import { BASE_API_URL, HOME, ME } from "@/constants/api-endpoints";
 
 export const getCurrentUser = cache(async () => {
   const cookieStore = await cookies();

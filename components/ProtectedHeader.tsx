@@ -1,8 +1,8 @@
 "use client";
 
-import { PLATFORM_ROUTE, STUDENT_ROUTE } from "@/utils/CONSTANTS";
-import { UserRole } from "@/utils/enums/enums";
-import { logout } from "@/utils/mutations/auth.mutations";
+import { PLATFORM_ROUTE, STUDENT_ROUTE } from "@/constants/ui-routes";
+import { UserRole } from "@/enums/enums";
+import { logout } from "@/server-api/mutations/auth.mutations";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
 

@@ -3,15 +3,15 @@
 import React, { useContext, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AuthContext } from "@/app/provider";
-import { useGetAllAssessments } from "@/utils/queries/assessment.queries";
-import { useGetQuizStats } from "@/utils/queries/quiz.queries";
+import { useGetAllAssessments } from "@/server-api/queries/assessment.queries";
+import { useGetQuizStats } from "@/server-api/queries/quiz.queries";
 import Loader from "@/components/Loader";
-import { QUIZ_ROUTE, QUIZ_TEST } from "@/utils/CONSTANTS";
-import { createQuizAssessment } from "@/utils/mutations/quiz.mutation";
+import { QUIZ_ROUTE, QUIZ_TEST } from "@/constants/ui-routes";
+import { createQuizAssessment } from "@/server-api/mutations/quiz.mutation";
 import {
   ASSESSMENT_TYPES,
   AssessmentResponse,
-} from "@/utils/api/types/assessment.types";
+} from "@/server-api/api/types/assessment.types";
 import WorkInProgressBanner from "@/components/WorkInProgressBanner";
 import { StatCard } from "../../../../components/StatCard";
 import AssessmentRow from "@/components/AssessmentRow";

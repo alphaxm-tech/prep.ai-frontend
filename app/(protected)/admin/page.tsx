@@ -3,7 +3,7 @@
 import AdminCollegeCard from "@/components/AdminCollegeCard";
 import React, { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { MOCK_COLLEGES, type College } from "@/utils/dummy-data/college";
+import { MOCK_COLLEGES, type College } from "@/constants/dummy-data/college";
 
 export default function AdminLanding() {
   const router = useRouter();

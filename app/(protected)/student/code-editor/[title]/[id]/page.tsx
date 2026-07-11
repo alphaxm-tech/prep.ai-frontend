@@ -3,13 +3,13 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import CodeEditor from "@/components/CodeEditor";
-import { codeEditorService } from "@/utils/services/code-editor.service";
+import { codeEditorService } from "@/server-api/services/code-editor.service";
 import {
   AssessmentSessionQuestion,
   ExecutionResult,
   ExecutionStatus,
   QuestionStatus,
-} from "@/utils/api/types/code-editor.types";
+} from "@/server-api/api/types/code-editor.types";
 import { useToast } from "@/components/toast/ToastContext";
 import Loader from "@/components/Loader";
 

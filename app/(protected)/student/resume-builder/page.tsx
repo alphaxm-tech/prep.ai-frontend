@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import WorkInProgressBanner from "@/components/WorkInProgressBanner";
 import Loader from "@/components/Loader";
-import { resumeService } from "@/utils/services/resume.service";
+import { resumeService } from "@/server-api/services/resume.service";
 import { SkillsPanel, Tag as SkillTag } from "@/components/resume/SkillsPanel";
 import EducationForm from "@/components/resume/EducationForm";
 import ResumeDropdown from "@/components/ResumeDropdown";
@@ -19,7 +19,7 @@ import {
   useGetResumeFormats,
   useGetSkillsMaster,
   useGetUsersAllResumes,
-} from "@/utils/queries/resume.queries";
+} from "@/server-api/queries/resume.queries";
 import {
   AddResumeRequest,
   Education,
@@ -28,22 +28,22 @@ import {
   ResumeResponse,
   UsersResumeResponse,
   WorkExperience,
-} from "@/utils/api/types/resume.types";
+} from "@/server-api/api/types/resume.types";
 // import { Education } from "@/utils/api/types/education.types";
-import { useSaveResume } from "@/utils/mutations/resume.mutations";
+import { useSaveResume } from "@/server-api/mutations/resume.mutations";
 import ProjectsForm from "@/components/resume/ProjectForm";
 import { useToast } from "@/components/toast/ToastContext";
 import { VerticalAccordion } from "@/components/VerticalAccordian";
 import { useUser } from "@/app/context/UserContext";
 import { formatFullName } from "@/lib/format-fullname";
-import { ResumeFormats, ResumeTitles } from "@/utils/enums/resume-enums";
-import { DEFAULT_SAMPLE } from "@/utils/dummy-data/resume-default-data";
-import { ToastStates } from "@/utils/enums/enums";
+import { ResumeFormats, ResumeTitles } from "@/enums/resume-enums";
+import { DEFAULT_SAMPLE } from "@/constants/dummy-data/resume-default-data";
+import { ToastStates } from "@/enums/enums";
 import {
   loadResumeDraft,
   saveResumeDraft,
   clearResumeDraft,
-} from "@/utils/resume-draft-storage";
+} from "@/server-api/resume-draft-storage";
 
 // type TemplateKey = "modern" | "classic" | "creative" | "minimal" | "standard";
 

@@ -5,7 +5,7 @@ import AppBootstrap from "@/components/AppBootstrap";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { Providers } from "../provider";
-import { BASE_API_URL, HOME, ME } from "@/utils/api/endpoints";
+import { BASE_API_URL, HOME, ME } from "@/constants/api-endpoints";
 import { UserProvider } from "../context/UserContext";
 import { ProtectedHeader } from "@/components/ProtectedHeader";
 import ProtectedShell from "@/components/ProtectedShell";

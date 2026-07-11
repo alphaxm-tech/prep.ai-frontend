@@ -5,15 +5,18 @@ import { useRouter } from "next/navigation";
 import {
   useGetAttemptQuestion,
   useGetQuizSession,
-} from "@/utils/queries/quiz.queries";
+} from "@/server-api/queries/quiz.queries";
 import {
   useMarkForReview,
   useSaveAttemptAnswer,
   useSubmitAttempt,
-} from "@/utils/mutations/quiz.mutation";
-import { QuestionStatus, SubmitAttemptResponse } from "@/utils/api/types/quiz.types";
+} from "@/server-api/mutations/quiz.mutation";
+import {
+  QuestionStatus,
+  SubmitAttemptResponse,
+} from "@/server-api/api/types/quiz.types";
 import Loader from "@/components/Loader";
-import { QUIZ_ROUTE } from "@/utils/CONSTANTS";
+import { QUIZ_ROUTE } from "@/constants/ui-routes";
 
 type QuizPageProps = {
   title?: string;
@@ -58,7 +61,8 @@ export default function QuizPage({ title = "Quiz", attemptId }: QuizPageProps) {
     }
   }, [quizSession, currentIndex]);
 
-  const attemptFinalized = !!quizSession && quizSession.status !== "in_progress";
+  const attemptFinalized =
+    !!quizSession && quizSession.status !== "in_progress";
 
   const {
     data: questionData,
@@ -155,8 +159,7 @@ export default function QuizPage({ title = "Quiz", attemptId }: QuizPageProps) {
   );
 
   const currentStatus = useMemo(
-    () =>
-      quizSession?.question_statuses?.find((s) => s.index === currentIndex),
+    () => quizSession?.question_statuses?.find((s) => s.index === currentIndex),
     [quizSession?.question_statuses, currentIndex],
   );
 
@@ -241,9 +244,7 @@ export default function QuizPage({ title = "Quiz", attemptId }: QuizPageProps) {
       <div className="min-h-screen flex items-center justify-center text-gray-600">
         <div className="max-w-md w-full bg-white/80 backdrop-blur-xl border border-white/40 shadow-2xl rounded-3xl p-8 text-center space-y-4">
           <h2 className="text-xl font-bold">This attempt has ended</h2>
-          <p className="text-sm text-gray-500">
-            Status: {quizSession?.status}
-          </p>
+          <p className="text-sm text-gray-500">Status: {quizSession?.status}</p>
           <button
             onClick={() => router.push(QUIZ_ROUTE)}
             className="mt-2 px-6 py-2 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-yellow-900 font-semibold shadow-lg"

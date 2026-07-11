@@ -3,7 +3,10 @@
 import React from "react";
 import { useParams } from "next/navigation";
 import StudentsTable from "@/components/StudentsTable";
-import { MOCK_CONTEXT, MOCK_STUDENTS } from "@/utils/dummy-data/mock-students";
+import {
+  MOCK_CONTEXT,
+  MOCK_STUDENTS,
+} from "@/constants/dummy-data/mock-students";
 
 export default function CCGStudentsPage() {
   // const params = useParams();

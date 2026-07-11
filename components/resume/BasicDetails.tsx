@@ -6,7 +6,7 @@ import { SparklesIcon } from "@heroicons/react/24/outline";
 import Loader from "../Loader";
 import { formatFullName } from "../../lib/format-fullname";
 import { useToast } from "@/components/toast/ToastContext";
-import { ToastStates } from "@/utils/enums/enums";
+import { ToastStates } from "@/enums/enums";
 
 type Props = {
   isDefault: boolean;

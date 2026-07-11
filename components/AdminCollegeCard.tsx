@@ -1,7 +1,7 @@
 // components/AdminCollegeCard.tsx
 "use client";
 
-import type { College } from "@/utils/dummy-data/college";
+import type { College } from "@/constants/dummy-data/college";
 
 export default function AdminCollegeCard({
   college,

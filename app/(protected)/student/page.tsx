@@ -14,7 +14,7 @@ import { useRouter } from "next/navigation";
 import Loader from "@/components/Loader";
 import { useContext } from "react";
 import { AuthContext } from "@/app/provider";
-import { STUDENT_ROUTE } from "@/utils/CONSTANTS";
+import { STUDENT_ROUTE } from "@/constants/ui-routes";
 
 export default function Dashboard() {
   const router = useRouter();

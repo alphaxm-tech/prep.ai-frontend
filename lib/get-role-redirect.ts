@@ -1,6 +1,6 @@
 import { decodeJwt } from "jose";
-import { UserRole } from "@/utils/enums/enums";
-import { STUDENT_ROUTE, PLATFORM_ROUTE } from "@/utils/CONSTANTS";
+import { UserRole } from "@/enums/enums";
+import { STUDENT_ROUTE, PLATFORM_ROUTE } from "@/constants/ui-routes";
 
 /**
  * Decodes the access token (no verification — caller must ensure the token is

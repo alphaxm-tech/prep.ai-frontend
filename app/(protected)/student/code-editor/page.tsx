@@ -2,17 +2,17 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useGetCodingQuestions } from "@/utils/queries/code-editor.queries";
+import { useGetCodingQuestions } from "@/server-api/queries/code-editor.queries";
 import { useToast } from "@/components/toast/ToastContext";
 import Loader from "@/components/Loader";
-import { Assessment } from "@/utils/api/types/code-editor.types";
+import { Assessment } from "@/server-api/api/types/code-editor.types";
 import { StatCard } from "@/components/StatCard";
 
-import { useGetAllAssessments } from "@/utils/queries/assessment.queries";
+import { useGetAllAssessments } from "@/server-api/queries/assessment.queries";
 import {
   ASSESSMENT_TYPES,
   AssessmentResponse,
-} from "@/utils/api/types/assessment.types";
+} from "@/server-api/api/types/assessment.types";
 import AssessmentRow from "@/components/AssessmentRow";
 import CompactAssessmentRow from "@/components/CompactAssessmentRow";
 import WorkInProgressBanner from "@/components/WorkInProgressBanner";

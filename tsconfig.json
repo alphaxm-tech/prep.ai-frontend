@@ -28,7 +28,10 @@
     "**/*.tsx",
     ".next/types/**/*.ts",
     "app/(protected)/admin/add-college",
-    ".next/dev/types/**/*.ts"
+    ".next/dev/types/**/*.ts",
+    "app/(protected)/platform/onboard-college/group",
+    "app/(protected)/platform/onboard-college/course",
+    "app/(protected)/platform/onboard-college/college"
   ],
   "exclude": ["node_modules"]
 }

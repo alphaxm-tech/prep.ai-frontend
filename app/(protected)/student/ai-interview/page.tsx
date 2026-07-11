@@ -3,11 +3,11 @@
 import { useState } from "react";
 import { PlayIcon, CheckCircleIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/navigation";
-import { useGetAllAssessments } from "@/utils/queries/assessment.queries";
+import { useGetAllAssessments } from "@/server-api/queries/assessment.queries";
 import Loader from "@/components/Loader";
 import WorkInProgressBanner from "@/components/WorkInProgressBanner";
-import { ASSESSMENT_TYPES } from "@/utils/api/types/assessment.types";
-import { AIINTERVIEW } from "@/utils/api/endpoints";
+import { ASSESSMENT_TYPES } from "@/server-api/api/types/assessment.types";
+import { AIINTERVIEW } from "@/constants/api-endpoints";
 
 type InterviewType = {
   id: string; // NEW: stable identifier

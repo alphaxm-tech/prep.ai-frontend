@@ -17,7 +17,7 @@ import {
   useResetPassword,
   useSetPassword,
   useVerifyUserEmail,
-} from "@/utils/mutations/auth.mutations";
+} from "@/server-api/mutations/auth.mutations";
 import { useToast } from "@/components/toast/ToastContext";
 import {
   ADMIN_ROUTE,
@@ -25,13 +25,8 @@ import {
   PLATFORM_ROUTE,
   STUDENT_ROUTE,
   UNAUTHORIZED_ROUTE,
-} from "@/utils/CONSTANTS";
-import {
-  LoginErrors,
-  LoginStates,
-  ToastStates,
-  UserRole,
-} from "@/utils/enums/enums";
+} from "@/constants/ui-routes";
+import { LoginErrors, LoginStates, ToastStates, UserRole } from "@/enums/enums";
 // import { AUTH, GOOGLE, LOGIN } from "@/utils/api/endpoints";
 import { validatePassword } from "@/lib/validate-password";
 
