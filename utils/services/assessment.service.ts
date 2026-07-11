@@ -18,6 +18,10 @@ export const assessmentService = {
           has_taken: params.hasTaken,
           page_no: params.pageNo,
           count: params.count,
+          difficulty:
+            params.difficulty && params.difficulty !== "ALL"
+              ? params.difficulty
+              : undefined,
         },
         paramsSerializer: (params) =>
           qs.stringify(params, { arrayFormat: "repeat" }),

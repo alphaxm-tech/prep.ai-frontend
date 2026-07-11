@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useContext, useMemo, useState } from "react";
+import React, { useContext, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AuthContext } from "@/app/provider";
 import { useGetAllAssessments } from "@/utils/queries/assessment.queries";
+import { useGetQuizStats } from "@/utils/queries/quiz.queries";
 import Loader from "@/components/Loader";
 import { QUIZ_ROUTE, QUIZ_TEST } from "@/utils/CONSTANTS";
 import { createQuizAssessment } from "@/utils/mutations/quiz.mutation";
@@ -13,33 +14,44 @@ import {
 } from "@/utils/api/types/assessment.types";
 import WorkInProgressBanner from "@/components/WorkInProgressBanner";
 import { StatCard } from "../../../../components/StatCard";
-import QuizPage from "@/components/Quiz";
 import AssessmentRow from "@/components/AssessmentRow";
 import CompactAssessmentRow from "@/components/CompactAssessmentRow";
+import Pagination from "@/components/Pagination";
+
+const DEFAULT_PAGE_SIZE = 10;
+
 export default function Quiz() {
   const router = useRouter();
   const userDetailsMain = useContext(AuthContext);
+
+  const [difficultyFilter, setDifficultyFilter] = useState("ALL");
+
+  const [notTakenPage, setNotTakenPage] = useState(1);
+  const [notTakenPageSize, setNotTakenPageSize] = useState(DEFAULT_PAGE_SIZE);
+
+  const [takenPage, setTakenPage] = useState(1);
+  const [takenPageSize, setTakenPageSize] = useState(DEFAULT_PAGE_SIZE);
 
   const { data: untakenAssessments, isLoading: isUntakenLoading } =
     useGetAllAssessments({
       assessmentType: ASSESSMENT_TYPES.MCQ,
       hasTaken: false,
-      pageNo: 1,
-      count: 10,
+      pageNo: notTakenPage,
+      count: notTakenPageSize,
+      difficulty: difficultyFilter,
     });
 
   const { data: takenAssessments, isLoading: isTakenLoading } =
     useGetAllAssessments({
       assessmentType: ASSESSMENT_TYPES.MCQ,
       hasTaken: true,
-      pageNo: 1,
-      count: 10,
+      pageNo: takenPage,
+      count: takenPageSize,
     });
 
-  console.log(takenAssessments?.assessments);
+  const { data: quizStats } = useGetQuizStats();
 
   const startQuizMutation = createQuizAssessment();
-  const [difficultyFilter, setDifficultyFilter] = useState("ALL");
 
   const handleStartQuiz = (quiz: AssessmentResponse) => {
     startQuizMutation.mutate(quiz.assessment_id, {
@@ -50,22 +62,21 @@ export default function Quiz() {
     });
   };
 
-  const { takenQuizzes, notTakenQuizzes } = useMemo(() => {
-    const assessments = untakenAssessments?.assessments || [];
-    return {
-      takenQuizzes: assessments.filter((q) => q.has_taken),
-      notTakenQuizzes: assessments.filter((q) => !q.has_taken),
-    };
-  }, [untakenAssessments]);
+  const handleDifficultyChange = (level: string) => {
+    setDifficultyFilter(level);
+    setNotTakenPage(1);
+  };
 
-  const filteredQuizzes =
-    difficultyFilter === "ALL"
-      ? notTakenQuizzes
-      : notTakenQuizzes.filter((q) => q.difficulty === difficultyFilter);
+  const notTakenQuizzes = untakenAssessments?.assessments || [];
+  const takenQuizzes = takenAssessments?.assessments || [];
 
-  const total = untakenAssessments?.assessments?.length || 0;
-  const completed = takenAssessments?.assessments?.length as number;
-  const completionPercent = total ? Math.round((completed! / total) * 100) : 0;
+  const notTakenTotal =
+    untakenAssessments?.total_count ?? notTakenQuizzes.length;
+  const takenTotal = takenAssessments?.total_count ?? takenQuizzes.length;
+  const totalQuizzes = notTakenTotal + takenTotal;
+
+  const formatScore = (value?: number | null) =>
+    value === null || value === undefined ? "—" : `${Math.round(value)}%`;
 
   return (
     <>
@@ -84,22 +95,22 @@ export default function Quiz() {
               Sharpen your skills. Track your growth.
             </p>
           </div>
-
-          {/* <button className="bg-yellow-400 hover:bg-yellow-300 transition-all duration-200 px-6 py-3 text-yellow-900 font-semibold rounded-xl shadow-md hover:shadow-lg">
-            🏆 Leaderboard
-          </button> */}
         </div>
 
-        {/* 🔥 STAT CARDS BACK AGAIN */}
+        {/* STAT CARDS */}
         <section className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
-          <StatCard label="Total Quizzes" value={total} variant="blue" />
+          <StatCard label="Total Quizzes" value={totalQuizzes} variant="blue" />
+          <StatCard label="Quizzes Taken" value={takenTotal} variant="green" />
           <StatCard
-            label="Quizzes Taken"
-            value={completed ? completed : 0}
-            variant="green"
+            label="Best Score"
+            value={formatScore(quizStats?.best_score)}
+            variant="yellow"
           />
-          <StatCard label="Best Score" value={"92%"} variant="yellow" />
-          <StatCard label="Avg Score" value={"78%"} variant="purple" />
+          <StatCard
+            label="Avg Score"
+            value={formatScore(quizStats?.average_score)}
+            variant="purple"
+          />
         </section>
 
         {/* PROGRESS + FILTER BAR */}
@@ -139,7 +150,7 @@ export default function Quiz() {
                 return (
                   <button
                     key={level}
-                    onClick={() => setDifficultyFilter(level)}
+                    onClick={() => handleDifficultyChange(level)}
                     className={`
           px-4 py-2 rounded-full text-sm font-medium
           transition-all duration-200
@@ -153,7 +164,7 @@ export default function Quiz() {
               })}
             </div>
             <p className="text-sm text-gray-500">
-              {filteredQuizzes.length} quizzes found
+              {notTakenTotal} quizzes found
             </p>
           </div>
         </div>
@@ -161,7 +172,7 @@ export default function Quiz() {
         <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* LEFT SIDE — EXPLORE */}
           <section className="lg:col-span-2 space-y-6">
-            {filteredQuizzes?.length === 0 ? (
+            {notTakenQuizzes.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-20 bg-white/60 backdrop-blur-md border border-white/40 rounded-3xl">
                 <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
                   <span className="text-xl">🔍</span>
@@ -176,13 +187,26 @@ export default function Quiz() {
                 </p>
               </div>
             ) : (
-              filteredQuizzes.map((quiz) => (
-                <AssessmentRow
-                  quiz={quiz}
-                  index={quiz.assessment_id}
-                  onStartQuiz={handleStartQuiz}
-                ></AssessmentRow>
-              ))
+              <>
+                {notTakenQuizzes.map((quiz) => (
+                  <AssessmentRow
+                    key={quiz.assessment_id}
+                    quiz={quiz}
+                    index={quiz.assessment_id}
+                    onStartQuiz={handleStartQuiz}
+                  ></AssessmentRow>
+                ))}
+                <Pagination
+                  page={notTakenPage}
+                  pageSize={notTakenPageSize}
+                  totalCount={notTakenTotal}
+                  onPageChange={setNotTakenPage}
+                  onPageSizeChange={(size) => {
+                    setNotTakenPageSize(size);
+                    setNotTakenPage(1);
+                  }}
+                />
+              </>
             )}
           </section>
 
@@ -200,15 +224,14 @@ export default function Quiz() {
                   </h3>
 
                   <p className="text-sm text-gray-500">
-                    {takenAssessments?.assessments?.length || 0} completed
-                    assessments
+                    {takenTotal} completed assessments
                   </p>
                 </div>
               </div>
             </div>
 
             <div className="p-6">
-              {takenAssessments?.assessments?.length === 0 ? (
+              {takenQuizzes.length === 0 ? (
                 <div className="text-center py-10">
                   <div className="text-4xl mb-3">🚀</div>
 
@@ -218,9 +241,22 @@ export default function Quiz() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {takenAssessments?.assessments?.map((quiz) => (
-                    <CompactAssessmentRow quiz={quiz} />
+                  {takenQuizzes.map((quiz) => (
+                    <CompactAssessmentRow
+                      key={quiz.assessment_id}
+                      quiz={quiz}
+                    />
                   ))}
+                  <Pagination
+                    page={takenPage}
+                    pageSize={takenPageSize}
+                    totalCount={takenTotal}
+                    onPageChange={setTakenPage}
+                    onPageSizeChange={(size) => {
+                      setTakenPageSize(size);
+                      setTakenPage(1);
+                    }}
+                  />
                 </div>
               )}
             </div>

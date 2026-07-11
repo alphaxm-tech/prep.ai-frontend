@@ -1,5 +1,8 @@
 export interface GetAssessment {
   assessments: AssessmentResponse[];
+  total_count?: number;
+  page_no?: number;
+  count?: number;
 }
 
 export const ASSESSMENT_TYPES = {
@@ -14,6 +17,7 @@ export interface GetAssessmentParams {
   hasTaken: boolean;
   pageNo: number;
   count: number;
+  difficulty?: string;
 }
 
 export type QuizDifficulty = "EASY" | "MEDIUM" | "HARD" | "";

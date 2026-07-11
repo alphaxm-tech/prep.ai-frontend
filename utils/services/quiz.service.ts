@@ -6,14 +6,24 @@ import {
   GET_ATTEMPT_QUESTION,
   GET_QUIZ_SESSION,
   LEADERBOARD,
+  MARK_FOR_REVIEW,
   QUIZ,
+  QUIZ_STATS,
   START_QUIZ,
+  SUBMIT,
 } from "../api/endpoints";
 import {
   GetAttemptQuestion,
+  GetAttemptQuestionResponse,
   GetAttemptStatusResposne,
   GetLeaderboardResponse,
+  MarkForReviewRequest,
+  QuizSessionResponse,
+  QuizStatsResponse,
+  SaveAnswerRequest,
+  SaveAnswerResponse,
   StartAssessmentResponse,
+  SubmitAttemptResponse,
 } from "../api/types/quiz.types";
 
 export const quizService = {
@@ -24,11 +34,13 @@ export const quizService = {
     return response.data;
   },
 
-  getAttemptQuestion: async (params: GetAttemptQuestion) => {
-    const resposne = await api.get(
+  getAttemptQuestion: async (
+    params: GetAttemptQuestion,
+  ): Promise<GetAttemptQuestionResponse> => {
+    const response = await api.get(
       `${BASE_API_URL}/${QUIZ}/${ATTEMPTS}/${params.AttemptID}/${GET_ATTEMPT_QUESTION}/${params.Index}`,
     );
-    return resposne;
+    return response.data;
   },
 
   getAttemptStatus: async (
@@ -41,6 +53,36 @@ export const quizService = {
     return resposne.data;
   },
 
+  saveAttemptAnswer: async (
+    attemptId: number,
+    payload: SaveAnswerRequest,
+  ): Promise<SaveAnswerResponse> => {
+    const response = await api.put(
+      `${BASE_API_URL}/${QUIZ}/${ATTEMPTS}/${attemptId}/answers`,
+      payload,
+    );
+    return response.data.answer;
+  },
+
+  submitAttempt: async (attemptId: number): Promise<SubmitAttemptResponse> => {
+    const response = await api.post(
+      `${BASE_API_URL}/${QUIZ}/${ATTEMPTS}/${attemptId}/${SUBMIT}`,
+    );
+    return response.data.result;
+  },
+
+  markForReview: async (
+    attemptId: number,
+    questionId: number,
+    payload: MarkForReviewRequest,
+  ) => {
+    const response = await api.put(
+      `${BASE_API_URL}/${QUIZ}/${ATTEMPTS}/${attemptId}/${GET_ATTEMPT_QUESTION}/${questionId}/${MARK_FOR_REVIEW}`,
+      payload,
+    );
+    return response.data;
+  },
+
   getLeaderboard: async (
     assessmentId: number,
   ): Promise<GetLeaderboardResponse> => {
@@ -51,11 +93,16 @@ export const quizService = {
     return response.data;
   },
 
-  getQuizSession: async (attemptId: number) => {
+  getQuizSession: async (attemptId: number): Promise<QuizSessionResponse> => {
     const response = await api.get(
       `${BASE_API_URL}/${QUIZ}/${GET_QUIZ_SESSION}/${attemptId}`,
     );
 
-    return response;
+    return response.data.session;
+  },
+
+  getQuizStats: async (): Promise<QuizStatsResponse> => {
+    const response = await api.get(`${BASE_API_URL}/${QUIZ}/${QUIZ_STATS}`);
+    return response.data.stats;
   },
 };

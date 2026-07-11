@@ -6,123 +6,131 @@ import {
   useGetAttemptQuestion,
   useGetQuizSession,
 } from "@/utils/queries/quiz.queries";
-
-export type Option = { id: string; text: string };
-
-export type Question = {
-  id: string;
-  text: string;
-  options: Option[];
-  correctOptionId?: string;
-};
+import {
+  useMarkForReview,
+  useSaveAttemptAnswer,
+  useSubmitAttempt,
+} from "@/utils/mutations/quiz.mutation";
+import { QuestionStatus, SubmitAttemptResponse } from "@/utils/api/types/quiz.types";
+import Loader from "@/components/Loader";
+import { QUIZ_ROUTE } from "@/utils/CONSTANTS";
 
 type QuizPageProps = {
-  durationMinutes?: number;
   title?: string;
   attemptId: number;
 };
 
-const questions: Question[] = [
-  {
-    id: "q1",
-    text: "What is the time complexity of binary search?",
-    correctOptionId: "o2",
-    options: [
-      { id: "o1", text: "O(n)" },
-      { id: "o2", text: "O(log n)" },
-      { id: "o3", text: "O(n log n)" },
-      { id: "o4", text: "O(1)" },
-    ],
-  },
-  {
-    id: "q2",
-    text: "Which of the following is NOT a JavaScript data type?",
-    correctOptionId: "o3",
-    options: [
-      { id: "o1", text: "string" },
-      { id: "o2", text: "boolean" },
-      { id: "o3", text: "character" },
-      { id: "o4", text: "undefined" },
-    ],
-  },
-  {
-    id: "q3",
-    text: "In Golang, which keyword is used to define a struct?",
-    correctOptionId: "o1",
-    options: [
-      { id: "o1", text: "type" },
-      { id: "o2", text: "class" },
-      { id: "o3", text: "struct" },
-      { id: "o4", text: "define" },
-    ],
-  },
-  {
-    id: "q4",
-    text: "Which HTTP status code means 'Unauthorized'?",
-    correctOptionId: "o2",
-    options: [
-      { id: "o1", text: "200" },
-      { id: "o2", text: "401" },
-      { id: "o3", text: "403" },
-      { id: "o4", text: "500" },
-    ],
-  },
-  {
-    id: "q5",
-    text: "What does ACID stand for in databases?",
-    correctOptionId: "o4",
-    options: [
-      { id: "o1", text: "Atomicity, Consistency, Isolation, Durability" },
-      { id: "o2", text: "Accuracy, Clarity, Isolation, Dependency" },
-      { id: "o3", text: "Atomicity, Concurrency, Integrity, Durability" },
-      { id: "o4", text: "Atomicity, Consistency, Isolation, Durability" },
-    ],
-  },
-];
+function formatTime(totalSeconds: number) {
+  const clamped = Math.max(0, totalSeconds);
+  const minutes = Math.floor(clamped / 60);
+  const seconds = clamped % 60;
+  return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+}
 
-export default function QuizPage({
-  durationMinutes = 20,
-  title = "Quiz",
-  attemptId,
-}: QuizPageProps) {
+function statusClasses(status: QuestionStatus | undefined, isCurrent: boolean) {
+  if (isCurrent) return "bg-blue-600 text-white";
+  if (!status || !status.visited) return "bg-gray-100 text-gray-500";
+  if (status.answered && status.marked_for_review)
+    return "bg-teal-200 text-teal-900";
+  if (status.marked_for_review) return "bg-purple-200 text-purple-900";
+  if (status.answered) return "bg-green-200 text-green-800";
+  return "bg-amber-100 text-amber-800";
+}
+
+export default function QuizPage({ title = "Quiz", attemptId }: QuizPageProps) {
   const router = useRouter();
 
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [timeLeft, setTimeLeft] = useState(durationMinutes * 60);
-  const [isRunning, setIsRunning] = useState(true);
-  const [showSummary, setShowSummary] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState<number | null>(null);
+  const [selectedOptionId, setSelectedOptionId] = useState<number | null>(null);
+  const [remainingSeconds, setRemainingSeconds] = useState<number | null>(null);
   const [showLeaveWarning, setShowLeaveWarning] = useState(false);
+  const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
+  const [results, setResults] = useState<SubmitAttemptResponse | null>(null);
   const confirmedLeaveRef = useRef(false);
+  const autoSubmittedRef = useRef(false);
 
-  // useEffect(() => {
-  //   if (!isRunning) return;
+  const { data: quizSession, isLoading: quizSessionLoading } =
+    useGetQuizSession(attemptId);
 
-  //   if (timeLeft <= 0) {
-  //     handleSubmit();
-  //     return;
-  //   }
+  useEffect(() => {
+    if (quizSession && currentIndex === null) {
+      setCurrentIndex(Math.max(1, quizSession.current_index || 1));
+    }
+  }, [quizSession, currentIndex]);
 
-  //   const t = window.setInterval(() => {
-  //     setTimeLeft((s) => s - 1);
-  //   }, 1000);
+  const attemptFinalized = !!quizSession && quizSession.status !== "in_progress";
 
-  //   return () => clearInterval(t);
-  // }, [isRunning, timeLeft]);
+  const {
+    data: questionData,
+    isLoading: questionLoading,
+    isFetching: questionFetching,
+  } = useGetAttemptQuestion({
+    AttemptID: attemptId,
+    Index: currentIndex ?? 0,
+  });
+
+  const saveAnswerMutation = useSaveAttemptAnswer(attemptId);
+  const markForReviewMutation = useMarkForReview(attemptId);
+  const submitMutation = useSubmitAttempt(attemptId);
+
+  // Prefill the selected option whenever the displayed question changes.
+  useEffect(() => {
+    setSelectedOptionId(questionData?.question?.marked_option_id ?? null);
+  }, [questionData?.question?.question_id]);
+
+  // Server-anchored countdown: recompute remaining time from expires_at every tick.
+  useEffect(() => {
+    if (!quizSession?.expires_at || attemptFinalized) return;
+    const expiresAt = new Date(quizSession.expires_at).getTime();
+
+    const tick = () => {
+      const remaining = Math.round((expiresAt - Date.now()) / 1000);
+      setRemainingSeconds(remaining);
+    };
+
+    tick();
+    const interval = window.setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [quizSession?.expires_at, attemptFinalized]);
+
+  const handleSubmit = () => {
+    if (submitMutation.isPending || results) return;
+    submitMutation.mutate(undefined, {
+      onSuccess: (data) => {
+        setResults(data);
+        setShowSubmitConfirm(false);
+      },
+    });
+  };
+
+  // Auto-submit once the server-derived timer hits zero.
+  useEffect(() => {
+    if (
+      remainingSeconds !== null &&
+      remainingSeconds <= 0 &&
+      !results &&
+      !autoSubmittedRef.current &&
+      !attemptFinalized
+    ) {
+      autoSubmittedRef.current = true;
+      handleSubmit();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [remainingSeconds, results, attemptFinalized]);
 
   // Block refresh / tab close while quiz is active
   useEffect(() => {
-    if (showSummary) return;
+    if (results) return;
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault();
     };
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [showSummary]);
+  }, [results]);
 
   // Block browser back button while quiz is active
   useEffect(() => {
-    if (showSummary) return;
+    if (results) return;
     window.history.pushState(null, "", window.location.href);
     const handlePopState = () => {
       if (confirmedLeaveRef.current) return;
@@ -131,7 +139,7 @@ export default function QuizPage({
     };
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, [showSummary]);
+  }, [results]);
 
   const confirmLeave = () => {
     confirmedLeaveRef.current = true;
@@ -139,66 +147,113 @@ export default function QuizPage({
     router.back();
   };
 
-  const score = useMemo(() => {
-    let correct = 0;
-    questions.forEach((q: any) => {
-      if (answers[q.id] === q.correctOptionId) correct++;
+  const totalQuestions = quizSession?.total_questions ?? 0;
+
+  const answeredCount = useMemo(
+    () => quizSession?.question_statuses?.filter((s) => s.answered).length ?? 0,
+    [quizSession?.question_statuses],
+  );
+
+  const currentStatus = useMemo(
+    () =>
+      quizSession?.question_statuses?.find((s) => s.index === currentIndex),
+    [quizSession?.question_statuses, currentIndex],
+  );
+
+  const selectOption = (optionId: number) => {
+    if (!questionData?.question) return;
+    setSelectedOptionId(optionId);
+    saveAnswerMutation.mutate({
+      question_id: questionData.question.question_id,
+      selected_option_id: optionId,
     });
-
-    const total = questions.length;
-
-    return {
-      total,
-      correct,
-      percent: total ? Math.round((correct / total) * 100) : 0,
-    };
-  }, [questions, answers]);
-
-  const fmt = (s: number) =>
-    `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(
-      2,
-      "0",
-    )}`;
-
-  const selectOption = (qid: string, oid: string) => {
-    setAnswers((prev) => ({
-      ...prev,
-      [qid]: oid,
-    }));
   };
 
-  const handleSubmit = () => {
-    setIsRunning(false);
-    setShowSummary(true);
+  const toggleMarkForReview = () => {
+    if (!questionData?.question) return;
+    const nextMarked = !(currentStatus?.marked_for_review ?? false);
+    markForReviewMutation.mutate({
+      questionId: questionData.question.question_id,
+      payload: { marked_for_review: nextMarked },
+    });
   };
 
-  if (!questions.length) {
+  const goToIndex = (index: number) => {
+    if (index < 1 || index > totalQuestions) return;
+    setCurrentIndex(index);
+  };
+
+  if (quizSessionLoading || currentIndex === null) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-500">
-        No questions available.
+        <Loader show message="Loading quiz..." />
       </div>
     );
   }
 
-  //////////////////////// API calls ////////////////////////
+  if (results) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-100 via-white to-gray-200 p-6 flex items-center justify-center">
+        <div className="max-w-lg w-full bg-white/80 backdrop-blur-xl border border-white/40 shadow-2xl rounded-3xl p-8 text-center space-y-4">
+          <h2 className="text-2xl font-bold">Quiz Submitted</h2>
+          <div className="text-5xl font-bold text-yellow-600">
+            {results.total > 0
+              ? Math.round((Math.max(results.score, 0) / results.total) * 100)
+              : 0}
+            %
+          </div>
+          <div className="grid grid-cols-3 gap-4 text-sm text-gray-700 mt-4">
+            <div>
+              <div className="text-lg font-semibold text-green-700">
+                {results.correct}
+              </div>
+              <div>Correct</div>
+            </div>
+            <div>
+              <div className="text-lg font-semibold text-red-600">
+                {results.wrong}
+              </div>
+              <div>Wrong</div>
+            </div>
+            <div>
+              <div className="text-lg font-semibold text-gray-500">
+                {results.unanswered}
+              </div>
+              <div>Unanswered</div>
+            </div>
+          </div>
+          <p className="text-sm text-gray-500">
+            Score: {results.score} / {results.total}
+          </p>
+          <button
+            onClick={() => router.push(QUIZ_ROUTE)}
+            className="mt-4 px-6 py-2 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-yellow-900 font-semibold shadow-lg"
+          >
+            Back to Quizzes
+          </button>
+        </div>
+      </div>
+    );
+  }
 
-  //////// get quiz session /////////////
-  const { data: quizSessionData, isLoading: quizSessionLoading } =
-    useGetQuizSession(attemptId);
-
-  //////// get question /////////////
-  const {
-    data: questionData,
-    isLoading: questionLoading,
-    isError,
-    error,
-    refetch,
-  } = useGetAttemptQuestion({
-    AttemptID: attemptId,
-    Index: quizSessionData?.data?.session?.current_index,
-  });
-
-  console.log(quizSessionData?.data?.session?.current_index);
+  if (attemptFinalized) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-gray-600">
+        <div className="max-w-md w-full bg-white/80 backdrop-blur-xl border border-white/40 shadow-2xl rounded-3xl p-8 text-center space-y-4">
+          <h2 className="text-xl font-bold">This attempt has ended</h2>
+          <p className="text-sm text-gray-500">
+            Status: {quizSession?.status}
+          </p>
+          <button
+            onClick={() => router.push(QUIZ_ROUTE)}
+            className="mt-2 px-6 py-2 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-yellow-900 font-semibold shadow-lg"
+          >
+            Back to Quizzes
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-100 via-white to-gray-200 p-6">
@@ -228,30 +283,59 @@ export default function QuizPage({
           </div>
         </div>
       )}
+
+      {showSubmitConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
+            <h2 className="text-xl font-bold mb-2">Submit the quiz?</h2>
+            <p className="text-gray-600 mb-6">
+              You have answered {answeredCount} of {totalQuestions} questions.
+              This cannot be undone.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowSubmitConfirm(false)}
+                className="px-5 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={submitMutation.isPending}
+                className="px-5 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition disabled:opacity-50"
+              >
+                Submit
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto bg-white/60 backdrop-blur-xl border border-white/40 shadow-2xl rounded-3xl overflow-hidden">
         {/* HEADER */}
         <div className="flex items-center justify-between px-8 py-6 border-b border-white/40">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+            <h1 className="text-2xl font-bold tracking-tight">
+              {quizSession?.title || title}
+            </h1>
             <p className="text-sm text-gray-600 mt-1">
-              {questions.length} Questions • {durationMinutes} Minutes
+              {totalQuestions} Questions
             </p>
           </div>
 
           <div className="flex items-center gap-4">
-            <div className="px-5 py-2 rounded-full bg-white/80 shadow text-lg font-semibold">
-              ⏱ {fmt(timeLeft)}
+            <div
+              className={`px-5 py-2 rounded-full bg-white/80 shadow text-lg font-semibold ${
+                remainingSeconds !== null && remainingSeconds <= 60
+                  ? "text-red-600"
+                  : ""
+              }`}
+            >
+              ⏱ {formatTime(remainingSeconds ?? 0)}
             </div>
 
             <button
-              onClick={() => setIsRunning((s) => !s)}
-              className="px-4 py-2 rounded-lg bg-gray-900 text-white text-sm"
-            >
-              {isRunning ? "Pause" : "Resume"}
-            </button>
-
-            <button
-              onClick={handleSubmit}
+              onClick={() => setShowSubmitConfirm(true)}
               className="px-6 py-2 rounded-xl bg-green-600 text-white font-semibold shadow-lg"
             >
               Submit
@@ -266,57 +350,71 @@ export default function QuizPage({
             <div className="bg-white/80 backdrop-blur-md border border-white/40 rounded-2xl p-6 shadow-lg">
               <div className="flex justify-between items-center mb-6">
                 <span className="text-sm text-gray-600">
-                  Question {currentIndex + 1} of {questions.length}
+                  Question {currentIndex} of {totalQuestions}
                 </span>
 
                 <span className="text-sm font-medium text-gray-700">
-                  Answered: {Object.keys(answers).length}
+                  Answered: {answeredCount}
                 </span>
               </div>
 
-              <div className="text-lg font-semibold mb-6 leading-relaxed">
-                {questions[currentIndex]?.text}
-              </div>
+              {questionLoading || questionFetching || !questionData ? (
+                <div className="py-16 text-center text-gray-400">
+                  Loading question...
+                </div>
+              ) : (
+                <>
+                  <div className="text-lg font-semibold mb-6 leading-relaxed">
+                    {questionData.question.question_text}
+                  </div>
 
-              <div className="space-y-3">
-                {questions[currentIndex]?.options?.map((opt: any) => {
-                  const selected =
-                    answers[questions[currentIndex].id] === opt.id;
+                  <div className="space-y-3">
+                    {questionData.question.options.map((opt) => {
+                      const selected = selectedOptionId === opt.option_id;
 
-                  return (
-                    <button
-                      key={opt.id}
-                      onClick={() =>
-                        selectOption(questions[currentIndex].id, opt.id)
-                      }
-                      className={`w-full text-left px-5 py-3 rounded-xl border transition-all duration-200 ${
-                        selected
-                          ? "bg-yellow-100 border-yellow-400 shadow-md"
-                          : "bg-white border-gray-200 hover:shadow-md"
-                      }`}
-                    >
-                      {opt.text}
-                    </button>
-                  );
-                })}
-              </div>
+                      return (
+                        <button
+                          key={opt.option_id}
+                          onClick={() => selectOption(opt.option_id)}
+                          className={`w-full text-left px-5 py-3 rounded-xl border transition-all duration-200 ${
+                            selected
+                              ? "bg-yellow-100 border-yellow-400 shadow-md"
+                              : "bg-white border-gray-200 hover:shadow-md"
+                          }`}
+                        >
+                          {opt.option_text}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
 
-              <div className="flex justify-between mt-8">
+              <div className="flex justify-between items-center mt-8">
                 <button
-                  onClick={() => setCurrentIndex((i) => Math.max(0, i - 1))}
-                  disabled={currentIndex === 0}
+                  onClick={() => goToIndex((currentIndex ?? 1) - 1)}
+                  disabled={currentIndex === 1}
                   className="px-4 py-2 rounded-lg bg-white border disabled:opacity-40"
                 >
                   Previous
                 </button>
 
                 <button
-                  onClick={() =>
-                    setCurrentIndex((i) =>
-                      Math.min(questions.length - 1, i + 1),
-                    )
-                  }
-                  disabled={currentIndex === questions.length - 1}
+                  onClick={toggleMarkForReview}
+                  className={`px-4 py-2 rounded-lg border text-sm font-medium transition ${
+                    currentStatus?.marked_for_review
+                      ? "bg-purple-500 text-white border-purple-500"
+                      : "bg-white text-purple-700 border-purple-300 hover:bg-purple-50"
+                  }`}
+                >
+                  {currentStatus?.marked_for_review
+                    ? "Unmark Review"
+                    : "Mark for Review"}
+                </button>
+
+                <button
+                  onClick={() => goToIndex((currentIndex ?? 1) + 1)}
+                  disabled={currentIndex === totalQuestions}
                   className="px-4 py-2 rounded-lg bg-white border disabled:opacity-40"
                 >
                   Next
@@ -334,26 +432,43 @@ export default function QuizPage({
               </h3>
 
               <div className="grid grid-cols-5 gap-3">
-                {questions.map((q: any, i: any) => {
-                  const attempted = !!answers[q.id];
-                  const isCurrent = i === currentIndex;
+                {Array.from({ length: totalQuestions }, (_, i) => i + 1).map(
+                  (index) => {
+                    const status = quizSession?.question_statuses?.find(
+                      (s) => s.index === index,
+                    );
+                    const isCurrent = index === currentIndex;
 
-                  return (
-                    <button
-                      key={q.id}
-                      onClick={() => setCurrentIndex(i)}
-                      className={`h-10 rounded-lg text-sm font-medium transition ${
-                        isCurrent
-                          ? "bg-blue-600 text-white"
-                          : attempted
-                            ? "bg-green-200 text-green-800"
-                            : "bg-gray-100 text-gray-700"
-                      }`}
-                    >
-                      {i + 1}
-                    </button>
-                  );
-                })}
+                    return (
+                      <button
+                        key={index}
+                        onClick={() => goToIndex(index)}
+                        className={`h-10 rounded-lg text-sm font-medium transition ${statusClasses(status, isCurrent)}`}
+                      >
+                        {index}
+                      </button>
+                    );
+                  },
+                )}
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500">
+                <span className="flex items-center gap-1">
+                  <span className="w-2.5 h-2.5 rounded-full bg-gray-200" />
+                  Not visited
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-200" />
+                  Visited
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-2.5 h-2.5 rounded-full bg-green-300" />
+                  Answered
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-2.5 h-2.5 rounded-full bg-purple-300" />
+                  Marked
+                </span>
               </div>
             </div>
 
@@ -364,25 +479,9 @@ export default function QuizPage({
               </h3>
 
               <div className="text-2xl font-bold">
-                {Object.keys(answers).length} / {questions.length}
-              </div>
-
-              <div className="text-sm text-gray-600 mt-3">Current Score</div>
-
-              <div className="text-2xl font-bold text-yellow-600">
-                {score.percent}%
+                {answeredCount} / {totalQuestions}
               </div>
             </div>
-
-            {showSummary && (
-              <div className="bg-white/80 backdrop-blur-md border border-white/40 rounded-2xl p-6 shadow-lg">
-                <h3 className="font-semibold mb-2">Summary</h3>
-                <p>
-                  Correct: {score.correct} / {score.total}
-                </p>
-                <p>Score: {score.percent}%</p>
-              </div>
-            )}
           </aside>
         </div>
       </div>

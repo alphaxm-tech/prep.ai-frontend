@@ -5,7 +5,14 @@ import { GetAssessmentParams } from "../api/types/assessment.types";
 
 export const useGetAllAssessments = (params: GetAssessmentParams) => {
   return useQuery({
-    queryKey: ["assessments", params.assessmentType, params.hasTaken],
+    queryKey: [
+      "assessments",
+      params.assessmentType,
+      params.hasTaken,
+      params.pageNo,
+      params.count,
+      params.difficulty,
+    ],
     queryFn: () => assessmentService.getAssessments(params),
   });
 };

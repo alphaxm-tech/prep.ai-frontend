@@ -3,6 +3,8 @@ import {
   GetAttemptQuestion,
   GetAttemptStatusResposne,
   GetLeaderboardResponse,
+  QuizSessionResponse,
+  QuizStatsResponse,
 } from "../api/types/quiz.types";
 import { quizService } from "../services/quiz.service";
 
@@ -10,26 +12,37 @@ export const useGetAttemptQuestion = (params: GetAttemptQuestion) => {
   return useQuery({
     queryKey: ["quiz", "getAttemptQuestion", params.AttemptID, params.Index],
     queryFn: () => quizService.getAttemptQuestion(params),
+    enabled: !!params.AttemptID && !!params.Index && params.Index > 0,
   });
 };
 
 export const useGetAttemptStatus = (attemptId: number) => {
   return useQuery<GetAttemptStatusResposne>({
-    queryKey: ["quiz", "getAttemptStatus"],
+    queryKey: ["quiz", "getAttemptStatus", attemptId],
     queryFn: () => quizService.getAttemptStatus(attemptId),
+    enabled: !!attemptId,
   });
 };
 
 export const useGetLeaderboard = (assessmentId: number) => {
   return useQuery<GetLeaderboardResponse>({
-    queryKey: ["quiz", "getLeaderboard"],
+    queryKey: ["quiz", "getLeaderboard", assessmentId],
     queryFn: () => quizService.getLeaderboard(assessmentId),
+    enabled: !!assessmentId,
   });
 };
 
 export const useGetQuizSession = (attemptId: number) => {
-  return useQuery({
+  return useQuery<QuizSessionResponse>({
     queryKey: ["quiz", "getQuizSession", attemptId],
     queryFn: () => quizService.getQuizSession(attemptId),
+    enabled: !!attemptId,
+  });
+};
+
+export const useGetQuizStats = () => {
+  return useQuery<QuizStatsResponse>({
+    queryKey: ["quiz", "getQuizStats"],
+    queryFn: () => quizService.getQuizStats(),
   });
 };
