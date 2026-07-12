@@ -16,6 +16,7 @@ export const LOGIN = "/login";
 // Student Routes
 export const HOME_ROUTE = "/"; // root home
 export const AI_INTERVIEW_ROUTE = "/student/ai-interview";
+export const AI_INTERVIEW_SESSION = "/interview";
 export const RESUME_BUILDER_ROUTE = "/student/resume-builder";
 export const QUIZ_ROUTE = "/student/quiz";
 export const STUDY_MATERIAL_ROUTE = "/student/study-material";

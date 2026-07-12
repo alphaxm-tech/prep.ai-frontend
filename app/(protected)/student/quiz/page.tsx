@@ -17,6 +17,7 @@ import { StatCard } from "../../../../components/StatCard";
 import AssessmentRow from "@/components/AssessmentRow";
 import CompactAssessmentRow from "@/components/CompactAssessmentRow";
 import Pagination from "@/components/Pagination";
+import EmptyStateCard from "@/components/EmptyStateCard";
 
 const DEFAULT_PAGE_SIZE = 10;
 
@@ -173,19 +174,10 @@ export default function Quiz() {
           {/* LEFT SIDE — EXPLORE */}
           <section className="lg:col-span-2 space-y-6">
             {notTakenQuizzes.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-20 bg-white/60 backdrop-blur-md border border-white/40 rounded-3xl">
-                <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-                  <span className="text-xl">🔍</span>
-                </div>
-
-                <h3 className="text-lg font-semibold text-gray-900">
-                  No assessments found
-                </h3>
-
-                <p className="mt-2 text-sm text-gray-500 text-center max-w-md">
-                  No coding assessments match the selected difficulty filter.
-                </p>
-              </div>
+              <EmptyStateCard
+                title="No assessments found"
+                subtitle="No coding assessments match the selected difficulty filter."
+              />
             ) : (
               <>
                 {notTakenQuizzes.map((quiz) => (

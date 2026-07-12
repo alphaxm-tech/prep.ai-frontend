@@ -16,6 +16,7 @@ import {
 import AssessmentRow from "@/components/AssessmentRow";
 import CompactAssessmentRow from "@/components/CompactAssessmentRow";
 import WorkInProgressBanner from "@/components/WorkInProgressBanner";
+import EmptyStateCard from "@/components/EmptyStateCard";
 
 function slugify(title: string) {
   return title
@@ -266,19 +267,10 @@ export default function CodeEditorListPage() {
           <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
             <section className="lg:col-span-2 space-y-6">
               {filteredQuizzes?.length === 0 && (
-                <div className="flex flex-col items-center justify-center py-20">
-                  <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center mb-4">
-                    <span className="text-xl">🔍</span>
-                  </div>
-
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    No assessments found
-                  </h3>
-
-                  <p className="mt-2 text-sm text-gray-500 text-center max-w-md">
-                    No coding assessments match the selected difficulty filter.
-                  </p>
-                </div>
+                <EmptyStateCard
+                  title="No assessments found"
+                  subtitle="No coding assessments match the selected difficulty filter."
+                />
               )}
               {filteredQuizzes?.map((quiz) => (
                 <AssessmentRow

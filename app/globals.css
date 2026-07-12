@@ -33,3 +33,20 @@ body {
 .animate-slide-in {
   animation: slide-in 0.25s ease-out;
 }
+
+@keyframes marquee-vertical {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-50%);
+  }
+}
+
+.animate-marquee-vertical {
+  animation: marquee-vertical linear infinite;
+}
+
+.marquee-pausable:hover .animate-marquee-vertical {
+  animation-play-state: paused;
+}

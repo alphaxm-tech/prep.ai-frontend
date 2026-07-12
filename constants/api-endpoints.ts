@@ -64,3 +64,10 @@ export const GET_CODING_QUESTIONS = "questions";
 export const RUN_JOBS = "run-jobs";
 export const SUBMISSIONS = "submissions";
 export const CODE_EDITOR_ASSESSMENTS = "assessments";
+
+/// AI Interview ///
+export const START = "start";
+export const FINISH = "finish";
+export const SESSION = "session";
+export const INTERVIEW_STATS = "interview-stats";
+export const ANSWER = "answer";
