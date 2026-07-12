@@ -5,7 +5,7 @@ import { useState } from "react";
 import { useContext } from "react";
 import { AuthContext } from "@/app/provider";
 import { useUser } from "@/app/context/UserContext";
-import { logout } from "@/utils/mutations/auth.mutations";
+import { logout } from "@/server-api/mutations/auth.mutations";
 
 export function Header() {
   const router = useRouter();
@@ -20,13 +20,8 @@ export function Header() {
   const userDetailsMain = useContext(AuthContext);
   const logoutMutation = logout();
 
-  // useEffect(() => {
-  //   console.log("from header" + userDetailsMain);
-  // }, [userDetailsMain]);
-
   // const user = useUser();
   // // Now you can use user data
-  // console.log(user);
 
   const landingNav = [
     { label: "Home", href: "#home" },

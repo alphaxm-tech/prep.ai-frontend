@@ -1,419 +1,236 @@
 "use client";
 
 import { useState } from "react";
-import { PlayIcon, CheckCircleIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/navigation";
-import { useGetAllAssessments } from "@/utils/queries/assessment.queries";
 import Loader from "@/components/Loader";
-import WorkInProgressBanner from "@/components/WorkInProgressBanner";
-import { ASSESSMENT_TYPES } from "@/utils/api/types/assessment.types";
-import { AIINTERVIEW } from "@/utils/api/endpoints";
+import { StatCard } from "@/components/StatCard";
+import AssessmentRow from "@/components/AssessmentRow";
+import CompactAssessmentRow from "@/components/CompactAssessmentRow";
+import Pagination from "@/components/Pagination";
+import EmptyStateCard from "@/components/EmptyStateCard";
+import TipsMarquee from "@/components/TipsMarquee";
+import { INTERVIEW_TIPS } from "@/constants/interview-tips";
+import { AI_INTERVIEW_ROUTE, AI_INTERVIEW_SESSION } from "@/constants/ui-routes";
+import { useGetAllAssessments } from "@/server-api/queries/assessment.queries";
+import { useGetInterviewStats } from "@/server-api/queries/ai-interview.queries";
+import { useStartInterview } from "@/server-api/mutations/ai-interview.mutation";
+import {
+  ASSESSMENT_TYPES,
+  AssessmentResponse,
+} from "@/server-api/api/types/assessment.types";
 
-type InterviewType = {
-  id: string; // NEW: stable identifier
-  company: string;
-  title: string;
-  description: string;
-  time: string;
-  difficulty: string;
-  difficultyColor: string;
-  iconColor: string;
-};
+const DEFAULT_PAGE_SIZE = 10;
 
-type PastInterview = {
-  id: string;
-  interviewId?: string; // NEW: to be able to replay with same question set
-  company: string;
-  title: string;
-  date: string; // ISO or display-friendly
-  duration: string; // e.g. "35m"
-  scorePct: number; // 0-100
-  notes?: string;
-};
+function formatScore(value?: number | null): string {
+  return value === null || value === undefined ? "—" : `${Math.round(value)}%`;
+}
+
+function formatImprovement(value?: number | null): string {
+  if (value === null || value === undefined) return "—";
+  const rounded = Math.round(value);
+  return `${rounded >= 0 ? "+" : ""}${rounded}%`;
+}
+
+function formatTotalTime(seconds?: number | null): string {
+  if (!seconds) return "—";
+  const hrs = Math.floor(seconds / 3600);
+  const mins = Math.round((seconds % 3600) / 60);
+  if (hrs > 0) return `${hrs}h ${mins}m`;
+  return `${mins}m`;
+}
 
 export default function AIInterviewPage() {
   const router = useRouter();
 
-  const [selected, setSelected] = useState<InterviewType | null>(null);
-  const { data: assessmentData, isLoading: getAssessmentsLoading } =
+  const [notTakenPage, setNotTakenPage] = useState(1);
+  const [notTakenPageSize, setNotTakenPageSize] = useState(DEFAULT_PAGE_SIZE);
+
+  const [takenPage, setTakenPage] = useState(1);
+  const [takenPageSize, setTakenPageSize] = useState(DEFAULT_PAGE_SIZE);
+
+  const { data: untakenAssessments, isLoading: isUntakenLoading } =
+    useGetAllAssessments({
+      assessmentType: ASSESSMENT_TYPES.DESCRIPTIVE,
+      hasTaken: false,
+      pageNo: notTakenPage,
+      count: notTakenPageSize,
+    });
+
+  const { data: takenAssessments, isLoading: isTakenLoading } =
     useGetAllAssessments({
       assessmentType: ASSESSMENT_TYPES.DESCRIPTIVE,
       hasTaken: true,
-      pageNo: 1,
-      count: 1,
+      pageNo: takenPage,
+      count: takenPageSize,
     });
 
-  // Sample past interviews (dummy data) — replace with real data from your backend
-  const [pastInterviews] = useState<PastInterview[]>([
-    {
-      id: "p1",
-      interviewId: "interview-1",
-      company: "Prep Buddy AI",
-      title: "Interview 1",
-      date: "2025-11-20",
-      duration: "42m",
-      scorePct: 82,
-      notes: "Good algorithmic reasoning; improve edge case handling",
-    },
-    {
-      id: "p2",
-      interviewId: "interview-2",
-      company: "Prep Buddy AI",
-      title: "Interview 2",
-      date: "2025-11-15",
-      duration: "58m",
-      scorePct: 74,
-      notes: "Strong behavioral answers; optimize runtime on Q2",
-    },
-    {
-      id: "p3",
-      interviewId: "interview-3",
-      company: "Prep Buddy AI",
-      title: "Interview 3",
-      date: "2025-10-30",
-      duration: "65m",
-      scorePct: 90,
-      notes: "Excellent tradeoffs and scalability reasoning",
-    },
-  ]);
+  const { data: interviewStats } = useGetInterviewStats();
 
-  const fallbackInterviewTypes: InterviewType[] = [
-    // 🔴 Interview 1 -> 7 questions from Excel (set 1)
-    {
-      id: "interview-1",
-      company: "Prep Buddy AI",
-      title: "Interview 1",
-      description: "Data structures, algorithms, and problem-solving.",
-      time: "45 min",
-      difficulty: "Hard",
-      difficultyColor: "bg-red-100 text-red-800",
-      iconColor: "bg-yellow-100 text-yellow-600",
-    },
-    // 🟡 Interview 2 -> 7 questions from Excel (set 2)
-    {
-      id: "interview-2",
-      company: "Prep Buddy AI",
-      title: "Interview 2",
-      description: "Coding + Amazon LP-focused behavioral questions.",
-      time: "60 min",
-      difficulty: "Medium",
-      difficultyColor: "bg-yellow-100 text-yellow-800",
-      iconColor: "bg-orange-100 text-orange-600",
-    },
-    // 🟣 Interview 3 -> 7 questions from Excel (set 3)
-    {
-      id: "interview-3",
-      company: "Prep Buddy AI",
-      title: "Interview 3",
-      description: "High-level architecture + scalability problems.",
-      time: "60–75 min",
-      difficulty: "Hard",
-      difficultyColor: "bg-purple-100 text-purple-800",
-      iconColor: "bg-purple-50 text-purple-600",
-    },
-    // You can still have other company presets below if you like
-    // {
-    //   id: "microsoft-tech",
-    //   company: "Microsoft",
-    //   title: "Microsoft Technical + Problem Solving",
-    //   description: "Conceptual problem-solving + coding questions.",
-    //   time: "45–60 min",
-    //   difficulty: "Medium",
-    //   difficultyColor: "bg-blue-100 text-blue-800",
-    //   iconColor: "bg-blue-50 text-blue-600",
-    // },
-    // {
-    //   id: "apple-behavioral",
-    //   company: "Apple",
-    //   title: "Apple Behavioral & Culture Fit",
-    //   description: "Deep behavioral + team fit evaluation.",
-    //   time: "30–45 min",
-    //   difficulty: "Easy",
-    //   difficultyColor: "bg-green-100 text-green-800",
-    //   iconColor: "bg-green-50 text-green-600",
-    // },
-  ];
+  const startInterviewMutation = useStartInterview();
 
-  const assessments = assessmentData?.assessments ?? [];
-
-  const interviewTypes: InterviewType[] =
-    assessments.length > 0
-      ? assessments.map((assessment) => ({
-          id: String(assessment.assessment_id),
-          company: "Prep Buddy AI",
-          title: assessment.title,
-          description: `${assessment.total_questions} questions, ${
-            assessment.duration_sec / 60
-          } minutes`,
-          time: `${assessment.duration_sec / 60} min`,
-          difficulty:
-            assessment.difficulty.charAt(0).toUpperCase() +
-            assessment.difficulty.slice(1).toLowerCase(),
-          difficultyColor:
-            assessment.difficulty === "EASY"
-              ? "bg-green-100 text-green-800"
-              : assessment.difficulty === "MEDIUM"
-                ? "bg-yellow-100 text-yellow-800"
-                : "bg-red-100 text-red-800",
-          iconColor: "bg-blue-100 text-blue-600",
-        }))
-      : fallbackInterviewTypes;
-
-  const isPageLoading = getAssessmentsLoading;
-
-  const handleStart = () => {
-    if (!selected) return;
-    const qs = `?interviewId=${encodeURIComponent(
-      selected.id,
-    )}&company=${encodeURIComponent(
-      selected.company,
-    )}&title=${encodeURIComponent(selected.title)}`;
-    router.push(`/ai-interview/interview${qs}`);
+  const handleStartInterview = (assessment: AssessmentResponse) => {
+    startInterviewMutation.mutate(assessment.assessment_id, {
+      onSuccess: (data) => {
+        const attemptId = data.attempt.AttemptID;
+        router.push(
+          `${AI_INTERVIEW_ROUTE}${AI_INTERVIEW_SESSION}?attemptId=${attemptId}`,
+        );
+      },
+    });
   };
 
-  const handleReplay = (p: PastInterview) => {
-    const qs = `?interviewId=${encodeURIComponent(
-      p.interviewId ?? "",
-    )}&company=${encodeURIComponent(p.company)}&title=${encodeURIComponent(
-      p.title,
-    )}`;
-    router.push(`/${AIINTERVIEW}/interview${qs}`);
-  };
+  const notTakenInterviews = untakenAssessments?.assessments || [];
+  const takenInterviews = takenAssessments?.assessments || [];
+
+  const notTakenTotal =
+    untakenAssessments?.total_count ?? notTakenInterviews.length;
+  const takenTotal = takenAssessments?.total_count ?? takenInterviews.length;
+  const totalInterviews = notTakenTotal + takenTotal;
+
+  const isPageLoading =
+    isUntakenLoading || isTakenLoading || startInterviewMutation.isPending;
 
   return (
     <>
-      <WorkInProgressBanner />
-      <Loader show={isPageLoading} message="Loading interviews for you" />
-      <div className="min-h-screen bg-white px-12 py-8">
-        {/* Page Header */}
-        <div className="flex flex-col items-start justify-start gap-2 pb-6">
-          <h1 className="text-3xl font-bold text-gray-800">
-            Smart Interview Coach
-          </h1>
-          <p className="text-lg text-yellow-900">
-            Practice, improve, and ace every interview with AI guidance
-          </p>
+      <Loader show={isPageLoading} message="Loading your interviews" />
+
+      <div className="min-h-screen px-4 md:px-8 py-10">
+        <div className="max-w-6xl mx-auto">
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold tracking-tight text-gray-900">
+              Smart Interview Coach
+            </h1>
+            <p className="text-lg text-gray-600 mt-1">
+              Practice, improve, and ace every interview with AI guidance.
+            </p>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Start Interview Section */}
-          <div className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-            <h2 className="text-xl font-semibold mb-4">Start New Interview</h2>
+        {/* TOP STAT CARDS */}
+        <section className="max-w-6xl mx-auto grid grid-cols-2 gap-6 mb-8">
+          <StatCard
+            label="Total Interviews Assigned"
+            value={totalInterviews}
+            variant="blue"
+          />
+          <StatCard
+            label="Interviews Attempted"
+            value={takenTotal}
+            variant="green"
+          />
+        </section>
 
-            <div className="flex flex-col md:flex-row gap-4 mb-6 items-center">
-              {/* Left hint */}
-              <span className="text-gray-700 font-medium">
-                Start by choosing an interview from your assigned sessions.
-              </span>
+        <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* START INTERVIEW SECTION */}
+          <section className="lg:col-span-2 space-y-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <h2 className="text-xl font-semibold mb-4">Start Interview</h2>
 
-              {/* Show selected label (if any) */}
-              <div className="ml-auto">
-                {selected ? (
-                  <div className="text-sm text-gray-600">
-                    Selected:&nbsp;
-                    <span className="font-semibold text-gray-800">
-                      {selected.company} — {selected.title}
-                    </span>
-                  </div>
-                ) : (
-                  <div className="text-sm text-gray-400">
-                    No interview selected
-                  </div>
-                )}
-              </div>
+              {notTakenInterviews.length === 0 ? (
+                <EmptyStateCard
+                  icon="🎙️"
+                  title="No interviews assigned"
+                  subtitle="You don't have any AI interviews assigned to your groups right now. Check back once your college assigns one."
+                />
+              ) : (
+                <div className="space-y-4">
+                  {notTakenInterviews.map((interview) => (
+                    <AssessmentRow
+                      key={interview.assessment_id}
+                      quiz={interview}
+                      index={interview.assessment_id}
+                      onStartQuiz={handleStartInterview}
+                    />
+                  ))}
+                  <Pagination
+                    page={notTakenPage}
+                    pageSize={notTakenPageSize}
+                    totalCount={notTakenTotal}
+                    onPageChange={setNotTakenPage}
+                    onPageSizeChange={(size) => {
+                      setNotTakenPageSize(size);
+                      setNotTakenPage(1);
+                    }}
+                  />
+                </div>
+              )}
             </div>
 
-            {/* Interview Types */}
-            <div className="overflow-x-auto -mx-2 px-2 mb-6">
-              <div className="flex gap-4 snap-x snap-mandatory pb-2">
-                {interviewTypes.map((type) => {
-                  const isSelected = selected?.id === type.id;
+            {/* ATTEMPTED INTERVIEWS */}
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <h2 className="text-xl font-semibold mb-4">
+                Attempted Interviews
+              </h2>
 
-                  return (
-                    <div
-                      key={type.id}
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => setSelected(type)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          setSelected(type);
-                        }
-                      }}
-                      aria-pressed={isSelected}
-                      className={`relative min-w-[260px] snap-start bg-white rounded-xl p-5 border transition cursor-pointer ${
-                        isSelected
-                          ? "border-yellow-300 shadow-xl ring-2 ring-yellow-200"
-                          : "border-gray-100 shadow-sm hover:shadow-lg"
-                      }`}
-                    >
-                      {/* Selected check badge */}
-                      {isSelected && (
-                        <div className="absolute top-3 right-3 bg-white rounded-full p-1 shadow">
-                          <CheckCircleIcon className="w-5 h-5 text-yellow-500" />
-                        </div>
-                      )}
-
-                      {/* Company Logo Bubble */}
-                      <div
-                        className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${type.iconColor}`}
-                      >
-                        <PlayIcon className="w-6 h-6" />
-                      </div>
-
-                      {/* Company Name */}
-                      <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                        {type.company}
-                      </span>
-
-                      {/* Title */}
-                      <h3 className="font-semibold text-gray-800 mt-1">
-                        {type.title}
-                      </h3>
-
-                      {/* Description */}
-                      <p className="text-sm text-gray-600 mt-1">
-                        {type.description}
-                      </p>
-
-                      {/* Footer: Time + Difficulty */}
-                      <div className="flex items-center justify-between mt-4">
-                        <span className="text-xs text-gray-500">
-                          {type.time}
-                        </span>
-                        <span
-                          className={`text-xs font-medium px-2 py-0.5 rounded-full ${type.difficultyColor}`}
-                        >
-                          {type.difficulty}
-                        </span>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+              {takenInterviews.length === 0 ? (
+                <EmptyStateCard
+                  icon="🚀"
+                  title="No interviews attempted yet"
+                  subtitle="Once you complete an AI interview, it will show up here with your score and feedback."
+                />
+              ) : (
+                <div className="space-y-4">
+                  {takenInterviews.map((interview) => (
+                    <CompactAssessmentRow
+                      key={interview.assessment_id}
+                      quiz={interview}
+                    />
+                  ))}
+                  <Pagination
+                    page={takenPage}
+                    pageSize={takenPageSize}
+                    totalCount={takenTotal}
+                    onPageChange={setTakenPage}
+                    onPageSizeChange={(size) => {
+                      setTakenPageSize(size);
+                      setTakenPage(1);
+                    }}
+                  />
+                </div>
+              )}
             </div>
+          </section>
 
-            {/* Start Interview Button */}
-            <button
-              onClick={handleStart}
-              disabled={!selected}
-              aria-disabled={!selected}
-              className={`w-full transition text-white py-3 rounded-lg font-medium flex items-center justify-center gap-2 ${
-                selected
-                  ? "bg-yellow-400 hover:bg-yellow-500"
-                  : "bg-gray-100 text-gray-400 cursor-not-allowed"
-              }`}
-            >
-              <PlayIcon className={`w-5 h-5 ${selected ? "" : "opacity-60"}`} />
-              {selected ? "Start Interview" : "Select an interview to start"}
-            </button>
-          </div>
-
-          {/* Performance + Tips */}
-          <div className="space-y-6">
+          {/* PERFORMANCE + TIPS */}
+          <aside className="space-y-6">
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
               <h3 className="font-semibold mb-4">Performance</h3>
-              <ul className="space-y-2 text-gray-700">
-                <li className="flex justify-between">
-                  <span>Average Score</span>
-                  <span className="font-semibold">85%</span>
-                </li>
-                <li className="flex justify-between">
-                  <span>Interviews Taken</span>
-                  <span className="font-semibold">12</span>
-                </li>
-                <li className="flex justify-between">
-                  <span>Total Time</span>
-                  <span className="font-semibold">8h 45m</span>
-                </li>
-                <li className="flex justify-between">
-                  <span>Improvement</span>
-                  <span className="font-semibold text-green-500">+15%</span>
-                </li>
-              </ul>
+              {interviewStats && interviewStats.interviews_taken > 0 ? (
+                <div className="grid grid-cols-2 gap-3">
+                  <StatCard
+                    label="Average Score"
+                    value={formatScore(interviewStats.average_score)}
+                    variant="yellow"
+                  />
+                  <StatCard
+                    label="Interviews Taken"
+                    value={interviewStats.interviews_taken}
+                    variant="blue"
+                  />
+                  <StatCard
+                    label="Total Time"
+                    value={formatTotalTime(interviewStats.total_time_sec)}
+                    variant="purple"
+                  />
+                  <StatCard
+                    label="Improvement"
+                    value={formatImprovement(interviewStats.improvement_pct)}
+                    variant="green"
+                  />
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500 text-center py-6">
+                  Complete your first AI interview to see your performance
+                  stats here.
+                </p>
+              )}
             </div>
 
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
               <h3 className="font-semibold mb-4">Interview Tips</h3>
-              <div className="space-y-3 text-sm h-48 overflow-y-auto pr-2">
-                <div className="bg-blue-50 p-3 rounded-lg">
-                  Practice the STAR method for behavioral questions
-                </div>
-                <div className="bg-green-50 p-3 rounded-lg">
-                  Research the company before starting
-                </div>
-                <div className="bg-pink-50 p-3 rounded-lg">
-                  Think out loud during technical problems
-                </div>
-                <div className="bg-yellow-50 p-3 rounded-lg">
-                  Manage your time effectively during coding rounds
-                </div>
-                <div className="bg-purple-50 p-3 rounded-lg">
-                  Ask clarifying questions before solving problems
-                </div>
-                <div className="bg-orange-50 p-3 rounded-lg">
-                  Review your past interview mistakes and improve
-                </div>
-              </div>
+              <TipsMarquee tips={INTERVIEW_TIPS} />
             </div>
-          </div>
-        </div>
-
-        {/* Recent Interviews */}
-        <div className="mt-8 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 max-w-screen-xl mx-auto">
-          <h2 className="text-xl font-semibold mb-4">Recent Interviews</h2>
-          <div className="space-y-3">
-            {pastInterviews.map((p) => (
-              <div
-                key={p.id}
-                className="flex items-center justify-between gap-4 bg-white border border-gray-100 rounded-lg p-3 shadow-sm"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-md bg-gray-50 flex items-center justify-center border border-gray-100">
-                    <span className="text-xs font-semibold text-gray-600 uppercase">
-                      {p.company[0]}
-                    </span>
-                  </div>
-                  <div>
-                    <div className="text-sm font-medium text-gray-800">
-                      {p.company} — {p.title}
-                    </div>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {new Date(p.date).toLocaleDateString()} • {p.duration}
-                    </div>
-                    {p.notes && (
-                      <div className="text-xs text-gray-600 mt-1">
-                        {p.notes}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-4">
-                  <div className="text-right">
-                    <div className="text-sm font-semibold">{p.scorePct}%</div>
-                    <div className="text-xs text-gray-500">Score</div>
-                  </div>
-                  <div>
-                    <button
-                      onClick={() => handleReplay(p)}
-                      className="inline-flex items-center gap-2 px-3 py-1.5 bg-yellow-400 hover:bg-yellow-500 text-white rounded-md text-sm"
-                    >
-                      <PlayIcon className="w-4 h-4" />
-                      Replay
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-
-            {pastInterviews.length === 0 && (
-              <div className="text-gray-500 text-sm">
-                No recent interviews found.
-              </div>
-            )}
-          </div>
+          </aside>
         </div>
       </div>
     </>

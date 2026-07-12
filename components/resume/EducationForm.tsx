@@ -1,5 +1,5 @@
 // components/resume/EducationForm.tsx
-import { Education } from "@/utils/api/types/resume.types";
+import { Education } from "@/server-api/api/types/resume.types";
 import React, { useState } from "react";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import YearDropdown from "./YearDropdown";

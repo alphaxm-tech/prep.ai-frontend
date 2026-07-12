@@ -1,6 +1,4 @@
-import { jwtVerify } from "jose";
 import { NextRequest, NextResponse } from "next/server";
-import { getRoleRedirect } from "@/lib/get-role-redirect";
 
 const BACKEND_URL =
   process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
@@ -10,32 +8,6 @@ export async function middleware(request: NextRequest) {
 
   const accessToken = request.cookies.get("access_token")?.value;
   const refreshToken = request.cookies.get("refresh_token")?.value;
-
-  // ==========================================
-  // ROTUE PROTECTION
-  // ==========================================
-  // try {
-  //   const secret = new TextEncoder().encode(process.env.JWT_ACCESS_SECRET);
-
-  //   const { payload } = await jwtVerify(accessToken as string, secret);
-  //   console.log(payload);
-
-  //   // const role = payload.role as string;
-  //   // console.log(role);
-  // } catch (error) {
-  //   // return NextResponse.redirect(new URL("/login", request.url));
-  // }
-
-  try {
-    const secret = new TextEncoder().encode(process.env.JWT_ACCESS_SECRET);
-
-    const { payload } = await jwtVerify(accessToken as string, secret);
-
-    console.log("PAYLOAD:", payload);
-  } catch (error) {
-    console.error("JWT VERIFY FAILED");
-    console.error(error);
-  }
 
   const isAuthPage =
     pathname === "/login" ||

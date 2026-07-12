@@ -4,7 +4,7 @@ import {
   Education,
   WorkExperience,
   Project,
-} from "@/utils/api/types/resume.types";
+} from "@/server-api/api/types/resume.types";
 
 export default function ProfessionalResumeTemplateVertical({
   data,

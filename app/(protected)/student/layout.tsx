@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/get-user-details";
-import { UserRole } from "@/utils/enums/enums";
-import { LOGIN, UNAUTHORIZED_ROUTE } from "@/utils/CONSTANTS";
+import { UserRole } from "@/enums/enums";
+import { LOGIN, UNAUTHORIZED_ROUTE } from "@/constants/ui-routes";
+import { InterviewPrepRoles } from "@/lib/allowed-roles";
 
 export default async function StudentLayout({
   children,
@@ -14,7 +15,7 @@ export default async function StudentLayout({
     redirect(LOGIN);
   }
 
-  if (user.role.name !== UserRole.STUDENT) {
+  if (!InterviewPrepRoles.includes(user?.role?.name)) {
     redirect(UNAUTHORIZED_ROUTE);
   }
 

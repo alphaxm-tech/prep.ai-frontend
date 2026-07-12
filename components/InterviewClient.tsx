@@ -7,251 +7,20 @@ import React, {
   useState,
   useCallback,
 } from "react";
-import { PlayIcon, CheckCircleIcon } from "@heroicons/react/24/solid";
+import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/navigation";
 import Loader from "@/components/Loader";
-
-/**
- * Types
- */
-type Q = {
-  id: number;
-  text: string;
-  note?: string;
-  suggestedTimeSec?: number;
-};
-
-type EvaluationAnswer = {
-  questionId: number;
-  questionText: string;
-  transcript: string;
-  durationSec?: number;
-  suggestedTimeSec?: number;
-};
-
-/**
- *  🔴 IMPORTANT:
- *  Replace the question text below with the real questions from your Excel.
- *  Each interview (1, 2, 3) has exactly 7 questions.
- */
-
-const INTERVIEW_1_QUESTIONS: Q[] = [
-  {
-    id: 1,
-    text: "What steps would you take if a desktop PC is heating up and performance is slowing down?",
-    suggestedTimeSec: 60,
-  },
-  {
-    id: 2,
-    text: "How would you troubleshoot a USB port that is not detecting any device?",
-    suggestedTimeSec: 60,
-  },
-  {
-    id: 3,
-    text: "What actions would you take if a desktop PC is running very slowly?",
-    suggestedTimeSec: 60,
-  },
-  {
-    id: 4,
-    text: "How do you troubleshoot a Blue Screen of Death (BSOD) error?",
-    suggestedTimeSec: 60,
-  },
-  {
-    id: 5,
-    text: "What would you check if a computer does not turn on at all?",
-    suggestedTimeSec: 60,
-  },
-  {
-    id: 6,
-    text: "How would you diagnose a desktop PC that keeps restarting automatically?",
-    suggestedTimeSec: 60,
-  },
-  {
-    id: 7,
-    text: "What steps would you follow if a computer has no internet connection?",
-    suggestedTimeSec: 60,
-  },
-  {
-    id: 8,
-    text: "How do you troubleshoot a keyboard that is not working?",
-    suggestedTimeSec: 60,
-  },
-  {
-    id: 9,
-    text: "What would you do if a printer is not printing or jobs are stuck in the queue?",
-    suggestedTimeSec: 60,
-  },
-  {
-    id: 10,
-    text: "How would you fix a situation where the PC is on but there is no display on the monitor?",
-    suggestedTimeSec: 60,
-  },
-  {
-    id: 11,
-    text: "Tell me about yourself and your experience with desktop or technical support.",
-    suggestedTimeSec: 60,
-  },
-  {
-    id: 12,
-    text: "Why do you want to work in a desktop support or IT support role?",
-    suggestedTimeSec: 60,
-  },
-];
-
-const INTERVIEW_2_QUESTIONS: Q[] = [
-  {
-    id: 1,
-    text: "What are the signs of a hard drive failure and how would you handle it?",
-    suggestedTimeSec: 60,
-  },
-  {
-    id: 2,
-    text: "How do you repair corrupted system files in Windows?",
-    suggestedTimeSec: 60,
-  },
-  {
-    id: 3,
-    text: "What troubleshooting steps would you take if sound is not working on a PC?",
-    suggestedTimeSec: 60,
-  },
-  {
-    id: 4,
-    text: "How would you resolve user account login or profile corruption issues?",
-    suggestedTimeSec: 60,
-  },
-  {
-    id: 5,
-    text: "What steps would you take if an application keeps freezing or crashing?",
-    suggestedTimeSec: 60,
-  },
-  {
-    id: 6,
-    text: "How do you troubleshoot a desktop fan that is very loud?",
-    suggestedTimeSec: 60,
-  },
-  {
-    id: 7,
-    text: "What would you do if a desktop PC does not shut down properly?",
-    suggestedTimeSec: 60,
-  },
-  {
-    id: 8,
-    text: "How do you fix missing or corrupted DLL file errors?",
-    suggestedTimeSec: 60,
-  },
-  {
-    id: 9,
-    text: "What steps would you follow if the system date and time are incorrect?",
-    suggestedTimeSec: 60,
-  },
-  {
-    id: 10,
-    text: "How would you troubleshoot a mouse that is not responding?",
-    suggestedTimeSec: 60,
-  },
-  {
-    id: 11,
-    text: "How do you handle pressure when multiple users report issues at the same time?",
-    suggestedTimeSec: 60,
-  },
-  {
-    id: 12,
-    text: "Describe a situation where you had to explain a technical issue to a non-technical user.",
-    suggestedTimeSec: 60,
-  },
-];
-
-const INTERVIEW_3_QUESTIONS: Q[] = [
-  {
-    id: 1,
-    text: "What actions would you take if the system drive is full and the PC is slowing down?",
-    suggestedTimeSec: 60,
-  },
-  {
-    id: 2,
-    text: "How would you handle a computer infected with a virus or malware?",
-    suggestedTimeSec: 60,
-  },
-  {
-    id: 3,
-    text: "What steps would you take if a system freezes frequently?",
-    suggestedTimeSec: 60,
-  },
-  {
-    id: 4,
-    text: "How do you fix screen resolution or display scaling issues?",
-    suggestedTimeSec: 60,
-  },
-  {
-    id: 5,
-    text: "What troubleshooting steps would you take if sound is coming from only one speaker?",
-    suggestedTimeSec: 60,
-  },
-  {
-    id: 6,
-    text: "How would you reset a forgotten Windows password?",
-    suggestedTimeSec: 60,
-  },
-  {
-    id: 7,
-    text: "What steps would you take if a Windows update fails to install?",
-    suggestedTimeSec: 60,
-  },
-  {
-    id: 8,
-    text: "How would you recover important data that was deleted accidentally?",
-    suggestedTimeSec: 60,
-  },
-  {
-    id: 9,
-    text: "What would you do if the system shows a 'Bootable device not found' error?",
-    suggestedTimeSec: 60,
-  },
-  {
-    id: 10,
-    text: "How do you troubleshoot email issues where a user cannot send or receive emails?",
-    suggestedTimeSec: 60,
-  },
-  {
-    id: 11,
-    text: "Are you comfortable working in shifts or handling on-call support responsibilities?",
-    suggestedTimeSec: 60,
-  },
-  {
-    id: 12,
-    text: "How do you prioritize tasks when you have multiple unresolved tickets?",
-    suggestedTimeSec: 60,
-  },
-];
-
-const DEFAULT_QUESTIONS: Q[] = [
-  { id: 1, text: "Tell me about yourself.", suggestedTimeSec: 60 },
-];
-
-/**
- * Map of question sets.
- */
-const QUESTION_SETS: Record<string, Q[]> = {
-  "interview-1": INTERVIEW_1_QUESTIONS,
-  "interview-2": INTERVIEW_2_QUESTIONS,
-  "interview-3": INTERVIEW_3_QUESTIONS,
-};
-
-/**
- * Parse query params
- */
-function parseQueryParams(search: string) {
-  try {
-    const sp = new URLSearchParams(search);
-    return {
-      interviewId: sp.get("interviewId") ?? "",
-      company: sp.get("company") ?? "",
-      title: sp.get("title") ?? "",
-    };
-  } catch {
-    return { interviewId: "", company: "", title: "" };
-  }
-}
+import { AI_INTERVIEW_ROUTE } from "@/constants/ui-routes";
+import { useGetInterviewSession } from "@/server-api/queries/ai-interview.queries";
+import {
+  useFinishInterview,
+  useSubmitInterviewAnswer,
+} from "@/server-api/mutations/ai-interview.mutation";
+import { aiInterviewService } from "@/server-api/services/ai-interview.service";
+import {
+  FinishInterviewResponse,
+  InterviewQuestion,
+} from "@/server-api/api/types/ai-interview.types";
 
 /* ---------------------- Recorder ---------------------- */
 
@@ -273,7 +42,7 @@ type RecorderProps = {
 
 export function InterviewRecorder({
   questionId,
-  maxSeconds = 45,
+  maxSeconds = 120,
   startTrigger = null,
   forceStopTrigger = null,
   onComplete,
@@ -392,6 +161,7 @@ export function InterviewRecorder({
         setMediaError(String(err?.message ?? err));
       }
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [startTrigger]);
 
   useEffect(() => {
@@ -399,6 +169,7 @@ export function InterviewRecorder({
     if (recording && mediaRecorderRef.current) {
       internalStopRecorder();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [forceStopTrigger]);
 
   useEffect(() => {
@@ -414,6 +185,7 @@ export function InterviewRecorder({
     }
     setRecording(false);
     setElapsedSec(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [questionId]);
 
   useEffect(() => {
@@ -469,13 +241,52 @@ export function InterviewRecorder({
   );
 }
 
+/* ---------------------- helpers ---------------------- */
+
+function parseAttemptId(search: string): number | null {
+  try {
+    const sp = new URLSearchParams(search);
+    const raw = sp.get("attemptId");
+    if (!raw) return null;
+    const parsed = Number(raw);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+function formatClock(totalSeconds: number): string {
+  const sec = Math.max(0, Math.floor(totalSeconds));
+  const mins = Math.floor(sec / 60);
+  const secs = sec % 60;
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
+}
+
+function isExpiredError(err: any): boolean {
+  const message =
+    err?.response?.data?.error?.message ?? err?.message ?? "";
+  return typeof message === "string" && message.toLowerCase().includes("expired");
+}
+
 /* ---------------------- InterviewClient ---------------------- */
 
 export default function InterviewClient() {
   const router = useRouter();
-  // const [processingAnswer, setProcessingAnswer] = useState(false);
-  // const [transcribing, setTranscribing] = useState(false);
-  // const [evaluating, setEvaluating] = useState(false);
+
+  const [attemptId, setAttemptId] = useState<number | null>(null);
+  const [attemptIdResolved, setAttemptIdResolved] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    setAttemptId(parseAttemptId(window.location.search || ""));
+    setAttemptIdResolved(true);
+  }, []);
+
+  const { data: session, isLoading: isSessionLoading } =
+    useGetInterviewSession(attemptId ?? 0);
+
+  const submitAnswerMutation = useSubmitInterviewAnswer(attemptId ?? 0);
+  const finishInterviewMutation = useFinishInterview(attemptId ?? 0);
 
   /* 🔒 TAB SWITCH GUARD */
   const tabExitHandledRef = useRef(false);
@@ -486,22 +297,19 @@ export default function InterviewClient() {
 
     console.warn("🚨 Interview terminated: tab/window change detected");
 
-    // Stop everything immediately
     try {
       window.speechSynthesis?.cancel();
     } catch {}
 
-    router.replace("/ai-interview");
+    router.replace(AI_INTERVIEW_ROUTE);
   }, [router]);
 
-  /* 🔥 Detect tab switch / minimize / focus loss */
   useEffect(() => {
     const onVisibilityChange = () => {
       if (document.visibilityState === "hidden") {
         forceExitInterview();
       }
     };
-
     const onWindowBlur = () => {
       forceExitInterview();
     };
@@ -515,15 +323,72 @@ export default function InterviewClient() {
     };
   }, [forceExitInterview]);
 
-  //////
+  /* ---------------------- camera gate (mandatory) ---------------------- */
 
-  // const router = useRouter();
-  const [companyParam, setCompanyParam] = useState<string>("");
-  const [titleParam, setTitleParam] = useState<string>("");
-  const [interviewIdParam, setInterviewIdParam] = useState<string>("");
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
+  const [cameraError, setCameraError] = useState<string | null>(null);
+  const [cameraOn, setCameraOn] = useState(false);
+  const [requestingCamera, setRequestingCamera] = useState(false);
+  const [cameraGatePassed, setCameraGatePassed] = useState(false);
 
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const currentIndexRef = useRef(0);
+  const requestCamera = async () => {
+    setRequestingCamera(true);
+    setCameraError(null);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      setCameraStream(stream);
+      setCameraOn(true);
+      setCameraGatePassed(true);
+    } catch (err: any) {
+      setCameraError(
+        err?.message ??
+          "Camera access denied. Camera access is mandatory to start this AI interview.",
+      );
+      setCameraOn(false);
+    } finally {
+      setRequestingCamera(false);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      try {
+        cameraStream?.getTracks().forEach((t) => t.stop());
+      } catch {}
+    };
+  }, [cameraStream]);
+
+  useEffect(() => {
+    if (!videoRef.current) return;
+    (videoRef.current as any).srcObject = cameraStream ?? null;
+  }, [cameraStream]);
+
+  const toggleCamera = async () => {
+    if (cameraOn) {
+      try {
+        cameraStream?.getTracks().forEach((t) => t.stop());
+      } catch {}
+      setCameraStream(null);
+      setCameraOn(false);
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      setCameraStream(stream);
+      setCameraOn(true);
+      setCameraError(null);
+    } catch (err: any) {
+      setCameraError(err?.message ?? "Camera access denied");
+      setCameraOn(false);
+    }
+  };
+
+  /* ---------------------- interview flow state ---------------------- */
+
+  const [currentIndex, setCurrentIndex] = useState(1);
+  const currentIndexRef = useRef(1);
+  const [totalQuestions, setTotalQuestions] = useState(0);
 
   const [interviewStarted, setInterviewStarted] = useState(false);
   const [bigCountdown, setBigCountdown] = useState<number | null>(null);
@@ -534,152 +399,58 @@ export default function InterviewClient() {
   const [recorderForceStopTrigger, setRecorderForceStopTrigger] = useState<
     number | null
   >(null);
-  const [processingAnswer, setProcessingAnswer] = useState(false); // 🔧 NEW: Prevent race conditions
+  const [processingAnswer, setProcessingAnswer] = useState(false);
 
   const [mute, setMute] = useState(false);
-  const [rate, setRate] = useState(1);
+  const rate = 1;
 
-  // camera states
-  const videoRef = useRef<HTMLVideoElement | null>(null);
-  const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
-  const [cameraError, setCameraError] = useState<string | null>(null);
-  const [cameraOn, setCameraOn] = useState(false);
+  const [currentQuestion, setCurrentQuestion] =
+    useState<InterviewQuestion | null>(null);
+  const [questionLoading, setQuestionLoading] = useState(false);
 
-  // transcription states
-  const [transcript, setTranscript] = useState<string | null>(null);
-  const [transcribing, setTranscribing] = useState(false);
-  const [transcribeError, setTranscribeError] = useState<string | null>(null);
-
-  // answers & evaluation
-  const [answers, setAnswers] = useState<EvaluationAnswer[]>([]);
-  const [evaluation, setEvaluation] = useState<any | null>(null);
-  const [evaluating, setEvaluating] = useState(false);
-  const [evaluateError, setEvaluateError] = useState<string | null>(null);
+  const [answeredCount, setAnsweredCount] = useState(0);
+  const [finishResult, setFinishResult] = useState<FinishInterviewResponse | null>(
+    null,
+  );
+  const [finishError, setFinishError] = useState<string | null>(null);
   const [showResultsModal, setShowResultsModal] = useState(false);
 
   // speech synthesis
   const synthRef = useRef<SpeechSynthesis | null>(null);
   const utterRef = useRef<SpeechSynthesisUtterance | null>(null);
 
-  // Stable questions ref
-  const interviewQuestionsRef = useRef<Q[]>([]);
-  const totalRef = useRef(0);
+  const showGlobalLoader =
+    processingAnswer ||
+    questionLoading ||
+    submitAnswerMutation.isPending ||
+    finishInterviewMutation.isPending;
 
-  // 🔄 GLOBAL LOADER STATE
-  const showGlobalLoader = processingAnswer || transcribing || evaluating;
-
-  const loaderMessage = evaluating
+  const loaderMessage = finishInterviewMutation.isPending
     ? "Evaluating your interview..."
-    : transcribing
-    ? "Transcribing your answer..."
-    : processingAnswer
-    ? "Processing your response..."
-    : "Loading...";
+    : submitAnswerMutation.isPending
+      ? "Transcribing your answer..."
+      : processingAnswer || questionLoading
+        ? "Processing..."
+        : "Loading...";
 
-  // Update refs
   useEffect(() => {
     currentIndexRef.current = currentIndex;
   }, [currentIndex]);
 
-  // init speech synth
   useEffect(() => {
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
       synthRef.current = window.speechSynthesis;
     }
   }, []);
 
-  // parse query params on mount
+  // Initialize total questions + resume position once session loads
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const { interviewId, company, title } = parseQueryParams(
-      window.location.search || ""
-    );
-    setInterviewIdParam(interviewId);
-    setCompanyParam(company);
-    setTitleParam(title);
-  }, []);
-
-  const questionKey = useMemo(() => {
-    if (interviewIdParam) {
-      if (QUESTION_SETS[interviewIdParam]) return interviewIdParam;
-      const numericMatch = `interview-${interviewIdParam}`;
-      if (QUESTION_SETS[numericMatch]) return numericMatch;
-    }
-    if (companyParam) {
-      const k = Object.keys(QUESTION_SETS).find(
-        (c) => c.toLowerCase() === companyParam.toLowerCase()
-      );
-      if (k) return k;
-    }
-    return "";
-  }, [interviewIdParam, companyParam]);
-
-  const interviewQuestions: Q[] = useMemo(() => {
-    if (questionKey && QUESTION_SETS[questionKey])
-      return QUESTION_SETS[questionKey];
-    return DEFAULT_QUESTIONS;
-  }, [questionKey]);
-
-  useEffect(() => {
-    interviewQuestionsRef.current = interviewQuestions;
-    totalRef.current = interviewQuestions.length;
-  }, [interviewQuestions]);
-
-  const total = totalRef.current;
-  const currentQuestion =
-    interviewQuestionsRef.current[currentIndex] ?? DEFAULT_QUESTIONS[0];
-
-  // Debug logging
-  useEffect(() => {
-    console.log({
-      interviewIdParam,
-      companyParam,
-      questionKey,
-      totalQuestions: total,
-      currentIndex,
-      currentQuestionId: currentQuestion.id,
-      answersLength: answers.length,
-      processingAnswer,
-    });
-  }, [
-    currentIndex,
-    total,
-    currentQuestion.id,
-    answers.length,
-    processingAnswer,
-  ]);
-
-  // auto-start interview
-  useEffect(() => {
-    setInterviewStarted(true);
-    setBigCountdown(3);
-  }, []);
-
-  // start camera
-  useEffect(() => {
-    if (!interviewStarted) return;
-    (async () => {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-        });
-        setCameraStream(stream);
-        setCameraOn(true);
-        setCameraError(null);
-      } catch (err: any) {
-        setCameraError(err?.message ?? "Camera access denied");
-        setCameraOn(false);
-      }
-    })();
-  }, [interviewStarted]);
-
-  useEffect(() => {
-    return () => {
-      try {
-        cameraStream?.getTracks().forEach((t) => t.stop());
-      } catch {}
-    };
-  }, [cameraStream]);
+    if (!session) return;
+    if (session.status !== "in_progress") return; // already finalized, handled below
+    setTotalQuestions(session.total_questions);
+    const resumeIndex = Math.max(1, session.last_visited_index || 1);
+    setCurrentIndex(resumeIndex);
+  }, [session]);
 
   const speakText = (text: string) => {
     if (!synthRef.current) return;
@@ -702,6 +473,69 @@ export default function InterviewClient() {
     utterRef.current = null;
   };
 
+  // Start the interview once the camera gate is passed
+  useEffect(() => {
+    if (cameraGatePassed && !interviewStarted && session?.status === "in_progress") {
+      setInterviewStarted(true);
+      setBigCountdown(3);
+    }
+  }, [cameraGatePassed, interviewStarted, session]);
+
+  /* ---------------------- server-authoritative timer ---------------------- */
+
+  const [remainingSec, setRemainingSec] = useState<number | null>(null);
+  const expiredHandledRef = useRef(false);
+
+  useEffect(() => {
+    if (!session?.expires_at) return;
+    const expiresAtMs = new Date(session.expires_at).getTime();
+
+    const tick = () => {
+      const remaining = Math.max(0, (expiresAtMs - Date.now()) / 1000);
+      setRemainingSec(remaining);
+      if (remaining <= 0 && !expiredHandledRef.current && interviewStarted) {
+        expiredHandledRef.current = true;
+        handleFinish();
+      }
+    };
+
+    tick();
+    const iv = window.setInterval(tick, 1000);
+    return () => window.clearInterval(iv);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.expires_at, interviewStarted]);
+
+  /* ---------------------- question loading ---------------------- */
+
+  useEffect(() => {
+    if (!interviewStarted || !attemptId || bigCountdown !== null) return;
+
+    let cancelled = false;
+    setQuestionLoading(true);
+    aiInterviewService
+      .getQuestion(attemptId, currentIndex)
+      .then((question) => {
+        if (cancelled) return;
+        setCurrentQuestion(question);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        if (isExpiredError(err)) {
+          handleFinish();
+        } else {
+          console.error("failed to load question", err);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setQuestionLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [interviewStarted, attemptId, currentIndex, bigCountdown]);
+
   // big countdown
   useEffect(() => {
     if (bigCountdown == null) return;
@@ -709,7 +543,7 @@ export default function InterviewClient() {
     const iv = window.setInterval(() => {
       sec -= 1;
       setBigCountdown((prev) =>
-        prev == null ? null : Math.max(0, (prev ?? 0) - 1)
+        prev == null ? null : Math.max(0, (prev ?? 0) - 1),
       );
       if (sec <= 0) {
         clearInterval(iv);
@@ -719,12 +553,25 @@ export default function InterviewClient() {
     return () => clearInterval(iv);
   }, [bigCountdown]);
 
-  // read question + small countdown
+  // read question + small countdown once it's loaded (skip if already answered)
   useEffect(() => {
-    if (!interviewStarted || bigCountdown !== null || processingAnswer) return;
+    if (
+      !interviewStarted ||
+      bigCountdown !== null ||
+      processingAnswer ||
+      questionLoading ||
+      !currentQuestion
+    )
+      return;
+
+    if (currentQuestion.already_answered) {
+      // Resuming a refreshed session past this question — move on without re-recording.
+      advanceOrFinish();
+      return;
+    }
 
     const t = setTimeout(() => {
-      if (!mute) speakText(currentQuestion.text);
+      if (!mute) speakText(currentQuestion.question_text);
       setSmallCountdown(3);
     }, 200);
 
@@ -732,7 +579,8 @@ export default function InterviewClient() {
       clearTimeout(t);
       stopSpeaking();
     };
-  }, [interviewStarted, bigCountdown, currentIndex, mute, processingAnswer]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [interviewStarted, bigCountdown, currentQuestion, mute, processingAnswer, questionLoading]);
 
   // small countdown
   useEffect(() => {
@@ -741,7 +589,7 @@ export default function InterviewClient() {
     const iv = window.setInterval(() => {
       seconds -= 1;
       setSmallCountdown((prev) =>
-        prev == null ? null : Math.max(0, (prev ?? 0) - 1)
+        prev == null ? null : Math.max(0, (prev ?? 0) - 1),
       );
       if (seconds <= 0) {
         clearInterval(iv);
@@ -755,172 +603,83 @@ export default function InterviewClient() {
   useEffect(() => {
     if (smallCountdown !== null || !interviewStarted || processingAnswer)
       return;
+    if (!currentQuestion || currentQuestion.already_answered) return;
 
     const t = setTimeout(() => {
       setRecorderStartTrigger(Date.now());
     }, 150);
 
     return () => clearTimeout(t);
-  }, [smallCountdown, interviewStarted, processingAnswer]);
+  }, [smallCountdown, interviewStarted, processingAnswer, currentQuestion]);
 
-  async function uploadForTranscription(blob: Blob): Promise<string> {
-    setTranscribing(true);
-    setTranscribeError(null);
-    setTranscript(null);
-
-    try {
-      const fd = new FormData();
-      fd.append("file", blob, "answer.webm");
-      fd.append("questionId", String(currentQuestion.id));
-
-      const res = await fetch("/api/transcribe", {
-        method: "POST",
-        body: fd,
-      });
-
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Transcription failed: ${res.status} ${text}`);
-      }
-
-      const body = await res.json();
-      const text = body.text ?? "";
-      setTranscript(text);
-      return text;
-    } catch (err: any) {
-      console.error("upload/transcribe error", err);
-      setTranscribeError(err?.message ?? "Unknown error");
-      return "";
-    } finally {
-      setTranscribing(false);
+  function advanceOrFinish() {
+    const nextIndex = currentIndexRef.current + 1;
+    if (totalQuestions > 0 && nextIndex > totalQuestions) {
+      setInterviewStarted(false);
+      setRecorderStartTrigger(null);
+      handleFinish();
+    } else {
+      setCurrentIndex(nextIndex);
+      setCurrentQuestion(null);
+      setSmallCountdown(null);
+      setRecorderStartTrigger(null);
+      setProcessingAnswer(false);
     }
   }
 
-  async function evaluateInterview(answersPayload: EvaluationAnswer[]) {
-    setEvaluating(true);
-    setEvaluateError(null);
-    setEvaluation(null);
-
+  async function handleFinish() {
+    if (!attemptId || finishInterviewMutation.isPending || finishResult) return;
+    stopSpeaking();
     try {
-      const res = await fetch("/api/evaluate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          interviewId: interviewIdParam,
-          company: companyParam,
-          title: titleParam,
-          questions: answersPayload,
-        }),
-      });
-
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(`Evaluate failed: ${res.status} ${txt}`);
-      }
-
-      const json = await res.json();
-      setEvaluation(json);
+      const result = await finishInterviewMutation.mutateAsync();
+      setFinishResult(result);
     } catch (err: any) {
-      console.error("evaluate error", err);
-      setEvaluateError(err?.message ?? String(err));
+      console.error("finish interview error", err);
+      setFinishError(
+        err?.response?.data?.error?.message ??
+          err?.message ??
+          "Could not evaluate interview",
+      );
     } finally {
-      setEvaluating(false);
       setShowResultsModal(true);
     }
   }
 
-  /**
-   * 🔧 FIXED: Single source of truth with processingAnswer lock
-   */
   const handleRecordingComplete = useCallback(
     async (payload: RecorderOnCompletePayload) => {
-      console.log("🔴 RECORDING COMPLETE:", {
-        payloadQuestionId: payload.questionId,
-        currentIndex: currentIndexRef.current,
-        expectedQuestionId:
-          interviewQuestionsRef.current[currentIndexRef.current]?.id,
-        processingAnswer,
-        answersLength: answers.length,
-      });
-
-      // 🔧 CRITICAL: Ignore if already processing or wrong question
-      if (processingAnswer) {
-        console.log("⏳ Already processing answer, ignoring");
+      if (processingAnswer) return;
+      if (!currentQuestion || payload.questionId !== currentQuestion.question_id)
         return;
-      }
+      if (!attemptId) return;
 
-      const expectedQ = interviewQuestionsRef.current[currentIndexRef.current];
-      if (!expectedQ || payload.questionId !== expectedQ.id) {
-        console.log(
-          "❌ Question ID mismatch, ignoring:",
-          payload.questionId,
-          "≠",
-          expectedQ?.id
-        );
-        return;
-      }
-
-      // 🔧 LOCK: Prevent multiple processing
       setProcessingAnswer(true);
       stopSpeaking();
       setRecorderForceStopTrigger(null);
 
-      let text = "";
       if (payload.blob.size > 0) {
         try {
-          text = await uploadForTranscription(payload.blob);
-        } catch (e) {
-          console.error("Transcription failed:", e);
+          await submitAnswerMutation.mutateAsync({
+            questionId: currentQuestion.question_id,
+            audio: payload.blob,
+            durationSec: Math.max(1, payload.durationSec),
+          });
+          setAnsweredCount((c) => c + 1);
+        } catch (err: any) {
+          console.error("submit answer failed:", err);
+          if (isExpiredError(err)) {
+            setProcessingAnswer(false);
+            handleFinish();
+            return;
+          }
         }
       }
 
-      const newAnswer: EvaluationAnswer = {
-        questionId: expectedQ.id,
-        questionText: expectedQ.text,
-        transcript: text,
-        durationSec: payload.durationSec,
-        suggestedTimeSec: expectedQ.suggestedTimeSec ?? 45,
-      };
-
-      setAnswers((prev) => {
-        if (prev.some((a) => a.questionId === newAnswer.questionId)) {
-          console.log("🔄 Duplicate answer ignored:", newAnswer.questionId);
-          setProcessingAnswer(false);
-          return prev;
-        }
-
-        const updated = [...prev, newAnswer];
-        const answerCount = updated.length;
-        const totalQuestions = totalRef.current;
-
-        console.log("✅ Added answer", answerCount, "/", totalQuestions);
-
-        if (answerCount === totalQuestions) {
-          console.log("🎉 ALL QUESTIONS COMPLETE!");
-          setInterviewStarted(false);
-          setRecorderStartTrigger(null);
-          evaluateInterview(updated);
-        } else {
-          // 🔧 Move to next question AFTER state update
-          setTimeout(() => {
-            const nextIndex = Math.min(
-              currentIndexRef.current + 1,
-              totalQuestions - 1
-            );
-            console.log("➡️ Moving to question index:", nextIndex);
-            setCurrentIndex(nextIndex);
-            setSmallCountdown(null);
-            setRecorderStartTrigger(null);
-            setTranscript(null);
-            setTranscribeError(null);
-            setProcessingAnswer(false);
-          }, 500);
-        }
-
-        return updated;
-      });
+      setTimeout(() => {
+        advanceOrFinish();
+      }, 400);
     },
-    []
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [processingAnswer, currentQuestion, attemptId, totalQuestions],
   );
 
   const handleManualNext = () => {
@@ -934,43 +693,114 @@ export default function InterviewClient() {
     if (mute) stopSpeaking();
   }, [mute]);
 
-  const toggleCamera = async () => {
-    if (cameraOn) {
-      try {
-        cameraStream?.getTracks().forEach((t) => t.stop());
-      } catch {}
-      setCameraStream(null);
-      setCameraOn(false);
-      return;
-    }
+  /* ---------------------- render guards ---------------------- */
 
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      setCameraStream(stream);
-      setCameraOn(true);
-      setCameraError(null);
-    } catch (err: any) {
-      setCameraError(err?.message ?? "Camera access denied");
-      setCameraOn(false);
-    }
-  };
+  if (attemptIdResolved && !attemptId) {
+    return (
+      <div className="h-screen w-full flex flex-col items-center justify-center gap-4 bg-white text-gray-900">
+        <p className="text-lg font-medium">No interview attempt specified.</p>
+        <button
+          onClick={() => router.push(AI_INTERVIEW_ROUTE)}
+          className="px-5 py-2.5 rounded-lg bg-gray-900 text-white text-sm font-bold hover:bg-gray-700 transition"
+        >
+          Back to Interviews
+        </button>
+      </div>
+    );
+  }
 
-  useEffect(() => {
-    if (!videoRef.current) return;
-    if (cameraStream) (videoRef.current as any).srcObject = cameraStream;
-    else (videoRef.current as any).srcObject = null;
-  }, [cameraStream]);
+  if (isSessionLoading || !attemptIdResolved) {
+    return (
+      <div className="h-screen w-full flex items-center justify-center bg-white">
+        <Loader show message="Loading your interview session..." />
+      </div>
+    );
+  }
+
+  if (session && session.status !== "in_progress" && !showResultsModal) {
+    return (
+      <div className="h-screen w-full flex flex-col items-center justify-center gap-4 bg-white text-gray-900">
+        <CheckCircleIcon className="w-12 h-12 text-amber-500" />
+        <p className="text-lg font-medium">
+          This interview has already been completed.
+        </p>
+        <button
+          onClick={() => router.push(AI_INTERVIEW_ROUTE)}
+          className="px-5 py-2.5 rounded-lg bg-gray-900 text-white text-sm font-bold hover:bg-gray-700 transition"
+        >
+          Back to Interviews
+        </button>
+      </div>
+    );
+  }
+
+  if (!cameraGatePassed) {
+    return (
+      <div className="h-screen w-full flex flex-col items-center justify-center gap-6 bg-white text-gray-900 px-6 text-center">
+        <div className="p-5 rounded-full bg-amber-100">
+          <svg
+            className="w-10 h-10 text-amber-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"
+            />
+          </svg>
+        </div>
+        <h1 className="text-2xl font-bold">Camera access required</h1>
+        <p className="text-gray-600 max-w-md">
+          {session?.title ?? "This AI interview"} requires your camera to be
+          on for the full session. Camera access is mandatory and cannot be
+          skipped.
+        </p>
+        <button
+          onClick={requestCamera}
+          disabled={requestingCamera}
+          className="px-6 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-gray-900 font-bold shadow-lg disabled:opacity-60"
+        >
+          {requestingCamera ? "Requesting access..." : "Enable Camera & Start"}
+        </button>
+        {cameraError && (
+          <p className="text-sm text-red-600 max-w-md">{cameraError}</p>
+        )}
+      </div>
+    );
+  }
+
+  const total = totalQuestions;
+  const questionText = currentQuestion?.question_text ?? "Loading question...";
+  const maxDurationSec = currentQuestion?.max_duration_sec ?? 120;
 
   return (
     <>
       <Loader show={showGlobalLoader} message={loaderMessage} />
       <div className="h-screen w-full bg-white text-gray-900 overflow-hidden flex font-sans selection:bg-amber-500/30">
-        {/* 🔔 TAB SWITCH WARNING NOTE */}
+        {/* TAB SWITCH WARNING */}
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
           <div className="px-4 py-2 rounded-full bg-amber-100 text-amber-800 text-[11px] font-semibold tracking-wide border border-amber-300 shadow-sm">
             ⚠️ Leaving this tab will automatically end the interview
           </div>
         </div>
+
+        {/* SERVER-AUTHORITATIVE TIMER */}
+        {remainingSec !== null && interviewStarted && (
+          <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50">
+            <div
+              className={`px-4 py-1.5 rounded-full text-xs font-bold tracking-wide border shadow-sm font-mono ${
+                remainingSec < 60
+                  ? "bg-red-100 text-red-700 border-red-300"
+                  : "bg-gray-100 text-gray-700 border-gray-300"
+              }`}
+            >
+              Time Remaining: {formatClock(remainingSec)}
+            </div>
+          </div>
+        )}
 
         {/* Results Modal */}
         {showResultsModal && (
@@ -993,7 +823,7 @@ export default function InterviewClient() {
                     </div>
                   </div>
                   <button
-                    onClick={() => router.push("/ai-interview")}
+                    onClick={() => router.push(AI_INTERVIEW_ROUTE)}
                     className="px-5 py-2.5 rounded-lg bg-gray-900 text-white text-sm font-bold hover:bg-gray-700 transition shadow-lg"
                   >
                     Back to Hub
@@ -1009,20 +839,22 @@ export default function InterviewClient() {
                             Status
                           </div>
                           <div className="text-base font-medium text-gray-900 mt-1">
-                            {evaluating
+                            {finishInterviewMutation.isPending
                               ? "Analyzing..."
-                              : evaluation
-                              ? "Complete"
-                              : "Pending"}
+                              : finishResult
+                                ? "Complete"
+                                : "Pending"}
                           </div>
                         </div>
                         <div className="hidden md:block w-px h-10 bg-gray-200 mx-auto" />
                         <div className="md:col-span-2">
                           <div className="text-xs uppercase tracking-wider text-gray-500 font-semibold">
-                            Answered
+                            Score
                           </div>
                           <div className="text-base font-medium text-gray-900 mt-1">
-                            {answers.length} Questions
+                            {finishResult
+                              ? `${finishResult.total_score} / ${finishResult.max_score}`
+                              : "—"}
                           </div>
                         </div>
                         <div className="md:col-span-7">
@@ -1030,8 +862,8 @@ export default function InterviewClient() {
                             Overview
                           </div>
                           <p className="text-sm text-gray-700 leading-relaxed">
-                            {evaluation?.overallFeedback ??
-                              (evaluateError
+                            {finishResult?.overall_feedback ??
+                              (finishError
                                 ? "Error generating feedback."
                                 : "Your responses have been recorded.")}
                           </p>
@@ -1040,27 +872,24 @@ export default function InterviewClient() {
                     </div>
 
                     <div className="space-y-4">
-                      {evaluation && evaluation.perQuestion?.length > 0 ? (
-                        evaluation.perQuestion.map((pq: any) => (
+                      {finishResult && finishResult.per_question?.length > 0 ? (
+                        finishResult.per_question.map((pq) => (
                           <div
-                            key={pq.questionId}
+                            key={pq.question_id}
                             className="group p-5 rounded-xl bg-white border border-gray-200 hover:border-amber-300 transition-colors shadow-sm"
                           >
                             <div className="flex flex-col md:flex-row gap-5 justify-between">
                               <div className="flex-1 space-y-3">
                                 <div className="flex items-center gap-3">
                                   <span className="px-2 py-1 rounded bg-amber-100 text-amber-800 text-xs font-bold uppercase tracking-wider border border-amber-200">
-                                    Q{pq.questionId}
+                                    Q{pq.question_id}
                                   </span>
                                   <span className="text-sm text-gray-600 font-medium truncate max-w-md">
-                                    {pq.shortQuestion}
+                                    {pq.question_text}
                                   </span>
                                 </div>
-                                <p className="text-sm text-gray-800 leading-relaxed">
-                                  {pq.summary}
-                                </p>
                                 <div className="flex flex-wrap gap-2 pt-1">
-                                  {pq.strengths?.map((s: string, i: number) => (
+                                  {pq.strengths?.map((s, i) => (
                                     <span
                                       key={i}
                                       className="text-xs px-2 py-1 rounded bg-green-50 text-green-700 border border-green-200"
@@ -1069,28 +898,25 @@ export default function InterviewClient() {
                                     </span>
                                   ))}
                                 </div>
-                                {/* Improvements / Constructive Feedback */}
                                 {pq.improvements?.length > 0 && (
                                   <div className="flex flex-wrap gap-2 pt-2">
-                                    {pq.improvements.map(
-                                      (imp: string, i: number) => (
-                                        <span
-                                          key={i}
-                                          className="text-xs px-2 py-1 rounded bg-red-50 text-red-700 border border-red-200"
-                                        >
-                                          ⚠ {imp}
-                                        </span>
-                                      )
-                                    )}
+                                    {pq.improvements.map((imp, i) => (
+                                      <span
+                                        key={i}
+                                        className="text-xs px-2 py-1 rounded bg-red-50 text-red-700 border border-red-200"
+                                      >
+                                        ⚠ {imp}
+                                      </span>
+                                    ))}
                                   </div>
                                 )}
                               </div>
                               <div className="flex md:flex-col items-center md:items-end justify-between md:justify-start gap-2 min-w-[80px]">
                                 <div className="text-2xl font-bold text-gray-900">
-                                  {pq.score}
+                                  {pq.score_awarded}
                                   <span className="text-gray-400 text-lg">
                                     {" "}
-                                    /10
+                                    /{pq.max_score}
                                   </span>
                                 </div>
                                 <div className="text-xs text-gray-500 uppercase tracking-widest">
@@ -1100,7 +926,7 @@ export default function InterviewClient() {
                             </div>
                           </div>
                         ))
-                      ) : evaluating ? (
+                      ) : finishInterviewMutation.isPending ? (
                         <div className="py-12 text-center">
                           <div className="inline-block w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mb-4" />
                           <p className="text-gray-500 text-sm animate-pulse">
@@ -1141,25 +967,22 @@ export default function InterviewClient() {
               {interviewStarted ? "● Live" : "○ Ready"}
             </div>
             <h1 className="text-3xl font-bold text-gray-900 tracking-tight truncate">
-              {companyParam || "Mock Interview"}
+              {session?.title ?? "AI Interview"}
             </h1>
-            <p className="text-sm text-gray-500 font-medium truncate mt-1">
-              {titleParam || "Standard Proficiency Test"}
-            </p>
           </div>
 
           <div className="relative z-10 flex-1 flex flex-col justify-center min-h-0">
             <div className="flex items-center gap-4 mb-4">
               <span className="text-amber-600 text-xs font-bold uppercase tracking-widest">
-                Question {currentIndex + 1}{" "}
-                <span className="text-gray-400">/ {total}</span>
+                Question {currentIndex}{" "}
+                <span className="text-gray-400">/ {total || "?"}</span>
               </span>
               <div className="h-px flex-1 bg-gray-200" />
             </div>
 
             <div className="overflow-hidden">
               <h2 className="text-2xl lg:text-3xl leading-snug font-medium text-gray-900">
-                {currentQuestion.text}
+                {questionText}
               </h2>
             </div>
 
@@ -1167,9 +990,7 @@ export default function InterviewClient() {
               <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
               <span>
                 Duration:{" "}
-                <span className="text-gray-700">
-                  {currentQuestion.suggestedTimeSec ?? 45}s
-                </span>
+                <span className="text-gray-700">{maxDurationSec}s</span>
               </span>
             </div>
           </div>
@@ -1177,22 +998,24 @@ export default function InterviewClient() {
           <div className="h-[20%] bg-white px-8 flex flex-col justify-center relative z-20 border-t border-gray-200 shadow-lg">
             <div className="w-full flex items-center gap-6">
               <div className="flex-1 h-14 bg-gray-50 rounded-xl border border-gray-300 relative overflow-hidden flex items-center px-2 shadow-inner">
-                <InterviewRecorder
-                  key={`recorder-${currentQuestion.id}`} // 🔧 Force remount on question change
-                  questionId={currentQuestion.id}
-                  maxSeconds={currentQuestion.suggestedTimeSec ?? 45}
-                  startTrigger={recorderStartTrigger}
-                  forceStopTrigger={recorderForceStopTrigger}
-                  onComplete={handleRecordingComplete}
-                />
+                {currentQuestion && (
+                  <InterviewRecorder
+                    key={`recorder-${currentQuestion.question_id}`}
+                    questionId={currentQuestion.question_id}
+                    maxSeconds={maxDurationSec}
+                    startTrigger={recorderStartTrigger}
+                    forceStopTrigger={recorderForceStopTrigger}
+                    onComplete={handleRecordingComplete}
+                  />
+                )}
               </div>
 
               <div className="flex items-center gap-3">
                 <button
                   onClick={handleManualNext}
-                  disabled={processingAnswer}
+                  disabled={processingAnswer || !currentQuestion}
                   className={`h-14 px-8 rounded-xl font-bold text-sm uppercase tracking-wide transition-all hover:translate-y-[-1px] shadow-lg flex items-center gap-2 ${
-                    processingAnswer
+                    processingAnswer || !currentQuestion
                       ? "bg-gray-300 text-gray-500 cursor-not-allowed shadow-none"
                       : "bg-amber-500 hover:bg-amber-400 text-gray-900 shadow-amber-500/30"
                   }`}
@@ -1259,11 +1082,14 @@ export default function InterviewClient() {
                       />
                     </svg>
                   </div>
+                  <p className="text-sm text-red-300 font-medium mb-1">
+                    Camera is required for this interview
+                  </p>
                   <button
                     onClick={() => toggleCamera()}
                     className="text-sm font-medium text-amber-400 hover:text-amber-300 transition"
                   >
-                    Enable Camera
+                    Re-enable Camera
                   </button>
                   {cameraError && (
                     <p className="mt-2 text-xs text-red-300">{cameraError}</p>

@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-import { BASE_API_URL, AUTH, LOGIN_WITH_PASSWORD } from "@/utils/api/endpoints";
+import {
+  BASE_API_URL,
+  AUTH,
+  LOGIN_WITH_PASSWORD,
+} from "@/constants/api-endpoints";
 
 export async function POST(request: Request) {
   try {

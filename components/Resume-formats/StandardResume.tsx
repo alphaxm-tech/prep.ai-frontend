@@ -5,7 +5,7 @@ import {
   Education,
   WorkExperience,
   Project,
-} from "@/utils/api/types/resume.types";
+} from "@/server-api/api/types/resume.types";
 
 export default function StandardResumeTemplate({
   data,
@@ -30,8 +30,6 @@ export default function StandardResumeTemplate({
 
   const ph = (val?: string, fallback = "") =>
     val && val.trim() ? val : showPlaceholders ? fallback : "";
-
-  // console.log(projects);
 
   const allSkills =
     skills?.length || softskills?.length

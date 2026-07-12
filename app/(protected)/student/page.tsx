@@ -14,24 +14,17 @@ import { useRouter } from "next/navigation";
 import Loader from "@/components/Loader";
 import { useContext } from "react";
 import { AuthContext } from "@/app/provider";
-import { STUDENT_ROUTE } from "@/utils/CONSTANTS";
+import { STUDENT_ROUTE } from "@/constants/ui-routes";
 
 export default function Dashboard() {
   const router = useRouter();
   const userDetailsMain = useContext(AuthContext);
-
-  // useEffect(() => {
-  //   console.log(userDetailsMain);
-  // }, [userDetailsMain]);
 
   const user = userDetailsMain?.user;
   const services = userDetailsMain?.services ?? [];
 
   const firstName =
     user?.full_name?.split(/[, ]+/)?.filter(Boolean)[1] ?? "there";
-
-  console.log(user?.full_name);
-  console.log(firstName);
 
   const handleCardClick = (cardTitle: string) => {
     let route;

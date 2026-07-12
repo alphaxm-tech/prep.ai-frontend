@@ -1,13 +1,48 @@
 "use client";
 
 import {
+  AI_INTERVIEWS_LABEL,
+  CODE_EDITOR_LABEL,
+  COLLEGES_LABEL,
+  COMMUNICATION_LABEL,
+  DASHBOARD_LABEL,
+  HOME_LABEL,
+  INTERVIEWS_LABEL,
+  ONBOARD_COLLEGE_LABEL,
+  PLACEMENT_LABEL,
+  QUIZZES_LABEL,
+  REPORTS_LABEL,
+  RESUME_BUILDER_LABEL,
+  ROLE_LABEL,
+  STUDENTS_LABEL,
+  STUDY_MATERIALS_LABEL,
+  SYSTEM_LOGS_LABEL,
+  USERS_LABEL,
+} from "@/constants/subheader-labels";
+
+import {
+  COLLEGE_ADMIN_ROUTE,
   AI_INTERVIEW_ROUTE,
   CODE_EDITOR_ROUTE,
+  COLLEGE,
+  ONBOARD_COLLEGE,
+  PLATFORM_ROUTE,
   QUIZ_ROUTE,
   RESUME_BUILDER_ROUTE,
   STUDENT_ROUTE,
   STUDY_MATERIAL_ROUTE,
-} from "@/utils/CONSTANTS";
+  PLACEMENT,
+  INTERVIEWS,
+  COMMUNICATION,
+  ROLE,
+  REPORT,
+  STUDENTS,
+} from "@/constants/ui-routes";
+import {
+  CollegeAdminRoles,
+  InterviewPrepRoles,
+  SuperAdminRoles,
+} from "@/lib/allowed-roles";
 
 import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -15,57 +50,95 @@ import { useState, useEffect } from "react";
 export function SubHeader({ user }: { user: any }) {
   const router = useRouter();
   const pathname = usePathname();
+  console.log(user?.college?.college_id);
 
   const [pendingRoute, setPendingRoute] = useState<string | null>(null);
 
-  const SUBHEADER_NAVIGATION_BY_ROLE: Record<
-    string,
-    { label: string; route: string }[]
-  > = {
-    student: [
-      { label: "Home", route: STUDENT_ROUTE },
-      { label: "Resume Builder", route: RESUME_BUILDER_ROUTE },
+  const NAV_SECTIONS: {
+    roles: string[];
+    prefix: string;
+    links: { label: string; route: string }[];
+  }[] = [
+    {
+      roles: InterviewPrepRoles,
+      prefix: STUDENT_ROUTE,
+      links: [
+        { label: HOME_LABEL, route: STUDENT_ROUTE },
+        { label: RESUME_BUILDER_LABEL, route: RESUME_BUILDER_ROUTE },
+        { label: QUIZZES_LABEL, route: QUIZ_ROUTE },
+        { label: CODE_EDITOR_LABEL, route: CODE_EDITOR_ROUTE },
+        { label: AI_INTERVIEWS_LABEL, route: AI_INTERVIEW_ROUTE },
+        { label: STUDY_MATERIALS_LABEL, route: STUDY_MATERIAL_ROUTE },
+      ],
+    },
+    {
+      roles: CollegeAdminRoles,
+      prefix: COLLEGE_ADMIN_ROUTE,
+      links: [
+        {
+          label: HOME_LABEL,
+          route: `${COLLEGE_ADMIN_ROUTE}/${user?.college?.college_id}`,
+        },
+        {
+          label: PLACEMENT_LABEL,
+          route: `${COLLEGE_ADMIN_ROUTE}/${user?.college?.college_id}${PLACEMENT}`,
+        },
+        {
+          label: STUDENTS_LABEL,
+          route: `${COLLEGE_ADMIN_ROUTE}/${user?.college?.college_id}${STUDENTS}`,
+        },
+        {
+          label: INTERVIEWS_LABEL,
+          route: `${COLLEGE_ADMIN_ROUTE}/${user?.college?.college_id}${INTERVIEWS}`,
+        },
+        {
+          label: REPORTS_LABEL,
+          route: `${COLLEGE_ADMIN_ROUTE}/${user?.college?.college_id}${REPORT}`,
+        },
+        {
+          label: ROLE_LABEL,
+          route: `${COLLEGE_ADMIN_ROUTE}/${user?.college?.college_id}${ROLE}`,
+        },
+        {
+          label: COMMUNICATION_LABEL,
+          route: `${COLLEGE_ADMIN_ROUTE}/${user?.college?.college_id}${COMMUNICATION}`,
+        },
+      ],
+    },
+    {
+      roles: SuperAdminRoles,
+      prefix: PLATFORM_ROUTE,
+      links: [
+        { label: DASHBOARD_LABEL, route: PLATFORM_ROUTE },
+        {
+          label: ONBOARD_COLLEGE_LABEL,
+          route: `${PLATFORM_ROUTE}${ONBOARD_COLLEGE}${COLLEGE}`,
+        },
+        {
+          label: COLLEGES_LABEL,
+          route: "/admin/colleges",
+        },
+        {
+          label: USERS_LABEL,
+          route: "/admin/users",
+        },
+        {
+          label: REPORTS_LABEL,
+          route: "/admin/reports",
+        },
+        {
+          label: SYSTEM_LOGS_LABEL,
+          route: "/admin/logs",
+        },
+      ],
+    },
+  ];
 
-      { label: "Quizzes", route: QUIZ_ROUTE },
-      { label: "Code Editor", route: CODE_EDITOR_ROUTE },
-      { label: "AI Interviews", route: AI_INTERVIEW_ROUTE },
-
-      { label: "Study Materials", route: STUDY_MATERIAL_ROUTE },
-    ],
-
-    college_admin: [
-      {
-        label: "Home",
-        route: "/college/1",
-      },
-      {
-        label: "Placement",
-        route: "/college/1/placement",
-      },
-      { label: "Students", route: "/placement/students" },
-      // { label: "Applications", route: "/placement/applications" },
-      // { label: "Assessments", route: "/placement/assessments" },
-      { label: "Interviews", route: "/college/1/interviews" },
-
-      { label: "Reports", route: "/college/1/report" },
-      { label: "Role", route: "/placement/role" },
-      { label: "Communication", route: "/college/communication" },
-    ],
-
-    super_admin: [
-      { label: "Dashboard", route: "/admin/dashboard" },
-      { label: "Colleges", route: "/admin/colleges" },
-      { label: "Users", route: "/admin/users" },
-      { label: "Reports", route: "/admin/reports" },
-      { label: "System Logs", route: "/admin/logs" },
-    ],
-  };
-
-  const navLinks = SUBHEADER_NAVIGATION_BY_ROLE[user?.role?.name] || [];
-
-  // useEffect(() => {
-  //   if (user?.role?.name) console.log("user role", user?.role?.name);
-  // }, [user?.role?.name]);
+  const navLinks =
+    NAV_SECTIONS.find(
+      ({ roles, prefix }) =>
+        roles.includes(user?.role?.name) && pathname.startsWith(prefix),
+    )?.links ?? [];
 
   const handleSubHeaderClick = (route: string) => {
     if (route === pathname) return; // avoid unnecessary navigation

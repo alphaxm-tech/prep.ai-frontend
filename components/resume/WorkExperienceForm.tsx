@@ -2,9 +2,9 @@
 import React, { useState } from "react";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import Loader from "../Loader";
-import { WorkExperience } from "@/utils/api/types/resume.types";
+import { WorkExperience } from "@/server-api/api/types/resume.types";
 import { useToast } from "@/components/toast/ToastContext";
-import { ToastStates } from "@/utils/enums/enums";
+import { ToastStates } from "@/enums/enums";
 import YearDropdown from "./YearDropdown";
 import AIEnhanceMenu, { AIEnhanceType } from "./AIEnhanceMenu";
 
@@ -338,8 +338,7 @@ export default function WorkExperienceForm({
                     disabled={loading || !editExp.description.trim()}
                     onSelect={(type) =>
                       handleAIEnhance(
-                        (val) =>
-                          setEditExp({ ...editExp, description: val }),
+                        (val) => setEditExp({ ...editExp, description: val }),
                         editExp.description,
                         type,
                         {

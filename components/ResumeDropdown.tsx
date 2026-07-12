@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
-import { resumes } from "@/utils/api/types/resume.types";
+import { resumes } from "@/server-api/api/types/resume.types";
 
 export default function ResumeDropdown({
   resumes,

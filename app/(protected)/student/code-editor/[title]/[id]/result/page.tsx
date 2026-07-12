@@ -1,19 +1,31 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useGetAssessmentResult } from "@/utils/queries/code-editor.queries";
+import { useGetAssessmentResult } from "@/server-api/queries/code-editor.queries";
 import Loader from "@/components/Loader";
-import { QuestionStatus } from "@/utils/api/types/code-editor.types";
+import { QuestionStatus } from "@/server-api/api/types/code-editor.types";
 
-const STATUS_STYLES: Record<QuestionStatus, { label: string; className: string }> = {
-  accepted:          { label: "Accepted",      className: "text-green-700 bg-green-100" },
-  wrong_answer:      { label: "Wrong Answer",  className: "text-red-700 bg-red-100" },
-  runtime_error:     { label: "Runtime Error", className: "text-red-700 bg-red-100" },
-  tle:               { label: "TLE",           className: "text-orange-700 bg-orange-100" },
-  compilation_error: { label: "Compile Error", className: "text-red-700 bg-red-100" },
-  not_started:       { label: "Not Attempted", className: "text-gray-600 bg-gray-100" },
-  pending:           { label: "Pending",       className: "text-yellow-700 bg-yellow-100" },
-  running:           { label: "Running",       className: "text-yellow-700 bg-yellow-100" },
+const STATUS_STYLES: Record<
+  QuestionStatus,
+  { label: string; className: string }
+> = {
+  accepted: { label: "Accepted", className: "text-green-700 bg-green-100" },
+  wrong_answer: { label: "Wrong Answer", className: "text-red-700 bg-red-100" },
+  runtime_error: {
+    label: "Runtime Error",
+    className: "text-red-700 bg-red-100",
+  },
+  tle: { label: "TLE", className: "text-orange-700 bg-orange-100" },
+  compilation_error: {
+    label: "Compile Error",
+    className: "text-red-700 bg-red-100",
+  },
+  not_started: {
+    label: "Not Attempted",
+    className: "text-gray-600 bg-gray-100",
+  },
+  pending: { label: "Pending", className: "text-yellow-700 bg-yellow-100" },
+  running: { label: "Running", className: "text-yellow-700 bg-yellow-100" },
 };
 
 export default function AssessmentResultPage() {
@@ -47,7 +59,9 @@ export default function AssessmentResultPage() {
                 <h1 className="text-2xl font-extrabold text-gray-900">
                   Test Complete
                 </h1>
-                <p className="text-sm text-gray-500 capitalize">{result.assessment_title}</p>
+                <p className="text-sm text-gray-500 capitalize">
+                  {result.assessment_title}
+                </p>
               </div>
 
               {/* Score card */}
@@ -68,8 +82,8 @@ export default function AssessmentResultPage() {
                         scorePercent >= 70
                           ? "bg-green-400"
                           : scorePercent >= 40
-                          ? "bg-yellow-400"
-                          : "bg-red-400"
+                            ? "bg-yellow-400"
+                            : "bg-red-400"
                       }`}
                       style={{ width: `${scorePercent}%` }}
                     />
@@ -91,7 +105,8 @@ export default function AssessmentResultPage() {
                 </div>
 
                 {result.questions.map((q, i) => {
-                  const cfg = STATUS_STYLES[q.status] ?? STATUS_STYLES.not_started;
+                  const cfg =
+                    STATUS_STYLES[q.status] ?? STATUS_STYLES.not_started;
                   return (
                     <div
                       key={q.question_id}
@@ -105,7 +120,9 @@ export default function AssessmentResultPage() {
                       <div className="text-right font-semibold text-gray-900">
                         {q.score}
                       </div>
-                      <div className="text-right text-gray-500">{q.max_score}</div>
+                      <div className="text-right text-gray-500">
+                        {q.max_score}
+                      </div>
                       <div className="flex justify-end">
                         <span
                           className={`text-[11px] px-2 py-0.5 rounded-full font-medium ${cfg.className}`}

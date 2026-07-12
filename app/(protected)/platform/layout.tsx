@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/get-user-details";
-import { UserRole } from "@/utils/enums/enums";
-import { LOGIN, UNAUTHORIZED_ROUTE } from "@/utils/CONSTANTS";
+import { UserRole } from "@/enums/enums";
+import { LOGIN, UNAUTHORIZED_ROUTE } from "@/constants/ui-routes";
+import { SuperAdminRoles } from "@/lib/allowed-roles";
 
 export default async function PlatformLayout({
   children,
@@ -14,7 +15,7 @@ export default async function PlatformLayout({
     redirect(LOGIN);
   }
 
-  if (user.role.name !== UserRole.SUPER_ADMIN) {
+  if (!SuperAdminRoles.includes(user?.role?.name)) {
     redirect(UNAUTHORIZED_ROUTE);
   }
 

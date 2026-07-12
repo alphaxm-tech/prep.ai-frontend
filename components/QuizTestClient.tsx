@@ -10,7 +10,7 @@ import {
   wiproQuestions,
   accentureQuestions,
 } from "@/app/(protected)/student/quiz/questionBank";
-import { QUIZ_ROUTE } from "@/utils/CONSTANTS";
+import { QUIZ_ROUTE } from "@/constants/ui-routes";
 
 /**
  * Convert QuestionBank question → QuizModal question

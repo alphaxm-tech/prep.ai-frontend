@@ -1,6 +1,6 @@
 "use client";
 
-import { MOCK_STUDENTS } from "@/utils/dummy-data/mock-students";
+import { MOCK_STUDENTS } from "@/constants/dummy-data/mock-students";
 import { useRouter } from "next/navigation";
 
 /* ---------------- TYPES ---------------- */
