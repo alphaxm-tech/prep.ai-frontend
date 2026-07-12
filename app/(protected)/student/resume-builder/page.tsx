@@ -245,7 +245,6 @@ export default function ResumeBuilderPage() {
   // const service = getUserDetailsAllRes?.userServices?.find(
   //   (s) => s.service_id === 1,
   // );
-  // console.log(service?.services_config?.max_resumes_per_student);
   // const totalResumes = service?.services_config
   //   ?.max_resumes_per_student as number;
 
@@ -561,8 +560,6 @@ export default function ResumeBuilderPage() {
     const errors = validateAll();
     setValidationErrors(errors);
 
-    console.log(errors);
-
     if (hasAnyErrors(errors)) {
       showToast(ToastStates.ERROR, "Please fill all the details");
       // If invalid, DO NOT open preview modal; user must fix fields.
@@ -575,8 +572,6 @@ export default function ResumeBuilderPage() {
 
     saveResumeMutation.mutate(payload, {
       onSuccess: (data: any) => {
-        // console.log("Verification successful", data);
-        // setLoading(false);
         setLoading(false);
         setShowPreviewModal(true);
         // Resume is now committed to the DB — the local draft has served
@@ -963,10 +958,6 @@ export default function ResumeBuilderPage() {
 
     URL.revokeObjectURL(url);
   };
-
-  // useEffect(() => {
-  //   console.log(technicalSkillIds);
-  // }, [technicalSkillIds]);
 
   const disableSave = remainingResumes === 0 || hasAnyErrors(validationErrors);
 

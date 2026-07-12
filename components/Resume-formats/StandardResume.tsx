@@ -31,8 +31,6 @@ export default function StandardResumeTemplate({
   const ph = (val?: string, fallback = "") =>
     val && val.trim() ? val : showPlaceholders ? fallback : "";
 
-  // console.log(projects);
-
   const allSkills =
     skills?.length || softskills?.length
       ? [...(skills ?? []), ...(softskills ?? [])]

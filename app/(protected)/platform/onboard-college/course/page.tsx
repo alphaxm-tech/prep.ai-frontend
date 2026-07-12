@@ -33,7 +33,6 @@ export default function CoursesSelectionPage() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const comboRef = useRef<HTMLDivElement>(null);
   const { data: courses, isLoading, isError, error } = useGetAllCourses();
-  console.log(allCourses);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -50,8 +49,6 @@ export default function CoursesSelectionPage() {
     if (isError) return "";
     return "";
   }, [isLoading, isError]);
-
-  console.log(courses);
 
   useEffect(() => {
     setAllCourses(courses?.data ?? []);
@@ -111,7 +108,6 @@ export default function CoursesSelectionPage() {
 
   // Add selected course (from suggestion click or dropdown)
   const addCourse = (course: Course) => {
-    console.log("test", course);
     if (selectedCourses.find((c) => c.name === course.name)) return;
     setSelectedCourses((s) => [...s, course]);
     setQuery("");

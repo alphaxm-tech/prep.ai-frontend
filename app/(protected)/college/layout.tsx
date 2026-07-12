@@ -1,10 +1,9 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/get-user-details";
-import { UserRole } from "@/enums/enums";
 import { LOGIN, UNAUTHORIZED_ROUTE } from "@/constants/ui-routes";
 import { CollegeAdminRoles } from "@/lib/allowed-roles";
 
-export default async function AdminLayout({
+export default async function CollegeLayout({
   children,
 }: {
   children: React.ReactNode;

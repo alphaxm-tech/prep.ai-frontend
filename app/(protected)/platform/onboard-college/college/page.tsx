@@ -85,14 +85,11 @@ export default function AddCollegePage() {
 
     addCollegeMutation.mutate(payload, {
       onSuccess: (data) => {
-        console.log("college added");
         setLoading(false);
         setSubmitting(false);
         router.push(`${PLATFORM_ROUTE}${ONBOARD_COLLEGE}${COURSE}`);
       },
       onError: (err: any) => {
-        console.log(err.response);
-        console.log("Erroring out on add college");
         setLoading(false);
         setSubmitting(false);
 

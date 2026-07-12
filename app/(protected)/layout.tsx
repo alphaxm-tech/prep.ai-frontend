@@ -45,14 +45,11 @@ export default async function ProtectedLayout({
   //     cache: "no-store",
   //   });
 
-  //   // console.log("ME STATUS:", meResponse.status);
-
   //   if (!meResponse.ok) {
   //     redirect("/login");
   //   }
 
   //   getMeDetails = await meResponse.json();
-  //   // console.log("me", getMeDetails);
 
   //   if (!getMeDetails) {
   //     redirect("/login");

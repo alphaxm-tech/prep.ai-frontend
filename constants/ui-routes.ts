@@ -6,7 +6,7 @@ export const staleTime = 5 * 60 * 1000;
 
 // Base Routes
 export const STUDENT_ROUTE = "/student"; // student user route
-export const ADMIN_ROUTE = "/admin"; // college admin route
+export const COLLEGE_ADMIN_ROUTE = "/college"; // college admin route
 export const PLATFORM_ROUTE = "/platform"; // super admin route
 export const UNAUTHORIZED_ROUTE = "/unauthorized";
 
@@ -30,3 +30,9 @@ export const COURSE = "/course";
 export const GROUP = "/group";
 
 // College admin Routes
+export const PLACEMENT = "/placement";
+export const INTERVIEWS = "/interviews";
+export const COMMUNICATION = "/communication";
+export const ROLE = "/role";
+export const REPORT = "/report";
+export const STUDENTS = "/students";

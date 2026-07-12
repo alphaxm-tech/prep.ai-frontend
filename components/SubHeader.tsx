@@ -21,7 +21,7 @@ import {
 } from "@/constants/subheader-labels";
 
 import {
-  ADMIN_ROUTE,
+  COLLEGE_ADMIN_ROUTE,
   AI_INTERVIEW_ROUTE,
   CODE_EDITOR_ROUTE,
   COLLEGE,
@@ -31,6 +31,12 @@ import {
   RESUME_BUILDER_ROUTE,
   STUDENT_ROUTE,
   STUDY_MATERIAL_ROUTE,
+  PLACEMENT,
+  INTERVIEWS,
+  COMMUNICATION,
+  ROLE,
+  REPORT,
+  STUDENTS,
 } from "@/constants/ui-routes";
 import {
   CollegeAdminRoles,
@@ -44,6 +50,7 @@ import { useState, useEffect } from "react";
 export function SubHeader({ user }: { user: any }) {
   const router = useRouter();
   const pathname = usePathname();
+  console.log(user?.college?.college_id);
 
   const [pendingRoute, setPendingRoute] = useState<string | null>(null);
 
@@ -66,35 +73,35 @@ export function SubHeader({ user }: { user: any }) {
     },
     {
       roles: CollegeAdminRoles,
-      prefix: ADMIN_ROUTE,
+      prefix: COLLEGE_ADMIN_ROUTE,
       links: [
         {
           label: HOME_LABEL,
-          route: "/college/1",
+          route: `${COLLEGE_ADMIN_ROUTE}/${user?.college?.college_id}`,
         },
         {
           label: PLACEMENT_LABEL,
-          route: "/college/1/placement",
+          route: `${COLLEGE_ADMIN_ROUTE}/${user?.college?.college_id}${PLACEMENT}`,
         },
         {
           label: STUDENTS_LABEL,
-          route: "/placement/students",
+          route: `${COLLEGE_ADMIN_ROUTE}/${user?.college?.college_id}${STUDENTS}`,
         },
         {
           label: INTERVIEWS_LABEL,
-          route: "/college/1/interviews",
+          route: `${COLLEGE_ADMIN_ROUTE}/${user?.college?.college_id}${INTERVIEWS}`,
         },
         {
           label: REPORTS_LABEL,
-          route: "/college/1/report",
+          route: `${COLLEGE_ADMIN_ROUTE}/${user?.college?.college_id}${REPORT}`,
         },
         {
           label: ROLE_LABEL,
-          route: "/placement/role",
+          route: `${COLLEGE_ADMIN_ROUTE}/${user?.college?.college_id}${ROLE}`,
         },
         {
           label: COMMUNICATION_LABEL,
-          route: "/college/communication",
+          route: `${COLLEGE_ADMIN_ROUTE}/${user?.college?.college_id}${COMMUNICATION}`,
         },
       ],
     },
@@ -132,10 +139,6 @@ export function SubHeader({ user }: { user: any }) {
       ({ roles, prefix }) =>
         roles.includes(user?.role?.name) && pathname.startsWith(prefix),
     )?.links ?? [];
-
-  // useEffect(() => {
-  //   if (user?.role?.name) console.log("user role", user?.role?.name);
-  // }, [user?.role?.name]);
 
   const handleSubHeaderClick = (route: string) => {
     if (route === pathname) return; // avoid unnecessary navigation

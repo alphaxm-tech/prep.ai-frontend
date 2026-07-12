@@ -75,12 +75,10 @@ export default function CreateCourseModal({
 
     createCourseMutation.mutate(payload, {
       onSuccess: (data) => {
-        console.log("course added");
         setLoading(false);
         showToast(ToastStates.SUCCESS, "New course created");
       },
-      onError: (err: any) => {
-        console.log(err?.response);
+      onError: () => {
         setLoading(false);
         showToast(ToastStates.ERROR, "Error in creating new course");
       },

@@ -19,16 +19,10 @@ import {
   useVerifyUserEmail,
 } from "@/server-api/mutations/auth.mutations";
 import { useToast } from "@/components/toast/ToastContext";
-import {
-  ADMIN_ROUTE,
-  COLLEGE,
-  PLATFORM_ROUTE,
-  STUDENT_ROUTE,
-  UNAUTHORIZED_ROUTE,
-} from "@/constants/ui-routes";
-import { LoginErrors, LoginStates, ToastStates, UserRole } from "@/enums/enums";
+import { LoginErrors, LoginStates, ToastStates } from "@/enums/enums";
 // import { AUTH, GOOGLE, LOGIN } from "@/utils/api/endpoints";
 import { validatePassword } from "@/lib/validate-password";
+import { getRoleRedirectPath } from "@/lib/get-role-redirect";
 
 // UI-only demo credentials (no backend required)
 const DEMO_EMAIL = "vm.prepai@gmail.com";
@@ -265,7 +259,6 @@ export default function LoginPage() {
         onError: (err: any) => {
           const status = err?.response?.status;
           const data = err?.response?.data;
-          console.log(err);
 
           if (status === 403) {
             handleForbidden(data);
@@ -322,7 +315,6 @@ export default function LoginPage() {
       },
       {
         onSuccess: (data: any) => {
-          console.log("Verification successful", data);
           setLoading(false);
 
           if (data?.passwordExists) {
@@ -442,8 +434,6 @@ export default function LoginPage() {
       },
       {
         onSuccess: async (data: any) => {
-          console.log("LOGIN SUCCESS:", data);
-
           const role = data?.userRole?.name;
 
           const sessionRes = await fetch("/api/auth/session", {
@@ -460,18 +450,9 @@ export default function LoginPage() {
             return;
           }
 
-          if (role === UserRole.ADMIN) {
-            router.replace(`${COLLEGE}/1`);
-          } else if (role === UserRole.STUDENT) {
-            router.replace(STUDENT_ROUTE);
-          } else if (role === UserRole.SUPER_ADMIN) {
-            router.replace(PLATFORM_ROUTE);
-          } else {
-            router.replace(UNAUTHORIZED_ROUTE);
-          }
+          router.replace(getRoleRedirectPath(role, data));
         },
         onError: (data: any) => {
-          console.log(data?.response?.data?.error?.message);
           showToast(
             "error",
             data?.response?.data?.error?.message
@@ -557,15 +538,7 @@ export default function LoginPage() {
             return;
           }
 
-          if (role === UserRole.ADMIN) {
-            router.replace("/college/1");
-          } else if (role === UserRole.STUDENT) {
-            router.replace(STUDENT_ROUTE);
-          } else if (role === UserRole.SUPER_ADMIN) {
-            router.replace(PLATFORM_ROUTE);
-          } else {
-            router.replace(UNAUTHORIZED_ROUTE);
-          }
+          router.replace(getRoleRedirectPath(role, data));
         },
         onError: (err: any) => {
           setLoading(false);
@@ -610,7 +583,6 @@ export default function LoginPage() {
       {
         onSuccess: async (data: any) => {
           setLoading(false);
-          console.log("userDetails", data);
 
           if (!data?.userDetails) {
             setStep(LoginStates.PROFIL);
@@ -660,15 +632,7 @@ export default function LoginPage() {
               return;
             }
 
-            if (role === UserRole.ADMIN) {
-              router.replace("/college/1");
-            } else if (role === UserRole.STUDENT) {
-              router.replace(STUDENT_ROUTE);
-            } else if (role === UserRole.SUPER_ADMIN) {
-              router.replace(PLATFORM_ROUTE);
-            } else {
-              router.replace(UNAUTHORIZED_ROUTE);
-            }
+            router.replace(getRoleRedirectPath(role, data));
           }
         },
         onError: () => {

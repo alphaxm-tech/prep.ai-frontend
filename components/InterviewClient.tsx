@@ -629,26 +629,6 @@ export default function InterviewClient() {
   const currentQuestion =
     interviewQuestionsRef.current[currentIndex] ?? DEFAULT_QUESTIONS[0];
 
-  // Debug logging
-  useEffect(() => {
-    console.log({
-      interviewIdParam,
-      companyParam,
-      questionKey,
-      totalQuestions: total,
-      currentIndex,
-      currentQuestionId: currentQuestion.id,
-      answersLength: answers.length,
-      processingAnswer,
-    });
-  }, [
-    currentIndex,
-    total,
-    currentQuestion.id,
-    answers.length,
-    processingAnswer,
-  ]);
-
   // auto-start interview
   useEffect(() => {
     setInterviewStarted(true);
@@ -834,29 +814,13 @@ export default function InterviewClient() {
    */
   const handleRecordingComplete = useCallback(
     async (payload: RecorderOnCompletePayload) => {
-      console.log("🔴 RECORDING COMPLETE:", {
-        payloadQuestionId: payload.questionId,
-        currentIndex: currentIndexRef.current,
-        expectedQuestionId:
-          interviewQuestionsRef.current[currentIndexRef.current]?.id,
-        processingAnswer,
-        answersLength: answers.length,
-      });
-
       // 🔧 CRITICAL: Ignore if already processing or wrong question
       if (processingAnswer) {
-        console.log("⏳ Already processing answer, ignoring");
         return;
       }
 
       const expectedQ = interviewQuestionsRef.current[currentIndexRef.current];
       if (!expectedQ || payload.questionId !== expectedQ.id) {
-        console.log(
-          "❌ Question ID mismatch, ignoring:",
-          payload.questionId,
-          "≠",
-          expectedQ?.id
-        );
         return;
       }
 
@@ -884,7 +848,6 @@ export default function InterviewClient() {
 
       setAnswers((prev) => {
         if (prev.some((a) => a.questionId === newAnswer.questionId)) {
-          console.log("🔄 Duplicate answer ignored:", newAnswer.questionId);
           setProcessingAnswer(false);
           return prev;
         }
@@ -893,10 +856,7 @@ export default function InterviewClient() {
         const answerCount = updated.length;
         const totalQuestions = totalRef.current;
 
-        console.log("✅ Added answer", answerCount, "/", totalQuestions);
-
         if (answerCount === totalQuestions) {
-          console.log("🎉 ALL QUESTIONS COMPLETE!");
           setInterviewStarted(false);
           setRecorderStartTrigger(null);
           evaluateInterview(updated);
@@ -907,7 +867,6 @@ export default function InterviewClient() {
               currentIndexRef.current + 1,
               totalQuestions - 1
             );
-            console.log("➡️ Moving to question index:", nextIndex);
             setCurrentIndex(nextIndex);
             setSmallCountdown(null);
             setRecorderStartTrigger(null);

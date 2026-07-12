@@ -20,13 +20,8 @@ export function Header() {
   const userDetailsMain = useContext(AuthContext);
   const logoutMutation = logout();
 
-  // useEffect(() => {
-  //   console.log("from header" + userDetailsMain);
-  // }, [userDetailsMain]);
-
   // const user = useUser();
   // // Now you can use user data
-  // console.log(user);
 
   const landingNav = [
     { label: "Home", href: "#home" },

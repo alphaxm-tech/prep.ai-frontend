@@ -86,7 +86,6 @@ export default function CodeEditorListPage() {
   // }, [isLoading, isError, codingQuestionData]);
 
   const handleStartCodingTest = (assessment: AssessmentResponse) => {
-    console.log("Test", assessment);
     const slug = slugify(assessment.title);
     router.push(`/student/code-editor/${slug}/${assessment.assessment_id}`);
   };

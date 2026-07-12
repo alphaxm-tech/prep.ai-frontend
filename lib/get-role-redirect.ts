@@ -1,26 +1,48 @@
 import { decodeJwt } from "jose";
 import { UserRole } from "@/enums/enums";
-import { STUDENT_ROUTE, PLATFORM_ROUTE } from "@/constants/ui-routes";
+import {
+  COLLEGE,
+  STUDENT_ROUTE,
+  PLATFORM_ROUTE,
+  UNAUTHORIZED_ROUTE,
+} from "@/constants/ui-routes";
+
+/**
+ * Maps a role string (from the login API response or a decoded token) to the
+ * dashboard route that role should land on. Unrecognized roles go to
+ * UNAUTHORIZED_ROUTE.
+ */
+export function getRoleRedirectPath(
+  role: string | undefined,
+  data?: any,
+): string {
+  switch (role) {
+    case UserRole.ADMIN:
+      return `${COLLEGE}/1`;
+    case UserRole.STUDENT:
+    case UserRole.DEVELOPER:
+      return STUDENT_ROUTE;
+    case UserRole.SUPER_ADMIN:
+      return PLATFORM_ROUTE;
+    default:
+      return UNAUTHORIZED_ROUTE;
+  }
+}
 
 /**
  * Decodes the access token (no verification — caller must ensure the token is
- * already trusted) and returns the dashboard route for that role.
+ * already trusted) and returns the dashboard route for that role. Unlike
+ * getRoleRedirectPath, an unrecognized/undecodable role falls back to
+ * STUDENT_ROUTE here rather than UNAUTHORIZED_ROUTE — this is used to redirect
+ * already-logged-in users away from public pages, where sending them to
+ * /student is preferable to /unauthorized.
  */
 export function getRoleRedirect(accessToken: string): string {
   try {
     const payload = decodeJwt(accessToken);
-    const role = payload.role as string;
+    const path = getRoleRedirectPath(payload.role as string);
 
-    switch (role) {
-      case UserRole.SUPER_ADMIN:
-        return PLATFORM_ROUTE;
-      case UserRole.ADMIN:
-        return "/college/1";
-      case UserRole.STUDENT:
-        return STUDENT_ROUTE;
-      default:
-        return STUDENT_ROUTE;
-    }
+    return path === UNAUTHORIZED_ROUTE ? STUDENT_ROUTE : path;
   } catch {
     return STUDENT_ROUTE;
   }
