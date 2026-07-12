@@ -3,6 +3,7 @@ export enum UserRole {
   ADMIN = "college_admin", // college access
   STUDENT = "student",
   DEVELOPER = "developer",
+  TESTER = "tester",
 }
 
 export enum LoginErrors {

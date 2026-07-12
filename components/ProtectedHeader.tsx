@@ -1,7 +1,12 @@
 "use client";
 
-import { PLATFORM_ROUTE, STUDENT_ROUTE } from "@/constants/ui-routes";
+import {
+  COLLEGE_ADMIN_ROUTE,
+  PLATFORM_ROUTE,
+  STUDENT_ROUTE,
+} from "@/constants/ui-routes";
 import { UserRole } from "@/enums/enums";
+import { SectionSwitcherRoles } from "@/lib/allowed-roles";
 import { logout } from "@/server-api/mutations/auth.mutations";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState, useRef } from "react";
@@ -80,14 +85,6 @@ export function ProtectedHeader({ user }: { user: any }) {
         label: "System Reports",
         action: () => router.push("/super-admin/reports"),
       },
-      {
-        label: "Platform",
-        action: () => router.push(`${PLATFORM_ROUTE}`),
-      },
-      {
-        label: "Student",
-        action: () => router.push(`${STUDENT_ROUTE}`),
-      },
     ],
 
     [UserRole.ADMIN]: [
@@ -110,6 +107,27 @@ export function ProtectedHeader({ user }: { user: any }) {
   };
 
   const roleMenuItems = role ? roleMenuMap[role] || [] : [];
+
+  // Developer / tester / super admin accounts can freely jump between the
+  // student, college and super admin sections instead of being locked to one.
+  const canSwitchSections = role && SectionSwitcherRoles.includes(role);
+
+  const sectionSwitcherItems = canSwitchSections
+    ? [
+        { label: "Student Section", action: () => router.push(STUDENT_ROUTE) },
+        {
+          label: "College Section",
+          action: () =>
+            router.push(
+              `${COLLEGE_ADMIN_ROUTE}/${user?.college?.college_id ?? 1}`,
+            ),
+        },
+        {
+          label: "Super Admin Section",
+          action: () => router.push(PLATFORM_ROUTE),
+        },
+      ]
+    : [];
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -198,6 +216,24 @@ export function ProtectedHeader({ user }: { user: any }) {
                         {item.label}
                       </button>
                     ))}
+
+                    {sectionSwitcherItems.length > 0 && (
+                      <>
+                        <div className="border-t border-gray-100 my-2" />
+                        <p className="px-5 pb-1 text-xs font-semibold text-gray-400 uppercase tracking-wide">
+                          Switch Section
+                        </p>
+                        {sectionSwitcherItems.map((item, index) => (
+                          <button
+                            key={index}
+                            onClick={item.action}
+                            className="w-full text-left px-5 py-2.5 hover:bg-yellow-50 transition"
+                          >
+                            {item.label}
+                          </button>
+                        ))}
+                      </>
+                    )}
 
                     {/* <button
                       onClick={() => router.push("/profile")}

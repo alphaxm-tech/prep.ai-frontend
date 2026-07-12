@@ -21,6 +21,7 @@ export function getRoleRedirectPath(
       return `${COLLEGE}/1`;
     case UserRole.STUDENT:
     case UserRole.DEVELOPER:
+    case UserRole.TESTER:
       return STUDENT_ROUTE;
     case UserRole.SUPER_ADMIN:
       return PLATFORM_ROUTE;
