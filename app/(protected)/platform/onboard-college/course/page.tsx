@@ -57,6 +57,8 @@ export default function CoursesSelectionPage() {
     setAllCourses(courses?.data ?? []);
   }, [courses]);
 
+  // test
+
   // useEffect(() => {
   //   let mounted = true;
   //   const load = async () => {
@@ -193,7 +195,10 @@ export default function CoursesSelectionPage() {
 
     setAllCourses((s) => [newCourse, ...s]);
     setSelectedCourses((s) => [...s, newCourse]);
-    setMessage({ type: "success", text: `Created course "${newCourse.name}".` });
+    setMessage({
+      type: "success",
+      text: `Created course "${newCourse.name}".`,
+    });
     setIsCreateModalOpen(false);
   };
 
