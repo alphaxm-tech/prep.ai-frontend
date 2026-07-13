@@ -4,6 +4,7 @@ export enum ResumeFormats {
   CREATIVE = "CREATIVE",
   MINIMAL = "MINIMAL",
   STANDARD = "STANDARD",
+  FRESHER = "FRESHER",
 }
 
 export enum ResumeTitles {
@@ -12,4 +13,5 @@ export enum ResumeTitles {
   Creative = "Creative",
   Minimal = "Minimal",
   Standard = "Standard",
+  Fresher = "Fresher Friendly",
 }

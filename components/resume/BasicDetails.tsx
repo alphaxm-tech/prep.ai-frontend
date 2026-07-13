@@ -425,25 +425,43 @@ export default function BasicDetails({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
         <div>
           <label className="block text-sm font-medium text-gray-700">
-            Portfolio link
+            Portfolio link{" "}
+            <span className="text-xs text-gray-400">(optional)</span>
           </label>
           <input
             value={portfolioLink}
             onChange={(e) => setPortfolioLink(e.target.value)}
-            className={`${inputBase} ${inputNormal}`}
+            className={`${inputBase} ${
+              invalid("portfolioLink") ? inputInvalid : inputNormal
+            }`}
             placeholder="https://yourportfolio.com"
+            aria-invalid={invalid("portfolioLink")}
           />
+          {invalid("portfolioLink") && (
+            <p className="mt-1 text-xs text-red-600">
+              Enter a valid URL (e.g. https://yourportfolio.com).
+            </p>
+          )}
         </div>
         <div>
           <label className="block text-sm font-medium text-gray-700">
-            Github link
+            Github link{" "}
+            <span className="text-xs text-gray-400">(optional)</span>
           </label>
           <input
             value={githubLink}
             onChange={(e) => setGithubLink(e.target.value)}
-            className={`${inputBase} ${inputNormal}`}
+            className={`${inputBase} ${
+              invalid("githubLink") ? inputInvalid : inputNormal
+            }`}
             placeholder="https://github.com/username"
+            aria-invalid={invalid("githubLink")}
           />
+          {invalid("githubLink") && (
+            <p className="mt-1 text-xs text-red-600">
+              Enter a valid GitHub URL (e.g. https://github.com/username).
+            </p>
+          )}
         </div>
       </div>
 
@@ -451,14 +469,24 @@ export default function BasicDetails({
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4 mb-4">
         <div>
           <label className="block text-sm font-medium text-gray-700">
-            Linkedin profile
+            Linkedin profile{" "}
+            <span className="text-xs text-gray-400">(optional)</span>
           </label>
           <input
             value={linkedinLink}
             onChange={(e) => setLinkedinLink(e.target.value)}
-            className={`${inputBase} ${inputNormal}`}
+            className={`${inputBase} ${
+              invalid("linkedinLink") ? inputInvalid : inputNormal
+            }`}
             placeholder="https://linkedin.com/in/username"
+            aria-invalid={invalid("linkedinLink")}
           />
+          {invalid("linkedinLink") && (
+            <p className="mt-1 text-xs text-red-600">
+              Enter a valid LinkedIn URL (e.g.
+              https://linkedin.com/in/username).
+            </p>
+          )}
         </div>
       </div>
     </>

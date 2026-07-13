@@ -173,58 +173,62 @@ export default function CreativeResumeTemplate({
           </section>
 
           {/* Experience */}
-          <section>
-            <h2 className="text-xl font-semibold mb-3">💼 Experience</h2>
-            <div className="space-y-4">
-              {experience?.length ? (
-                experience.map((exp: WorkExperience, i: number) => (
-                  <article
-                    key={i}
-                    className="p-4 rounded-xl bg-white border shadow-sm"
-                  >
-                    <div className="flex justify-between">
-                      <div>
-                        <div className="font-semibold">{exp.role}</div>
-                        <div className="text-sm text-slate-600">
-                          {exp.company}
+          {(experience?.length || showPlaceholders) && (
+            <section>
+              <h2 className="text-xl font-semibold mb-3">💼 Experience</h2>
+              <div className="space-y-4">
+                {experience?.length ? (
+                  experience.map((exp: WorkExperience, i: number) => (
+                    <article
+                      key={i}
+                      className="p-4 rounded-xl bg-white border shadow-sm"
+                    >
+                      <div className="flex justify-between">
+                        <div>
+                          <div className="font-semibold">{exp.role}</div>
+                          <div className="text-sm text-slate-600">
+                            {exp.company}
+                          </div>
+                        </div>
+                        <div className="text-xs text-slate-500">
+                          {exp.start_year} – {exp.end_year}
                         </div>
                       </div>
-                      <div className="text-xs text-slate-500">
-                        {exp.start_year} – {exp.end_year}
-                      </div>
-                    </div>
-                    <p className="mt-2 text-sm text-slate-700">
-                      {exp.description}
-                    </p>
-                  </article>
-                ))
-              ) : showPlaceholders ? (
-                <p className="text-sm text-slate-400">No experience added</p>
-              ) : null}
-            </div>
-          </section>
+                      <p className="mt-2 text-sm text-slate-700">
+                        {exp.description}
+                      </p>
+                    </article>
+                  ))
+                ) : (
+                  <p className="text-sm text-slate-400">No experience added</p>
+                )}
+              </div>
+            </section>
+          )}
 
           {/* Projects */}
-          <section>
-            <h2 className="text-xl font-semibold mb-3">🚀 Projects</h2>
-            <div className="space-y-3">
-              {projects?.length ? (
-                projects.map((p: Project, i: number) => (
-                  <div
-                    key={i}
-                    className="p-4 bg-white rounded-xl border shadow-sm"
-                  >
-                    <div className="font-semibold">{p.name}</div>
-                    <p className="text-sm text-slate-700 mt-1">
-                      {p.description}
-                    </p>
-                  </div>
-                ))
-              ) : showPlaceholders ? (
-                <p className="text-sm text-slate-400">No projects added</p>
-              ) : null}
-            </div>
-          </section>
+          {(projects?.length || showPlaceholders) && (
+            <section>
+              <h2 className="text-xl font-semibold mb-3">🚀 Projects</h2>
+              <div className="space-y-3">
+                {projects?.length ? (
+                  projects.map((p: Project, i: number) => (
+                    <div
+                      key={i}
+                      className="p-4 bg-white rounded-xl border shadow-sm"
+                    >
+                      <div className="font-semibold">{p.name}</div>
+                      <p className="text-sm text-slate-700 mt-1">
+                        {p.description}
+                      </p>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-slate-400">No projects added</p>
+                )}
+              </div>
+            </section>
+          )}
         </main>
       </div>
 
