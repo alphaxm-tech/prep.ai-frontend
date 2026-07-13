@@ -24,8 +24,8 @@ export interface GetAttemptStatusResposne {
   AssessmentID: number;
   Status: string;
   StartedAt: string;
-  ExpiredAt: string;
-  SubmittedAt: string;
+  ExpiresAt: string;
+  SubmittedAt: string | null;
   TotalQuestions: number;
   Answered: number;
   Remaining: number;
@@ -96,6 +96,7 @@ export interface QuestionStatus {
 
 export interface QuizSessionResponse {
   attempt_id: number;
+  assessment_id: number;
   status: string;
   expires_at: string;
   total_questions: number;
@@ -112,4 +113,39 @@ export interface QuizStatsResponse {
 
 export interface MarkForReviewRequest {
   marked_for_review: boolean;
+}
+
+export interface QuizResultOption {
+  option_id: number;
+  option_text: string;
+  is_correct: boolean;
+}
+
+export interface QuizResultQuestion {
+  question_id: number;
+  question_text: string;
+  options: QuizResultOption[];
+  selected_option_id?: number | null;
+  correct_option_id?: number | null;
+  answered: boolean;
+  is_correct: boolean;
+  score_awarded: number;
+  max_score: number;
+  marked_for_review: boolean;
+}
+
+export interface QuizResultsResponse {
+  attempt_id: number;
+  assessment_id: number;
+  title: string;
+  status: string;
+  started_at: string;
+  submitted_at?: string | null;
+  evaluated_at?: string | null;
+  total_score: number;
+  max_score: number;
+  correct: number;
+  wrong: number;
+  unanswered: number;
+  questions: QuizResultQuestion[];
 }

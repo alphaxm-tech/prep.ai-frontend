@@ -30,7 +30,21 @@ export const useSubmitInterviewAnswer = (attemptId: number) => {
 };
 
 export const useFinishInterview = (attemptId: number) => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: () => aiInterviewService.finishInterview(attemptId),
+    onSuccess: () => {
+      // The hub page's assessment lists (not-taken/taken) and performance
+      // stats are cached with a 5min staleTime and no refetch-on-focus, so
+      // without this they'd keep showing this interview as "not taken" and
+      // stale stats after the user navigates back from the results screen.
+      queryClient.invalidateQueries({ queryKey: ["assessments"] });
+      queryClient.invalidateQueries({
+        queryKey: ["ai-interview", "getInterviewStats"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["ai-interview", "getSession", attemptId],
+      });
+    },
   });
 };

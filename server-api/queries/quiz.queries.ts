@@ -3,6 +3,7 @@ import {
   GetAttemptQuestion,
   GetAttemptStatusResposne,
   GetLeaderboardResponse,
+  QuizResultsResponse,
   QuizSessionResponse,
   QuizStatsResponse,
 } from "../api/types/quiz.types";
@@ -44,5 +45,13 @@ export const useGetQuizStats = () => {
   return useQuery<QuizStatsResponse>({
     queryKey: ["quiz", "getQuizStats"],
     queryFn: () => quizService.getQuizStats(),
+  });
+};
+
+export const useGetQuizResults = (assessmentId: number | null) => {
+  return useQuery<QuizResultsResponse>({
+    queryKey: ["quiz", "getQuizResults", assessmentId],
+    queryFn: () => quizService.getQuizResults(assessmentId as number),
+    enabled: assessmentId !== null && assessmentId > 0,
   });
 };
