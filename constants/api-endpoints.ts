@@ -71,3 +71,15 @@ export const FINISH = "finish";
 export const SESSION = "session";
 export const INTERVIEW_STATS = "interview-stats";
 export const ANSWER = "answer";
+export const REVIEW = "review";
+
+/// Question Bank + Assessment Management (super admin) ///
+export const QUESTION_BANK = "question-bank";
+export const ADMIN = "admin";
+export const TAGS = "tags";
+export const UPLOAD = "upload";
+export const UPLOADS = "uploads";
+export const ACCEPT = "accept";
+export const QB_QUESTIONS = "questions";
+export const GROUPS = "groups";
+export const STATUS = "status";

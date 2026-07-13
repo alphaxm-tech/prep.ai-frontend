@@ -9,6 +9,7 @@ import CompactAssessmentRow from "@/components/CompactAssessmentRow";
 import Pagination from "@/components/Pagination";
 import EmptyStateCard from "@/components/EmptyStateCard";
 import TipsMarquee from "@/components/TipsMarquee";
+import InterviewReviewModal from "@/components/InterviewReviewModal";
 import { INTERVIEW_TIPS } from "@/constants/interview-tips";
 import { AI_INTERVIEW_ROUTE, AI_INTERVIEW_SESSION } from "@/constants/ui-routes";
 import { useGetAllAssessments } from "@/server-api/queries/assessment.queries";
@@ -47,6 +48,10 @@ export default function AIInterviewPage() {
 
   const [takenPage, setTakenPage] = useState(1);
   const [takenPageSize, setTakenPageSize] = useState(DEFAULT_PAGE_SIZE);
+
+  const [reviewAssessmentId, setReviewAssessmentId] = useState<number | null>(
+    null,
+  );
 
   const { data: untakenAssessments, isLoading: isUntakenLoading } =
     useGetAllAssessments({
@@ -93,6 +98,10 @@ export default function AIInterviewPage() {
   return (
     <>
       <Loader show={isPageLoading} message="Loading your interviews" />
+      <InterviewReviewModal
+        assessmentId={reviewAssessmentId}
+        onClose={() => setReviewAssessmentId(null)}
+      />
 
       <div className="min-h-screen px-4 md:px-8 py-10">
         <div className="max-w-6xl mx-auto">
@@ -174,6 +183,7 @@ export default function AIInterviewPage() {
                     <CompactAssessmentRow
                       key={interview.assessment_id}
                       quiz={interview}
+                      onReview={(q) => setReviewAssessmentId(q.assessment_id)}
                     />
                   ))}
                   <Pagination

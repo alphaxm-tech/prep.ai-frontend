@@ -12,3 +12,10 @@ export const useGetAllCourses = () => {
     queryFn: ccgService.getAllCourses,
   });
 };
+
+export const useGetAllGroups = () => {
+  return useQuery({
+    queryKey: ["ccg", "groups"],
+    queryFn: ccgService.getAllGroups,
+  });
+};

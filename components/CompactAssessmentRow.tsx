@@ -2,10 +2,10 @@ import { AssessmentResponse } from "@/server-api/api/types/assessment.types";
 
 export default function CompactAssessmentRow({
   quiz,
-  // onStartQuiz,
+  onReview,
 }: {
   quiz: AssessmentResponse;
-  // onStartQuiz: (quiz: AssessmentResponse) => void;
+  onReview?: (quiz: AssessmentResponse) => void;
 }) {
   return (
     <div className="bg-white rounded-xl border border-yellow-200 px-4 py-4 shadow-sm hover:shadow-md transition-all duration-200">
@@ -20,8 +20,9 @@ export default function CompactAssessmentRow({
         </div>
 
         <button
-          // onClick={() => onStartQuiz(quiz)}
-          className="bg-yellow-400 hover:bg-yellow-300 text-yellow-900 text-xs font-semibold px-3 py-1 rounded-md"
+          onClick={onReview ? () => onReview(quiz) : undefined}
+          disabled={!onReview}
+          className="bg-yellow-400 hover:bg-yellow-300 disabled:opacity-60 disabled:cursor-not-allowed text-yellow-900 text-xs font-semibold px-3 py-1 rounded-md"
         >
           Review
         </button>

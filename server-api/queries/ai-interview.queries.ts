@@ -23,3 +23,13 @@ export const useGetInterviewStats = () => {
     queryFn: () => aiInterviewService.getInterviewStats(),
   });
 };
+
+// enabled only when assessmentId is set (e.g. a Review modal is open) —
+// avoids firing a request per attempted-interview row on every list render.
+export const useGetInterviewReview = (assessmentId: number | null) => {
+  return useQuery({
+    queryKey: ["ai-interview", "getReview", assessmentId],
+    queryFn: () => aiInterviewService.getReview(assessmentId as number),
+    enabled: !!assessmentId,
+  });
+};

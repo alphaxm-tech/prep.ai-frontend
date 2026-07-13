@@ -40,3 +40,16 @@ export interface CreateCourseRequest {
   type: string;
   description: string;
 }
+
+export interface Group {
+  group_id: number;
+  college_id: number | null;
+  name: string;
+  description: string | null;
+  group_type: string;
+  visibility: string;
+  created_by: number;
+  status: string;
+  created_at: string;
+  updated_at: string;
+}
