@@ -18,6 +18,7 @@ import AssessmentRow from "@/components/AssessmentRow";
 import CompactAssessmentRow from "@/components/CompactAssessmentRow";
 import Pagination from "@/components/Pagination";
 import EmptyStateCard from "@/components/EmptyStateCard";
+import QuizResultsModal from "@/components/QuizResultsModal";
 
 const DEFAULT_PAGE_SIZE = 10;
 
@@ -32,6 +33,10 @@ export default function Quiz() {
 
   const [takenPage, setTakenPage] = useState(1);
   const [takenPageSize, setTakenPageSize] = useState(DEFAULT_PAGE_SIZE);
+
+  const [reviewAssessmentId, setReviewAssessmentId] = useState<number | null>(
+    null,
+  );
 
   const { data: untakenAssessments, isLoading: isUntakenLoading } =
     useGetAllAssessments({
@@ -81,7 +86,7 @@ export default function Quiz() {
 
   return (
     <>
-      {/* <WorkInProgressBanner /> */}
+      <WorkInProgressBanner />
       <Loader
         show={isUntakenLoading || startQuizMutation.isPending || isTakenLoading}
       />
@@ -175,8 +180,8 @@ export default function Quiz() {
           <section className="lg:col-span-2 space-y-6">
             {notTakenQuizzes.length === 0 ? (
               <EmptyStateCard
-                title="No assessments found"
-                subtitle="No coding assessments match the selected difficulty filter."
+                title="No quizzes found"
+                subtitle="No quizzes match the selected difficulty filter."
               />
             ) : (
               <>
@@ -237,6 +242,7 @@ export default function Quiz() {
                     <CompactAssessmentRow
                       key={quiz.assessment_id}
                       quiz={quiz}
+                      onReview={(q) => setReviewAssessmentId(q.assessment_id)}
                     />
                   ))}
                   <Pagination
@@ -255,6 +261,11 @@ export default function Quiz() {
           </aside>
         </div>
       </div>
+
+      <QuizResultsModal
+        assessmentId={reviewAssessmentId}
+        onClose={() => setReviewAssessmentId(null)}
+      />
     </>
   );
 }

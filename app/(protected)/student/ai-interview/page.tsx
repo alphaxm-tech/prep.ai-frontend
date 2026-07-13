@@ -11,7 +11,10 @@ import EmptyStateCard from "@/components/EmptyStateCard";
 import TipsMarquee from "@/components/TipsMarquee";
 import InterviewReviewModal from "@/components/InterviewReviewModal";
 import { INTERVIEW_TIPS } from "@/constants/interview-tips";
-import { AI_INTERVIEW_ROUTE, AI_INTERVIEW_SESSION } from "@/constants/ui-routes";
+import {
+  AI_INTERVIEW_ROUTE,
+  AI_INTERVIEW_SESSION,
+} from "@/constants/ui-routes";
 import { useGetAllAssessments } from "@/server-api/queries/assessment.queries";
 import { useGetInterviewStats } from "@/server-api/queries/ai-interview.queries";
 import { useStartInterview } from "@/server-api/mutations/ai-interview.mutation";
@@ -19,6 +22,7 @@ import {
   ASSESSMENT_TYPES,
   AssessmentResponse,
 } from "@/server-api/api/types/assessment.types";
+import WorkInProgressBanner from "@/components/WorkInProgressBanner";
 
 const DEFAULT_PAGE_SIZE = 10;
 
@@ -97,6 +101,7 @@ export default function AIInterviewPage() {
 
   return (
     <>
+      <WorkInProgressBanner />
       <Loader show={isPageLoading} message="Loading your interviews" />
       <InterviewReviewModal
         assessmentId={reviewAssessmentId}
@@ -230,8 +235,8 @@ export default function AIInterviewPage() {
                 </div>
               ) : (
                 <p className="text-sm text-gray-500 text-center py-6">
-                  Complete your first AI interview to see your performance
-                  stats here.
+                  Complete your first AI interview to see your performance stats
+                  here.
                 </p>
               )}
             </div>

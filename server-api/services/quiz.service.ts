@@ -8,6 +8,7 @@ import {
   LEADERBOARD,
   MARK_FOR_REVIEW,
   QUIZ,
+  QUIZ_RESULTS,
   QUIZ_STATS,
   START_QUIZ,
   SUBMIT,
@@ -18,6 +19,7 @@ import {
   GetAttemptStatusResposne,
   GetLeaderboardResponse,
   MarkForReviewRequest,
+  QuizResultsResponse,
   QuizSessionResponse,
   QuizStatsResponse,
   SaveAnswerRequest,
@@ -104,5 +106,12 @@ export const quizService = {
   getQuizStats: async (): Promise<QuizStatsResponse> => {
     const response = await api.get(`${BASE_API_URL}/${QUIZ}/${QUIZ_STATS}`);
     return response.data.stats;
+  },
+
+  getQuizResults: async (assessmentId: number): Promise<QuizResultsResponse> => {
+    const response = await api.get(
+      `${BASE_API_URL}/${QUIZ}/${ASSESSMENTS}/${assessmentId}/${QUIZ_RESULTS}`,
+    );
+    return response.data.results;
   },
 };

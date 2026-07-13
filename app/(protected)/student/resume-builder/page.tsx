@@ -14,6 +14,7 @@ import ProfessionalResumeTemplateVertical from "../../../../components/Resume-fo
 import ModernResumeTemplate from "../../../../components/Resume-formats/ModernResume";
 import MinimalResumeTemplate from "../../../../components/Resume-formats/MinimalResume";
 import StandardResumeTemplate from "../../../../components/Resume-formats/StandardResume";
+import FresherResumeTemplate from "../../../../components/Resume-formats/FresherResume";
 import {
   useGetCompleteResumeByID,
   useGetResumeFormats,
@@ -260,6 +261,7 @@ export default function ResumeBuilderPage() {
     { key: ResumeFormats.CREATIVE, title: ResumeTitles.Creative },
     { key: ResumeFormats.MINIMAL, title: ResumeTitles.Minimal },
     { key: ResumeFormats.STANDARD, title: ResumeTitles.Standard },
+    { key: ResumeFormats.FRESHER, title: ResumeTitles.Fresher },
   ];
 
   // demo resumes list
@@ -414,23 +416,84 @@ export default function ResumeBuilderPage() {
     technicalSkills,
   ]);
 
+  // Nested shape (same as assembledDataWithDefaults) but with NO dummy
+  // fallbacks — every empty field/array stays honestly empty. Backs the
+  // post-save Resume Preview modal (renderSelectedTemplate(false)), which
+  // must show only what the user actually entered, unlike the live Template
+  // Preview panel which intentionally shows placeholders.
+  const assembledDataWithoutDefaults = useMemo<any>(() => {
+    return {
+      resume_details: {
+        format_id: selectedResumeFormat?.format_id,
+        title: resumeTitle?.trim() || "",
+        is_default: false,
+      },
+
+      user: {
+        location: assembledData.location?.trim() || "",
+        phone: assembledData.phone?.trim() || "",
+        objective: assembledData.objective?.trim() || "",
+        portfolio_website_url: assembledData.portfolioLink?.trim() || "",
+        github_url: assembledData.githubLink?.trim() || "",
+        linkedin_url: assembledData.linkedinLink?.trim() || "",
+      },
+
+      skills: technicalSkillIds.length > 0 ? skillNames : [],
+
+      softskills:
+        assembledData.softSkills.length > 0 ? assembledData.softSkills : [],
+
+      education:
+        assembledData.educations.length > 0
+          ? assembledData.educations.map((e: any) => ({
+              degree: e.degree,
+              institute: e.institute,
+              location: e.location,
+              start_year: e.start_year ?? e.startYear,
+              end_year: e.end_year ?? e.endYear,
+              grade: e.grade,
+            }))
+          : [],
+
+      experience:
+        assembledData.experiences.length > 0
+          ? assembledData.experiences.map((exp: any) => ({
+              company: exp.company,
+              role: exp.role,
+              start_year: exp.start_year ?? exp.startYear,
+              end_year: exp.end_year ?? exp.endYear,
+              description: exp.description,
+            }))
+          : [],
+
+      projects:
+        assembledData.projects.length > 0
+          ? assembledData.projects.map((p: any) => ({
+              name: p.name ?? p.title,
+              description: p.description,
+            }))
+          : [],
+    };
+  }, [
+    assembledData,
+    selectedResumeFormat?.format_id,
+    resumeTitle,
+    technicalSkillIds,
+    skillNames,
+  ]);
+
   // Flat shape (matches components/resume-pdfs/types.ts `ResumeData`) sent to
-  // the PDF download route. Applies the exact same "real value or
-  // DEFAULT_SAMPLE fallback" rules as assembledDataWithDefaults above, so the
-  // downloaded PDF always matches what's already on screen in the Template
-  // Preview / post-save Resume Preview modal — including placeholder content
-  // for sections the user left empty.
+  // the PDF download route. The downloaded PDF must only ever contain what
+  // the user actually entered — no dummy/placeholder fallbacks — so every
+  // field below uses the real value or an honest empty string/array.
   const assembledDataForPdf = useMemo<any>(() => {
     return {
-      fullName: fullName ? fullName : DEFAULT_SAMPLE.fullName,
-      title: resumeTitle?.trim() || DEFAULT_SAMPLE.title,
-      email: email ? email : DEFAULT_SAMPLE.email,
-      phone: assembledData.phone?.trim() || DEFAULT_SAMPLE.phone,
-      location: assembledData.location?.trim() || DEFAULT_SAMPLE.location,
-      objective: assembledData.objective?.trim() || DEFAULT_SAMPLE.objective,
-      // Links have no meaningful placeholder — only include what the user
-      // actually entered so templates correctly omit unset links instead of
-      // rendering sample URLs in the real, downloaded PDF.
+      fullName: fullName ? fullName : "",
+      title: resumeTitle?.trim() || "",
+      email: email ? email : "",
+      phone: assembledData.phone?.trim() || "",
+      location: assembledData.location?.trim() || "",
+      objective: assembledData.objective?.trim() || "",
       portfolioLink: assembledData.portfolioLink?.trim() || "",
       githubLink: assembledData.githubLink?.trim() || "",
       linkedinLink: assembledData.linkedinLink?.trim() || "",
@@ -438,40 +501,33 @@ export default function ResumeBuilderPage() {
       technicalSkills:
         assembledData.technicalSkills.length > 0
           ? assembledData.technicalSkills
-          : DEFAULT_SAMPLE.technicalSkills,
+          : [],
 
       softSkills:
-        assembledData.softSkills.length > 0
-          ? assembledData.softSkills
-          : DEFAULT_SAMPLE.softSkills,
+        assembledData.softSkills.length > 0 ? assembledData.softSkills : [],
 
       educations:
-        assembledData.educations.length > 0
-          ? assembledData.educations
-          : DEFAULT_SAMPLE.educations,
+        assembledData.educations.length > 0 ? assembledData.educations : [],
 
       experiences:
-        assembledData.experiences.length > 0
-          ? assembledData.experiences
-          : DEFAULT_SAMPLE.experiences,
+        assembledData.experiences.length > 0 ? assembledData.experiences : [],
 
       projects:
-        assembledData.projects.length > 0
-          ? assembledData.projects
-          : DEFAULT_SAMPLE.projects,
+        assembledData.projects.length > 0 ? assembledData.projects : [],
 
       resumeFormat,
     };
   }, [assembledData, fullName, email, resumeTitle, resumeFormat]);
 
   const renderSelectedTemplate = (showPlaceholders = true) => {
-    // const data = showPlaceholders ? assembledDataWithDefaults : assembledData;
-    const data = assembledDataWithDefaults;
+    const data = showPlaceholders
+      ? assembledDataWithDefaults
+      : assembledDataWithoutDefaults;
     const props = {
       data,
       showPlaceholders,
-      fullName: fullName ? fullName : DEFAULT_SAMPLE.fullName,
-      email: email ? email : DEFAULT_SAMPLE.email,
+      fullName: fullName ? fullName : showPlaceholders ? DEFAULT_SAMPLE.fullName : "",
+      email: email ? email : showPlaceholders ? DEFAULT_SAMPLE.email : "",
     };
 
     switch (resumeFormat) {
@@ -483,6 +539,8 @@ export default function ResumeBuilderPage() {
         return <ModernResumeTemplate {...props} />;
       case ResumeFormats.MINIMAL:
         return <MinimalResumeTemplate {...props} />;
+      case ResumeFormats.FRESHER:
+        return <FresherResumeTemplate {...props} />;
       case ResumeFormats.STANDARD:
       default:
         return <StandardResumeTemplate {...props} />;
@@ -537,6 +595,25 @@ export default function ResumeBuilderPage() {
 
     // NOTE: experiences and projects are intentionally NOT required,
     // so we do NOT set errors.experiences or errors.projects here.
+
+    // Portfolio/GitHub/LinkedIn are also NOT required, but if the user
+    // chooses to fill one in, it must actually be a valid link.
+    const isValidHttpUrl = (v: string) => {
+      try {
+        const u = new URL(v.trim());
+        return u.protocol === "http:" || u.protocol === "https:";
+      } catch {
+        return false;
+      }
+    };
+    errors.portfolioLink =
+      portfolioLink.trim() !== "" && !isValidHttpUrl(portfolioLink);
+    errors.githubLink =
+      githubLink.trim() !== "" &&
+      !(isValidHttpUrl(githubLink) && /github\.com/i.test(githubLink));
+    errors.linkedinLink =
+      linkedinLink.trim() !== "" &&
+      !(isValidHttpUrl(linkedinLink) && /linkedin\.com/i.test(linkedinLink));
 
     return errors;
   };
@@ -984,6 +1061,7 @@ export default function ResumeBuilderPage() {
     3: ResumeFormats.CLASSIC,
     4: ResumeFormats.STANDARD,
     5: ResumeFormats.MINIMAL,
+    6: ResumeFormats.FRESHER,
   };
 
   const formatIdToFormatKey = useMemo(() => {
@@ -1012,6 +1090,8 @@ export default function ResumeBuilderPage() {
         return <ModernResumeTemplate {...props} />;
       case ResumeFormats.MINIMAL:
         return <MinimalResumeTemplate {...props} />;
+      case ResumeFormats.FRESHER:
+        return <FresherResumeTemplate {...props} />;
       case ResumeFormats.STANDARD:
       default:
         return <StandardResumeTemplate {...props} />;

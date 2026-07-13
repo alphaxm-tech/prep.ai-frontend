@@ -6,6 +6,7 @@ import ModernResumePDF from "@/components/resume-pdfs/ModernResumePDF";
 import CreativeResumePDF from "@/components/resume-pdfs/CreativeResumePDF";
 import MinimalResumePDF from "@/components/resume-pdfs/MinimalResumePDF";
 import StandardResumePDF from "@/components/resume-pdfs/StandardResumePDF";
+import FresherResumePDF from "@/components/resume-pdfs/FresherResumePDF";
 
 const TEMPLATES_BY_FORMAT: Record<string, typeof ProfessionalResumePDF> = {
   MODERN: ModernResumePDF,
@@ -13,6 +14,7 @@ const TEMPLATES_BY_FORMAT: Record<string, typeof ProfessionalResumePDF> = {
   CREATIVE: CreativeResumePDF,
   MINIMAL: MinimalResumePDF,
   STANDARD: StandardResumePDF,
+  FRESHER: FresherResumePDF,
 };
 
 export async function POST(req: Request) {

@@ -25,8 +25,20 @@ export const useSaveAttemptAnswer = (attemptId: number) => {
 };
 
 export const useSubmitAttempt = (attemptId: number) => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: () => quizService.submitAttempt(attemptId),
+    onSuccess: () => {
+      // The quiz hub page's not-taken/taken lists and best/avg stats are
+      // cached with a 5min staleTime and no refetch-on-focus, so without
+      // this they'd keep showing this quiz as untaken with stale stats
+      // after the user navigates back from the results screen.
+      queryClient.invalidateQueries({ queryKey: ["assessments"] });
+      queryClient.invalidateQueries({ queryKey: ["quiz", "getQuizStats"] });
+      queryClient.invalidateQueries({
+        queryKey: ["quiz", "getQuizSession", attemptId],
+      });
+    },
   });
 };
 

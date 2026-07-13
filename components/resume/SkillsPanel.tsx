@@ -330,11 +330,7 @@ export function SkillsPanel({
 
       {/* Soft Skills */}
       <div
-        className={`p-4 rounded-xl border bg-gray-50/40 shadow-sm ${
-          invalid("softSkillsMissing")
-            ? "border-red-400 ring-1 ring-red-200"
-            : "border-gray-200"
-        }`}
+        className={`p-4 rounded-xl border bg-gray-50/40 shadow-sm border-gray-200`}
       >
         <h4 className="text-sm font-semibold mb-2 text-gray-800">
           Soft Skills

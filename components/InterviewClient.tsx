@@ -263,9 +263,10 @@ function formatClock(totalSeconds: number): string {
 }
 
 function isExpiredError(err: any): boolean {
-  const message =
-    err?.response?.data?.error?.message ?? err?.message ?? "";
-  return typeof message === "string" && message.toLowerCase().includes("expired");
+  const message = err?.response?.data?.error?.message ?? err?.message ?? "";
+  return (
+    typeof message === "string" && message.toLowerCase().includes("expired")
+  );
 }
 
 /* ---------------------- InterviewClient ---------------------- */
@@ -282,8 +283,9 @@ export default function InterviewClient() {
     setAttemptIdResolved(true);
   }, []);
 
-  const { data: session, isLoading: isSessionLoading } =
-    useGetInterviewSession(attemptId ?? 0);
+  const { data: session, isLoading: isSessionLoading } = useGetInterviewSession(
+    attemptId ?? 0,
+  );
 
   const submitAnswerMutation = useSubmitInterviewAnswer(attemptId ?? 0);
   const finishInterviewMutation = useFinishInterview(attemptId ?? 0);
@@ -409,15 +411,15 @@ export default function InterviewClient() {
   const [questionLoading, setQuestionLoading] = useState(false);
 
   const [answeredCount, setAnsweredCount] = useState(0);
-  const [finishResult, setFinishResult] = useState<FinishInterviewResponse | null>(
-    null,
-  );
+  const [finishResult, setFinishResult] =
+    useState<FinishInterviewResponse | null>(null);
   const [finishError, setFinishError] = useState<string | null>(null);
   const [showResultsModal, setShowResultsModal] = useState(false);
 
   // speech synthesis
   const synthRef = useRef<SpeechSynthesis | null>(null);
   const utterRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const voicesRef = useRef<SpeechSynthesisVoice[]>([]);
 
   const showGlobalLoader =
     processingAnswer ||
@@ -439,9 +441,45 @@ export default function InterviewClient() {
 
   useEffect(() => {
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
-      synthRef.current = window.speechSynthesis;
+      const synth = window.speechSynthesis;
+      synthRef.current = synth;
+
+      const loadVoices = () => {
+        voicesRef.current = synth.getVoices();
+      };
+      loadVoices();
+      synth.addEventListener("voiceschanged", loadVoices);
+      return () => synth.removeEventListener("voiceschanged", loadVoices);
     }
   }, []);
+
+  // Prefer a clear, local (non-network) English voice — remote/compressed
+  // "network" voices are the usual cause of muffled/tinny TTS playback.
+  const pickBestVoice = () => {
+    const voices = voicesRef.current;
+    if (!voices.length) return null;
+    const englishVoices = voices.filter((v) =>
+      v.lang?.toLowerCase().startsWith("en"),
+    );
+    const pool = englishVoices.length ? englishVoices : voices;
+
+    const preferredNames = [
+      "Google US English",
+      "Samantha",
+      "Microsoft Aria Online (Natural)",
+      "Microsoft Jenny Online (Natural)",
+      "Microsoft Guy Online (Natural)",
+    ];
+    for (const name of preferredNames) {
+      const match = pool.find((v) => v.name === name);
+      if (match) return match;
+    }
+
+    const localVoice = pool.find((v) => v.localService);
+    if (localVoice) return localVoice;
+
+    return pool[0];
+  };
 
   // Initialize total questions + resume position once session loads
   useEffect(() => {
@@ -459,6 +497,10 @@ export default function InterviewClient() {
       const u = new SpeechSynthesisUtterance(text);
       u.lang = "en-US";
       u.rate = Math.max(0.6, Math.min(1.6, rate));
+      u.pitch = 1;
+      u.volume = 1;
+      const voice = pickBestVoice();
+      if (voice) u.voice = voice;
       utterRef.current = u;
       synthRef.current.speak(u);
     } catch (e) {
@@ -475,7 +517,11 @@ export default function InterviewClient() {
 
   // Start the interview once the camera gate is passed
   useEffect(() => {
-    if (cameraGatePassed && !interviewStarted && session?.status === "in_progress") {
+    if (
+      cameraGatePassed &&
+      !interviewStarted &&
+      session?.status === "in_progress"
+    ) {
       setInterviewStarted(true);
       setBigCountdown(3);
     }
@@ -580,7 +626,14 @@ export default function InterviewClient() {
       stopSpeaking();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [interviewStarted, bigCountdown, currentQuestion, mute, processingAnswer, questionLoading]);
+  }, [
+    interviewStarted,
+    bigCountdown,
+    currentQuestion,
+    mute,
+    processingAnswer,
+    questionLoading,
+  ]);
 
   // small countdown
   useEffect(() => {
@@ -648,7 +701,10 @@ export default function InterviewClient() {
   const handleRecordingComplete = useCallback(
     async (payload: RecorderOnCompletePayload) => {
       if (processingAnswer) return;
-      if (!currentQuestion || payload.questionId !== currentQuestion.question_id)
+      if (
+        !currentQuestion ||
+        payload.questionId !== currentQuestion.question_id
+      )
         return;
       if (!attemptId) return;
 
@@ -754,8 +810,8 @@ export default function InterviewClient() {
         </div>
         <h1 className="text-2xl font-bold">Camera access required</h1>
         <p className="text-gray-600 max-w-md">
-          {session?.title ?? "This AI interview"} requires your camera to be
-          on for the full session. Camera access is mandatory and cannot be
+          {session?.title ?? "This AI interview"} requires your camera to be on
+          for the full session. Camera access is mandatory and cannot be
           skipped.
         </p>
         <button
@@ -782,7 +838,7 @@ export default function InterviewClient() {
       <div className="h-screen w-full bg-white text-gray-900 overflow-hidden flex font-sans selection:bg-amber-500/30">
         {/* TAB SWITCH WARNING */}
         <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50">
-          <div className="px-4 py-2 rounded-full bg-amber-100 text-amber-800 text-[11px] font-semibold tracking-wide border border-amber-300 shadow-sm">
+          <div className="px-6 py-3 rounded-full bg-amber-100 text-amber-800 text-sm md:text-base font-bold tracking-wide border-2 border-amber-300 shadow-md">
             ⚠️ Leaving this tab will automatically end the interview
           </div>
         </div>
@@ -791,7 +847,7 @@ export default function InterviewClient() {
         {remainingSec !== null && interviewStarted && (
           <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50">
             <div
-              className={`px-4 py-1.5 rounded-full text-xs font-bold tracking-wide border shadow-sm font-mono ${
+              className={`px-6 py-2.5 rounded-full text-lg md:text-xl font-bold tracking-wide border-2 shadow-md font-mono ${
                 remainingSec < 60
                   ? "bg-red-100 text-red-700 border-red-300"
                   : "bg-gray-100 text-gray-700 border-gray-300"
@@ -815,7 +871,7 @@ export default function InterviewClient() {
                     </div>
                     <div>
                       <div className="text-xl font-bold text-gray-900 tracking-tight">
-                        Interview Results
+                        {session?.title ?? "Interview"} — Results
                       </div>
                       <div className="text-sm text-gray-600">
                         Performance summary & feedback
