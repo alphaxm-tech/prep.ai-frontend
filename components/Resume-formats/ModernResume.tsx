@@ -185,81 +185,85 @@ export default function ModernResumeTemplate({
         </section>
 
         {/* Experience */}
-        <section>
-          <h2 className="text-xl font-semibold text-gray-900 border-b-2 border-indigo-100 pb-1 mb-3">
-            Experience
-          </h2>
-          <div className="space-y-4">
-            {experience?.length ? (
-              experience.map((exp: WorkExperience, i: number) => (
-                <div
-                  key={i}
-                  className="p-5 border border-gray-100 rounded-xl shadow-sm"
-                >
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="font-semibold text-gray-900">
-                        {exp.role}
+        {(experience?.length || showPlaceholders) && (
+          <section>
+            <h2 className="text-xl font-semibold text-gray-900 border-b-2 border-indigo-100 pb-1 mb-3">
+              Experience
+            </h2>
+            <div className="space-y-4">
+              {experience?.length ? (
+                experience.map((exp: WorkExperience, i: number) => (
+                  <div
+                    key={i}
+                    className="p-5 border border-gray-100 rounded-xl shadow-sm"
+                  >
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="font-semibold text-gray-900">
+                          {exp.role}
+                        </div>
+                        <div className="text-sm text-gray-600">
+                          {exp.company}
+                        </div>
                       </div>
-                      <div className="text-sm text-gray-600">{exp.company}</div>
+                      <div className="text-xs text-gray-500">
+                        {exp.start_year} – {exp.end_year}
+                      </div>
                     </div>
-                    <div className="text-xs text-gray-500">
-                      {exp.start_year} – {exp.end_year}
-                    </div>
+                    <p className="mt-2 text-sm text-gray-700 leading-relaxed">
+                      {exp.description}
+                    </p>
                   </div>
+                ))
+              ) : (
+                <div className="p-5 border border-gray-100 rounded-xl shadow-sm">
+                  <div className="font-semibold text-gray-900">
+                    Software Engineer
+                  </div>
+                  <div className="text-sm text-gray-600">Company Name</div>
                   <p className="mt-2 text-sm text-gray-700 leading-relaxed">
-                    {exp.description}
+                    Worked on impactful features and scalable systems.
                   </p>
                 </div>
-              ))
-            ) : showPlaceholders ? (
-              <div className="p-5 border border-gray-100 rounded-xl shadow-sm">
-                <div className="font-semibold text-gray-900">
-                  Software Engineer
-                </div>
-                <div className="text-sm text-gray-600">Company Name</div>
-                <p className="mt-2 text-sm text-gray-700 leading-relaxed">
-                  Worked on impactful features and scalable systems.
-                </p>
-              </div>
-            ) : (
-              <span className="text-sm text-gray-400">
-                No work experience added
-              </span>
-            )}
-          </div>
-        </section>
+              )}
+            </div>
+          </section>
+        )}
 
         {/* Projects */}
-        <section>
-          <h2 className="text-xl font-semibold text-gray-900 border-b-2 border-indigo-100 pb-1 mb-3">
-            Projects
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {projects?.length ? (
-              projects.map((p: Project, i: number) => (
-                <div
-                  key={i}
-                  className="p-4 bg-gradient-to-br from-indigo-50 to-white border border-gray-100 rounded-lg"
-                >
-                  <div className="font-medium text-gray-900">🚀 {p.name}</div>
-                  <p className="mt-2 text-sm text-gray-700">{p.description}</p>
+        {(projects?.length || showPlaceholders) && (
+          <section>
+            <h2 className="text-xl font-semibold text-gray-900 border-b-2 border-indigo-100 pb-1 mb-3">
+              Projects
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {projects?.length ? (
+                projects.map((p: Project, i: number) => (
+                  <div
+                    key={i}
+                    className="p-4 bg-gradient-to-br from-indigo-50 to-white border border-gray-100 rounded-lg"
+                  >
+                    <div className="font-medium text-gray-900">
+                      🚀 {p.name}
+                    </div>
+                    <p className="mt-2 text-sm text-gray-700">
+                      {p.description}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <div className="p-4 bg-gradient-to-br from-indigo-50 to-white border border-gray-100 rounded-lg">
+                  <div className="font-medium text-gray-900">
+                    🚀 Example Project
+                  </div>
+                  <p className="mt-2 text-sm text-gray-700">
+                    A sample project description demonstrating impact.
+                  </p>
                 </div>
-              ))
-            ) : showPlaceholders ? (
-              <div className="p-4 bg-gradient-to-br from-indigo-50 to-white border border-gray-100 rounded-lg">
-                <div className="font-medium text-gray-900">
-                  🚀 Example Project
-                </div>
-                <p className="mt-2 text-sm text-gray-700">
-                  A sample project description demonstrating impact.
-                </p>
-              </div>
-            ) : (
-              <span className="text-sm text-gray-400">No projects added</span>
-            )}
-          </div>
-        </section>
+              )}
+            </div>
+          </section>
+        )}
       </main>
 
       <footer className="mt-6 mb-8 text-xs text-gray-500 text-center">

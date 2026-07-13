@@ -194,81 +194,83 @@ export default function ProfessionalResumeTemplateVertical({
         </section>
 
         {/* Experience */}
-        <section>
-          <h3 className="text-sm font-semibold text-slate-800 mb-2">
-            Experience
-          </h3>
-          <div className="space-y-4">
-            {experience?.length ? (
-              experience.map((exp: WorkExperience, i: number) => (
-                <article
-                  key={i}
-                  className="p-4 rounded border border-slate-100 bg-white shadow-sm"
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <div className="text-md font-semibold text-slate-900">
-                        {exp.role}
+        {(experience?.length || showPlaceholders) && (
+          <section>
+            <h3 className="text-sm font-semibold text-slate-800 mb-2">
+              Experience
+            </h3>
+            <div className="space-y-4">
+              {experience?.length ? (
+                experience.map((exp: WorkExperience, i: number) => (
+                  <article
+                    key={i}
+                    className="p-4 rounded border border-slate-100 bg-white shadow-sm"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <div className="text-md font-semibold text-slate-900">
+                          {exp.role}
+                        </div>
+                        <div className="text-sm text-slate-700">
+                          {exp.company}
+                        </div>
                       </div>
-                      <div className="text-sm text-slate-700">
-                        {exp.company}
+                      <div className="text-xs text-slate-500">
+                        {exp.start_year} – {exp.end_year}
                       </div>
                     </div>
-                    <div className="text-xs text-slate-500">
-                      {exp.start_year} – {exp.end_year}
-                    </div>
+                    <p className="mt-2 text-sm text-slate-700 leading-normal">
+                      {exp.description}
+                    </p>
+                  </article>
+                ))
+              ) : (
+                <article className="p-4 rounded border border-slate-100 bg-white shadow-sm">
+                  <div className="text-md font-semibold text-slate-900">
+                    Software Engineer
                   </div>
+                  <div className="text-sm text-slate-700">Company Name</div>
                   <p className="mt-2 text-sm text-slate-700 leading-normal">
-                    {exp.description}
+                    Worked on scalable systems and business-critical features.
                   </p>
                 </article>
-              ))
-            ) : showPlaceholders ? (
-              <article className="p-4 rounded border border-slate-100 bg-white shadow-sm">
-                <div className="text-md font-semibold text-slate-900">
-                  Software Engineer
-                </div>
-                <div className="text-sm text-slate-700">Company Name</div>
-                <p className="mt-2 text-sm text-slate-700 leading-normal">
-                  Worked on scalable systems and business-critical features.
-                </p>
-              </article>
-            ) : (
-              <div className="text-sm text-slate-400">No experience listed</div>
-            )}
-          </div>
-        </section>
+              )}
+            </div>
+          </section>
+        )}
 
         {/* Projects */}
-        <section>
-          <h3 className="text-sm font-semibold text-slate-800 mb-2">
-            Projects
-          </h3>
-          <div className="space-y-3">
-            {projects?.length ? (
-              projects.map((p: Project, i: number) => (
-                <div
-                  key={i}
-                  className="p-3 rounded border border-slate-100 bg-white shadow-sm"
-                >
-                  <div className="font-medium text-slate-900">{p.name}</div>
-                  <p className="mt-1 text-sm text-slate-700">{p.description}</p>
+        {(projects?.length || showPlaceholders) && (
+          <section>
+            <h3 className="text-sm font-semibold text-slate-800 mb-2">
+              Projects
+            </h3>
+            <div className="space-y-3">
+              {projects?.length ? (
+                projects.map((p: Project, i: number) => (
+                  <div
+                    key={i}
+                    className="p-3 rounded border border-slate-100 bg-white shadow-sm"
+                  >
+                    <div className="font-medium text-slate-900">{p.name}</div>
+                    <p className="mt-1 text-sm text-slate-700">
+                      {p.description}
+                    </p>
+                  </div>
+                ))
+              ) : (
+                <div className="p-3 rounded border border-slate-100 bg-white shadow-sm">
+                  <div className="font-medium text-slate-900">
+                    Example Project
+                  </div>
+                  <p className="mt-1 text-sm text-slate-700">
+                    Short project description showing scope and impact.
+                  </p>
                 </div>
-              ))
-            ) : showPlaceholders ? (
-              <div className="p-3 rounded border border-slate-100 bg-white shadow-sm">
-                <div className="font-medium text-slate-900">
-                  Example Project
-                </div>
-                <p className="mt-1 text-sm text-slate-700">
-                  Short project description showing scope and impact.
-                </p>
-              </div>
-            ) : (
-              <div className="text-sm text-slate-400">No projects listed</div>
-            )}
-          </div>
-        </section>
+              )}
+            </div>
+          </section>
+        )}
 
         <footer className="mt-6 text-xs text-gray-500 text-center">
           {/* Generated with a professional vertical · Print friendly */}

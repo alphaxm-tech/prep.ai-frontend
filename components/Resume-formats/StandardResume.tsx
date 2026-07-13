@@ -193,80 +193,84 @@ export default function StandardResumeTemplate({
         </section>
 
         {/* Experience */}
-        <section>
-          <h2 className="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-1 mb-2">
-            Work Experience
-          </h2>
+        {(experience?.length || showPlaceholders) && (
+          <section>
+            <h2 className="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-1 mb-2">
+              Work Experience
+            </h2>
 
-          {experience?.length ? (
-            <div className="space-y-4">
-              {experience.map((exp: WorkExperience, idx: number) => (
-                <div key={idx}>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <div className="font-medium text-gray-900">
-                        {exp.role}
+            {experience?.length ? (
+              <div className="space-y-4">
+                {experience.map((exp: WorkExperience, idx: number) => (
+                  <div key={idx}>
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="font-medium text-gray-900">
+                          {exp.role}
+                        </div>
+                        <div className="text-sm text-gray-700">
+                          {exp.company}
+                        </div>
                       </div>
-                      <div className="text-sm text-gray-700">{exp.company}</div>
+                      <div className="text-xs text-gray-500">
+                        {exp.start_year} – {exp.end_year}
+                      </div>
                     </div>
-                    <div className="text-xs text-gray-500">
-                      {exp.start_year} – {exp.end_year}
-                    </div>
+                    <p className="mt-1 text-sm text-gray-700 leading-snug">
+                      {exp.description}
+                    </p>
                   </div>
-                  <p className="mt-1 text-sm text-gray-700 leading-snug">
-                    {exp.description}
-                  </p>
-                </div>
-              ))}
-            </div>
-          ) : showPlaceholders ? (
-            <div>
-              <div className="flex justify-between items-start">
-                <div>
-                  <div className="font-medium text-gray-900">
-                    Software Engineer
-                  </div>
-                  <div className="text-sm text-gray-700">Company Name</div>
-                </div>
-                <div className="text-xs text-gray-500">2023 – Present</div>
+                ))}
               </div>
-              <p className="mt-1 text-sm text-gray-700 leading-snug">
-                Built reliable backend services and user-facing features.
-              </p>
-            </div>
-          ) : (
-            <p className="text-sm text-gray-400">No experience listed</p>
-          )}
-        </section>
+            ) : (
+              <div>
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="font-medium text-gray-900">
+                      Software Engineer
+                    </div>
+                    <div className="text-sm text-gray-700">Company Name</div>
+                  </div>
+                  <div className="text-xs text-gray-500">2023 – Present</div>
+                </div>
+                <p className="mt-1 text-sm text-gray-700 leading-snug">
+                  Built reliable backend services and user-facing features.
+                </p>
+              </div>
+            )}
+          </section>
+        )}
 
         {/* Projects */}
-        <section>
-          <h2 className="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-1 mb-2">
-            Projects
-          </h2>
+        {(projects?.length || showPlaceholders) && (
+          <section>
+            <h2 className="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-1 mb-2">
+              Projects
+            </h2>
 
-          {projects?.length ? (
-            <div className="space-y-3">
-              {projects.map((p: Project, idx: number) => (
-                <div key={idx}>
-                  <div className="font-medium text-gray-900">{p.name}</div>
-                  <p className="text-sm text-gray-700 leading-snug">
-                    {p.description}
-                  </p>
+            {projects?.length ? (
+              <div className="space-y-3">
+                {projects.map((p: Project, idx: number) => (
+                  <div key={idx}>
+                    <div className="font-medium text-gray-900">{p.name}</div>
+                    <p className="text-sm text-gray-700 leading-snug">
+                      {p.description}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div>
+                <div className="font-medium text-gray-900">
+                  Example Project
                 </div>
-              ))}
-            </div>
-          ) : showPlaceholders ? (
-            <div>
-              <div className="font-medium text-gray-900">Example Project</div>
-              <p className="text-sm text-gray-700 leading-snug">
-                A short example showing scope and technical stack.
-              </p>
-            </div>
-          ) : (
-            <p className="text-sm text-gray-400">No projects listed</p>
-          )}
-        </section>
+                <p className="text-sm text-gray-700 leading-snug">
+                  A short example showing scope and technical stack.
+                </p>
+              </div>
+            )}
+          </section>
+        )}
       </main>
 
       <footer className="mt-6 text-xs text-gray-500 text-center">
