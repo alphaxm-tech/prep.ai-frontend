@@ -16,6 +16,7 @@ import {
   SubmitAttemptResponse,
 } from "@/server-api/api/types/quiz.types";
 import Loader from "@/components/Loader";
+import QuizResultsModal from "@/components/QuizResultsModal";
 import { QUIZ_ROUTE } from "@/constants/ui-routes";
 
 type QuizPageProps = {
@@ -49,6 +50,7 @@ export default function QuizPage({ title = "Quiz", attemptId }: QuizPageProps) {
   const [showLeaveWarning, setShowLeaveWarning] = useState(false);
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
   const [results, setResults] = useState<SubmitAttemptResponse | null>(null);
+  const [showResultsModal, setShowResultsModal] = useState(false);
   const confirmedLeaveRef = useRef(false);
   const autoSubmittedRef = useRef(false);
 
@@ -228,30 +230,38 @@ export default function QuizPage({ title = "Quiz", attemptId }: QuizPageProps) {
           <p className="text-sm text-gray-500">
             Score: {results.score} / {results.total}
           </p>
-          <button
-            onClick={() => router.push(QUIZ_ROUTE)}
-            className="mt-4 px-6 py-2 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-yellow-900 font-semibold shadow-lg"
-          >
-            Back to Quizzes
-          </button>
+          <div className="flex gap-3 justify-center mt-4">
+            <button
+              onClick={() => setShowResultsModal(true)}
+              className="px-6 py-2 rounded-xl bg-white border border-yellow-300 text-yellow-800 font-semibold shadow hover:bg-yellow-50"
+            >
+              View Full Results
+            </button>
+            <button
+              onClick={() => router.push(QUIZ_ROUTE)}
+              className="px-6 py-2 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-yellow-900 font-semibold shadow-lg"
+            >
+              Back to Quizzes
+            </button>
+          </div>
         </div>
+        {showResultsModal && (
+          <QuizResultsModal
+            assessmentId={quizSession?.assessment_id ?? null}
+            onClose={() => setShowResultsModal(false)}
+          />
+        )}
       </div>
     );
   }
 
   if (attemptFinalized) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-gray-600">
-        <div className="max-w-md w-full bg-white/80 backdrop-blur-xl border border-white/40 shadow-2xl rounded-3xl p-8 text-center space-y-4">
-          <h2 className="text-xl font-bold">This attempt has ended</h2>
-          <p className="text-sm text-gray-500">Status: {quizSession?.status}</p>
-          <button
-            onClick={() => router.push(QUIZ_ROUTE)}
-            className="mt-2 px-6 py-2 rounded-xl bg-yellow-400 hover:bg-yellow-300 text-yellow-900 font-semibold shadow-lg"
-          >
-            Back to Quizzes
-          </button>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-gray-100 via-white to-gray-200">
+        <QuizResultsModal
+          assessmentId={quizSession?.assessment_id ?? null}
+          onClose={() => router.push(QUIZ_ROUTE)}
+        />
       </div>
     );
   }
