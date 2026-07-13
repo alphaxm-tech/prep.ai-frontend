@@ -2,19 +2,23 @@ import api from "../api/axios";
 import {
   AIINTERVIEW,
   ANSWER,
+  ASSESSMENTS,
   ATTEMPTS,
   BASE_API_URL,
   FINISH,
   GET_ATTEMPT_QUESTION,
   INTERVIEW_STATS,
+  REVIEW,
   SESSION,
   START,
 } from "../../constants/api-endpoints";
 import {
   FinishInterviewResponse,
   GetInterviewQuestionResponse,
+  GetInterviewReviewResponse,
   GetInterviewSessionResponse,
   GetInterviewStatsResponse,
+  InterviewReviewResponse,
   InterviewSessionResponse,
   InterviewStatsResponse,
   StartInterviewResponse,
@@ -81,5 +85,12 @@ export const aiInterviewService = {
       `${BASE_API_URL}/${AIINTERVIEW}/${INTERVIEW_STATS}`,
     );
     return response.data.stats;
+  },
+
+  getReview: async (assessmentId: number): Promise<InterviewReviewResponse> => {
+    const response = await api.get<GetInterviewReviewResponse>(
+      `${BASE_API_URL}/${AIINTERVIEW}/${ASSESSMENTS}/${assessmentId}/${REVIEW}`,
+    );
+    return response.data.review;
   },
 };

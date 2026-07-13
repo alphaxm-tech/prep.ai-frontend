@@ -2,6 +2,7 @@
 
 import {
   AI_INTERVIEWS_LABEL,
+  ASSESSMENT_MANAGEMENT_LABEL,
   CODE_EDITOR_LABEL,
   COLLEGES_LABEL,
   COMMUNICATION_LABEL,
@@ -37,6 +38,7 @@ import {
   ROLE,
   REPORT,
   STUDENTS,
+  ASSESSMENT_MANAGEMENT,
 } from "@/constants/ui-routes";
 import {
   CollegeAdminRoles,
@@ -117,6 +119,10 @@ export function SubHeader({ user }: { user: any }) {
         {
           label: COLLEGES_LABEL,
           route: "/admin/colleges",
+        },
+        {
+          label: ASSESSMENT_MANAGEMENT_LABEL,
+          route: `${PLATFORM_ROUTE}${ASSESSMENT_MANAGEMENT}`,
         },
         {
           label: USERS_LABEL,

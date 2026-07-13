@@ -82,3 +82,34 @@ export interface GetInterviewStatsResponse {
   success: boolean;
   stats: InterviewStatsResponse;
 }
+
+export interface InterviewReviewQuestion {
+  question_id: number;
+  question_text: string;
+  transcript: string;
+  duration_sec: number;
+  score_awarded: number;
+  max_score: number;
+  strengths: string[];
+  improvements: string[];
+  evaluation_status: string;
+}
+
+export interface InterviewReviewResponse {
+  attempt_id: number;
+  assessment_id: number;
+  title: string;
+  status: string;
+  started_at: string;
+  submitted_at?: string | null;
+  evaluated_at?: string | null;
+  total_score: number;
+  max_score: number;
+  overall_feedback?: string;
+  questions: InterviewReviewQuestion[];
+}
+
+export interface GetInterviewReviewResponse {
+  success: boolean;
+  review: InterviewReviewResponse;
+}

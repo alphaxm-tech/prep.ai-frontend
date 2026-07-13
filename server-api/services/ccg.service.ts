@@ -3,6 +3,7 @@ import {
   AddCollegeRequest,
   Course,
   CreateCourseRequest,
+  Group,
 } from "../api/types/ccg.types";
 import {
   CREATE_NEW_COLLEGE,
@@ -11,6 +12,7 @@ import {
   SUPER_ADMIN,
   CCG,
   CREARE_NEW_COURSE,
+  GROUPS,
 } from "@/constants/api-endpoints";
 import api from "@/server-api/api/axios";
 import { GetAllCoursesResponse } from "../queries/ccg.queries";
@@ -34,5 +36,12 @@ export const ccgService = {
       `${BASE_API_URL}/${CCG}/${CREARE_NEW_COURSE}`,
     );
     return response.data;
+  },
+
+  getAllGroups: async (): Promise<Group[]> => {
+    const response = await api.get<{ success: boolean; data: Group[] }>(
+      `${BASE_API_URL}/${CCG}/${GROUPS}`,
+    );
+    return response.data.data;
   },
 };

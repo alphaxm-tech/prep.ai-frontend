@@ -17,3 +17,4 @@ export const ONBOARD_COLLEGE_LABEL = "Onboard College";
 export const COLLEGES_LABEL = "Colleges";
 export const USERS_LABEL = "Users";
 export const SYSTEM_LOGS_LABEL = "System Logs";
+export const ASSESSMENT_MANAGEMENT_LABEL = "Assessment management";

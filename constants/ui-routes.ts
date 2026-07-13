@@ -29,6 +29,7 @@ export const ONBOARD_COLLEGE = "/onboard-college";
 export const COLLEGE = "/college";
 export const COURSE = "/course";
 export const GROUP = "/group";
+export const ASSESSMENT_MANAGEMENT = "/assessment-management";
 
 // College admin Routes
 export const PLACEMENT = "/placement";
