@@ -4,7 +4,8 @@ import React, { useState } from "react";
 import { PlusIcon } from "@heroicons/react/24/outline";
 import YearDropdown from "./YearDropdown";
 
-const CURRENT_YEAR = new Date().getFullYear();
+// const CURRENT_YEAR = new Date().getFullYear();
+const CURRENT_YEAR = 2032;
 const YEAR_OPTIONS = Array.from({ length: CURRENT_YEAR - 1995 + 1 }, (_, i) =>
   String(CURRENT_YEAR - i),
 );
