@@ -42,6 +42,20 @@ export const useSubmitAttempt = (attemptId: number) => {
   });
 };
 
+export const useAbandonAttempt = (attemptId: number) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => quizService.abandonAttempt(attemptId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["assessments"] });
+      queryClient.invalidateQueries({ queryKey: ["quiz", "getQuizStats"] });
+      queryClient.invalidateQueries({
+        queryKey: ["quiz", "getQuizSession", attemptId],
+      });
+    },
+  });
+};
+
 export const useMarkForReview = (attemptId: number) => {
   const queryClient = useQueryClient();
   return useMutation({

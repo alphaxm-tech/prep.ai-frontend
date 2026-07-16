@@ -6,8 +6,7 @@ import { AuthContext } from "@/app/provider";
 import { useGetAllAssessments } from "@/server-api/queries/assessment.queries";
 import { useGetQuizStats } from "@/server-api/queries/quiz.queries";
 import Loader from "@/components/Loader";
-import { QUIZ_ROUTE, QUIZ_TEST } from "@/constants/ui-routes";
-import { createQuizAssessment } from "@/server-api/mutations/quiz.mutation";
+import { QUIZ_ROUTE, QUIZ_INSTRUCTIONS } from "@/constants/ui-routes";
 import {
   ASSESSMENT_TYPES,
   AssessmentResponse,
@@ -57,15 +56,18 @@ export default function Quiz() {
 
   const { data: quizStats } = useGetQuizStats();
 
-  const startQuizMutation = createQuizAssessment();
-
+  // Starting the attempt (and its timer) happens on the instructions page,
+  // not here — clicking "Start" just routes there with enough context to
+  // render the instructions without a second fetch.
   const handleStartQuiz = (quiz: AssessmentResponse) => {
-    startQuizMutation.mutate(quiz.assessment_id, {
-      onSuccess: (data) => {
-        const attemptId = data.attempt.AttemptID;
-        router.push(`${QUIZ_ROUTE}${QUIZ_TEST}/${attemptId}`);
-      },
+    const query = new URLSearchParams({
+      title: quiz.title,
+      total_questions: String(quiz.total_questions),
+      duration_sec: String(quiz.duration_sec),
     });
+    router.push(
+      `${QUIZ_ROUTE}${QUIZ_INSTRUCTIONS}/${quiz.assessment_id}?${query.toString()}`,
+    );
   };
 
   const handleDifficultyChange = (level: string) => {
@@ -86,10 +88,8 @@ export default function Quiz() {
 
   return (
     <>
-      <WorkInProgressBanner />
-      <Loader
-        show={isUntakenLoading || startQuizMutation.isPending || isTakenLoading}
-      />
+      {/* <WorkInProgressBanner /> */}
+      <Loader show={isUntakenLoading || isTakenLoading} />
 
       <div className="min-h-screen px-4 md:px-8 py-10">
         <div className="max-w-6xl mx-auto">
