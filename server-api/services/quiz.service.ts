@@ -4,6 +4,7 @@ import {
   ASSESSMENTS,
   ATTEMPTS,
   BASE_API_URL,
+  COLLEGE_LEADERBOARD,
   GET_ATTEMPT_QUESTION,
   GET_QUIZ_SESSION,
   LEADERBOARD,
@@ -15,6 +16,7 @@ import {
   SUBMIT,
 } from "../../constants/api-endpoints";
 import {
+  CollegeLeaderboardEntry,
   GetAttemptQuestion,
   GetAttemptQuestionResponse,
   GetAttemptStatusResposne,
@@ -121,5 +123,12 @@ export const quizService = {
       `${BASE_API_URL}/${QUIZ}/${ASSESSMENTS}/${assessmentId}/${QUIZ_RESULTS}`,
     );
     return response.data.results;
+  },
+
+  getCollegeLeaderboard: async (): Promise<CollegeLeaderboardEntry[]> => {
+    const response = await api.get(
+      `${BASE_API_URL}/${QUIZ}/${COLLEGE_LEADERBOARD}`,
+    );
+    return response.data.leaderboard;
   },
 };

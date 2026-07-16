@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import {
+  CollegeLeaderboardEntry,
   GetAttemptQuestion,
   GetAttemptStatusResposne,
   GetLeaderboardResponse,
@@ -53,5 +54,12 @@ export const useGetQuizResults = (assessmentId: number | null) => {
     queryKey: ["quiz", "getQuizResults", assessmentId],
     queryFn: () => quizService.getQuizResults(assessmentId as number),
     enabled: assessmentId !== null && assessmentId > 0,
+  });
+};
+
+export const useGetCollegeLeaderboard = () => {
+  return useQuery<CollegeLeaderboardEntry[]>({
+    queryKey: ["quiz", "getCollegeLeaderboard"],
+    queryFn: () => quizService.getCollegeLeaderboard(),
   });
 };

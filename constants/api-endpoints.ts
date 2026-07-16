@@ -60,6 +60,7 @@ export const QUIZ_STATS = "quiz-stats";
 export const MARK_FOR_REVIEW = "mark-for-review";
 export const QUIZ_RESULTS = "results";
 export const ABANDON = "abandon";
+export const COLLEGE_LEADERBOARD = "leaderboard/college";
 
 /// Code editor ///
 export const GET_CODING_QUESTIONS = "questions";
