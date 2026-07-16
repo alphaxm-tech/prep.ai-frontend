@@ -1,6 +1,6 @@
 // "https://api.aiprepbuddy.com/api/v1";
-export const BASE_API_URL = "https://api.aiprepbuddy.com/api/v1";
-// export const BASE_API_URL = "http://localhost:8080/api/v1";
+// export const BASE_API_URL = "https://api.aiprepbuddy.com/api/v1";
+export const BASE_API_URL = "http://localhost:8080/api/v1";
 
 export const RESUME = `resume`;
 export const AIINTERVIEW = `ai-interview`;
@@ -59,6 +59,7 @@ export const GET_QUIZ_SESSION = "get-quiz-session";
 export const QUIZ_STATS = "quiz-stats";
 export const MARK_FOR_REVIEW = "mark-for-review";
 export const QUIZ_RESULTS = "results";
+export const ABANDON = "abandon";
 
 /// Code editor ///
 export const GET_CODING_QUESTIONS = "questions";

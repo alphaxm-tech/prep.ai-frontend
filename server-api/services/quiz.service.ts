@@ -1,5 +1,6 @@
 import api from "../api/axios";
 import {
+  ABANDON,
   ASSESSMENTS,
   ATTEMPTS,
   BASE_API_URL,
@@ -69,6 +70,13 @@ export const quizService = {
   submitAttempt: async (attemptId: number): Promise<SubmitAttemptResponse> => {
     const response = await api.post(
       `${BASE_API_URL}/${QUIZ}/${ATTEMPTS}/${attemptId}/${SUBMIT}`,
+    );
+    return response.data.result;
+  },
+
+  abandonAttempt: async (attemptId: number): Promise<SubmitAttemptResponse> => {
+    const response = await api.post(
+      `${BASE_API_URL}/${QUIZ}/${ATTEMPTS}/${attemptId}/${ABANDON}`,
     );
     return response.data.result;
   },

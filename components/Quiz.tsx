@@ -7,6 +7,7 @@ import {
   useGetQuizSession,
 } from "@/server-api/queries/quiz.queries";
 import {
+  useAbandonAttempt,
   useMarkForReview,
   useSaveAttemptAnswer,
   useSubmitAttempt,
@@ -17,7 +18,7 @@ import {
 } from "@/server-api/api/types/quiz.types";
 import Loader from "@/components/Loader";
 import QuizResultsModal from "@/components/QuizResultsModal";
-import { QUIZ_ROUTE } from "@/constants/ui-routes";
+import { QUIZ_ROUTE, QUIZ_TERMINATED } from "@/constants/ui-routes";
 
 type QuizPageProps = {
   title?: string;
@@ -51,8 +52,10 @@ export default function QuizPage({ title = "Quiz", attemptId }: QuizPageProps) {
   const [showSubmitConfirm, setShowSubmitConfirm] = useState(false);
   const [results, setResults] = useState<SubmitAttemptResponse | null>(null);
   const [showResultsModal, setShowResultsModal] = useState(false);
+  const [terminating, setTerminating] = useState(false);
   const confirmedLeaveRef = useRef(false);
   const autoSubmittedRef = useRef(false);
+  const abandonedRef = useRef(false);
 
   const { data: quizSession, isLoading: quizSessionLoading } =
     useGetQuizSession(attemptId);
@@ -78,6 +81,7 @@ export default function QuizPage({ title = "Quiz", attemptId }: QuizPageProps) {
   const saveAnswerMutation = useSaveAttemptAnswer(attemptId);
   const markForReviewMutation = useMarkForReview(attemptId);
   const submitMutation = useSubmitAttempt(attemptId);
+  const abandonMutation = useAbandonAttempt(attemptId);
 
   // Prefill the selected option whenever the displayed question changes.
   useEffect(() => {
@@ -123,6 +127,48 @@ export default function QuizPage({ title = "Quiz", attemptId }: QuizPageProps) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [remainingSeconds, results, attemptFinalized]);
+
+  // Anti-cheating: if the student switches tabs or leaves for another
+  // window/app while the quiz is actively in progress, immediately
+  // terminate the attempt server-side (scored from whatever was answered
+  // so far, same as a timeout) and redirect to a page explaining why.
+  // Page Visibility API only — deliberately not window.blur, which also
+  // fires on plenty of legitimate in-page interactions (browser chrome,
+  // permission dialogs, devtools) and would cause false-positive closures.
+  useEffect(() => {
+    if (attemptFinalized || results || terminating) return;
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) return;
+      if (abandonedRef.current) return;
+      abandonedRef.current = true;
+      setTerminating(true);
+
+      const goToTerminatedPage = () => {
+        const params = quizSession?.title
+          ? `?title=${encodeURIComponent(quizSession.title)}`
+          : "";
+        router.push(`${QUIZ_ROUTE}${QUIZ_TERMINATED}${params}`);
+      };
+
+      abandonMutation.mutate(undefined, {
+        onSuccess: goToTerminatedPage,
+        // Even if the server call fails (e.g. the attempt had already been
+        // finalized by a timeout that raced with the tab switch), still
+        // pull the student out of the live quiz UI rather than leaving it
+        // interactive in a hidden tab.
+        onError: goToTerminatedPage,
+      });
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () =>
+      document.removeEventListener(
+        "visibilitychange",
+        handleVisibilityChange,
+      );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [attemptFinalized, results, terminating]);
 
   // Block refresh / tab close while quiz is active
   useEffect(() => {
@@ -192,6 +238,14 @@ export default function QuizPage({ title = "Quiz", attemptId }: QuizPageProps) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-500">
         <Loader show message="Loading quiz..." />
+      </div>
+    );
+  }
+
+  if (terminating) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 via-white to-gray-200 text-gray-500">
+        <Loader show message="Closing your quiz..." />
       </div>
     );
   }

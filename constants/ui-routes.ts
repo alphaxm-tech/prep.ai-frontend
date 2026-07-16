@@ -23,6 +23,8 @@ export const STUDY_MATERIAL_ROUTE = "/student/study-material";
 export const CODE_EDITOR_ROUTE = "/student/code-editor";
 export const QUIZ_ROUTE_MAIN = "/quiz";
 export const QUIZ_TEST = "/test";
+export const QUIZ_INSTRUCTIONS = "/instructions";
+export const QUIZ_TERMINATED = "/terminated";
 
 // Platform/Super admin Routes
 export const ONBOARD_COLLEGE = "/onboard-college";
