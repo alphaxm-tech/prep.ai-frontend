@@ -66,7 +66,7 @@ export default function Dashboard() {
                 {user.location ?? "—"}
               </span>
 
-              <span className="flex items-center gap-1">
+              {/* <span className="flex items-center gap-1">
                 <strong className="text-gray-700">Email:</strong>
                 {user.emailVerified ? (
                   <span className="inline-flex items-center gap-1 text-green-600">
@@ -79,7 +79,7 @@ export default function Dashboard() {
                     Not verified
                   </span>
                 )}
-              </span>
+              </span> */}
             </div>
           </section>
         )}

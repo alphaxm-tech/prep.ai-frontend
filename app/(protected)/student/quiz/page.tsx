@@ -88,7 +88,7 @@ export default function Quiz() {
 
   return (
     <>
-      <WorkInProgressBanner />
+      {/* <WorkInProgressBanner /> */}
       <Loader show={isUntakenLoading || isTakenLoading} />
 
       <div className="min-h-screen px-4 md:px-8 py-10">
