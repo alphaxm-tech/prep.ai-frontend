@@ -18,6 +18,7 @@ import CompactAssessmentRow from "@/components/CompactAssessmentRow";
 import Pagination from "@/components/Pagination";
 import EmptyStateCard from "@/components/EmptyStateCard";
 import QuizResultsModal from "@/components/QuizResultsModal";
+import QuizCollegeLeaderboard from "@/components/QuizCollegeLeaderboard";
 
 const DEFAULT_PAGE_SIZE = 10;
 
@@ -117,6 +118,11 @@ export default function Quiz() {
             value={formatScore(quizStats?.average_score)}
             variant="purple"
           />
+        </section>
+
+        {/* COLLEGE LEADERBOARD */}
+        <section className="max-w-6xl mx-auto mb-6">
+          <QuizCollegeLeaderboard />
         </section>
 
         {/* PROGRESS + FILTER BAR */}

@@ -115,6 +115,15 @@ export interface MarkForReviewRequest {
   marked_for_review: boolean;
 }
 
+export interface CollegeLeaderboardEntry {
+  rank: number;
+  user_id: number;
+  full_name: string;
+  avg_percentile: number;
+  quizzes_taken: number;
+  is_you: boolean;
+}
+
 export interface QuizResultOption {
   option_id: number;
   option_text: string;

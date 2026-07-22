@@ -1,5 +1,3 @@
-import { Geist, Geist_Mono } from "next/font/google";
-import "../globals.css";
 import SubHeaderWrapper from "@/components/SubHeaderWrapper";
 import AppBootstrap from "@/components/AppBootstrap";
 import { cookies } from "next/headers";
@@ -10,16 +8,6 @@ import { UserProvider } from "../context/UserContext";
 import { ProtectedHeader } from "@/components/ProtectedHeader";
 import ProtectedShell from "@/components/ProtectedShell";
 import { getCurrentUser } from "@/lib/get-user-details";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export default async function ProtectedLayout({
   children,
@@ -61,19 +49,13 @@ export default async function ProtectedLayout({
   const user = await getCurrentUser();
 
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        <Providers user={user}>
-          <UserProvider user={user}>
-            <ProtectedHeader user={user} />
-            <AppBootstrap />
-            <SubHeaderWrapper user={user} />
-            <ProtectedShell>{children}</ProtectedShell>
-          </UserProvider>
-        </Providers>
-      </body>
-    </html>
+    <Providers user={user}>
+      <UserProvider user={user}>
+        <ProtectedHeader user={user} />
+        <AppBootstrap />
+        <SubHeaderWrapper user={user} />
+        <ProtectedShell>{children}</ProtectedShell>
+      </UserProvider>
+    </Providers>
   );
 }

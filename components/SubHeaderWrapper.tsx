@@ -7,6 +7,7 @@ export default function SubHeaderWrapper({ user }: { user: any }) {
   const pathname = usePathname();
 
   if (pathname.startsWith("/student/quiz/test/")) return null;
+  if (pathname.startsWith("/student/ai-interview/interview")) return null;
 
   return <SubHeader user={user} />;
 }

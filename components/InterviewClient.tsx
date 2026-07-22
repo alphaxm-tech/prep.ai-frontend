@@ -10,9 +10,13 @@ import React, {
 import { CheckCircleIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/navigation";
 import Loader from "@/components/Loader";
-import { AI_INTERVIEW_ROUTE } from "@/constants/ui-routes";
+import {
+  AI_INTERVIEW_ROUTE,
+  AI_INTERVIEW_TERMINATED,
+} from "@/constants/ui-routes";
 import { useGetInterviewSession } from "@/server-api/queries/ai-interview.queries";
 import {
+  useAbandonInterview,
   useFinishInterview,
   useSubmitInterviewAnswer,
 } from "@/server-api/mutations/ai-interview.mutation";
@@ -146,6 +150,25 @@ export function InterviewRecorder({
       }, maxSeconds * 1000);
     } catch (err: any) {
       setMediaError(err?.message ?? "Microphone access denied");
+      setRecording(false);
+
+      // If the mic/recorder genuinely can't start (permission revoked,
+      // device busy, hardware error), don't leave the interview stuck on
+      // this question forever — treat it the same as a recording that
+      // captured no audio (onComplete with an empty blob), so the parent
+      // still advances to the next question after showing the error.
+      if (!completedRef.current) {
+        completedRef.current = true;
+        window.setTimeout(() => {
+          onComplete({
+            blob: new Blob([], { type: "audio/webm" }),
+            url: "",
+            durationSec: 0,
+            questionId,
+          });
+        }, 1200);
+      }
+
       throw err;
     } finally {
       startingRef.current = false;
@@ -289,41 +312,11 @@ export default function InterviewClient() {
 
   const submitAnswerMutation = useSubmitInterviewAnswer(attemptId ?? 0);
   const finishInterviewMutation = useFinishInterview(attemptId ?? 0);
+  const abandonInterviewMutation = useAbandonInterview(attemptId ?? 0);
 
-  /* 🔒 TAB SWITCH GUARD */
+  /* 🔒 TAB SWITCH GUARD — wired up below, once interviewStarted/finishResult exist */
   const tabExitHandledRef = useRef(false);
-
-  const forceExitInterview = useCallback(() => {
-    if (tabExitHandledRef.current) return;
-    tabExitHandledRef.current = true;
-
-    console.warn("🚨 Interview terminated: tab/window change detected");
-
-    try {
-      window.speechSynthesis?.cancel();
-    } catch {}
-
-    router.replace(AI_INTERVIEW_ROUTE);
-  }, [router]);
-
-  useEffect(() => {
-    const onVisibilityChange = () => {
-      if (document.visibilityState === "hidden") {
-        forceExitInterview();
-      }
-    };
-    const onWindowBlur = () => {
-      forceExitInterview();
-    };
-
-    document.addEventListener("visibilitychange", onVisibilityChange);
-    window.addEventListener("blur", onWindowBlur);
-
-    return () => {
-      document.removeEventListener("visibilitychange", onVisibilityChange);
-      window.removeEventListener("blur", onWindowBlur);
-    };
-  }, [forceExitInterview]);
+  const expiredHandledRef = useRef(false);
 
   /* ---------------------- camera gate (mandatory) ---------------------- */
 
@@ -415,6 +408,54 @@ export default function InterviewClient() {
     useState<FinishInterviewResponse | null>(null);
   const [finishError, setFinishError] = useState<string | null>(null);
   const [showResultsModal, setShowResultsModal] = useState(false);
+
+  // Anti-cheating: if the student switches tabs or leaves for another
+  // window/app while the interview is active, immediately terminate the
+  // attempt server-side (scored from whatever was answered so far, same as
+  // a timeout) and redirect to a page explaining why. Page Visibility API
+  // only — deliberately not window.blur, which also fires on plenty of
+  // legitimate in-page interactions (camera/mic permission prompts, browser
+  // chrome, devtools) and would cause false-positive terminations.
+  useEffect(() => {
+    if (finishResult || showResultsModal) return;
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState !== "hidden") return;
+      if (tabExitHandledRef.current) return;
+      tabExitHandledRef.current = true;
+      expiredHandledRef.current = true; // stop the timer-expiry path from also firing
+
+      try {
+        window.speechSynthesis?.cancel();
+      } catch {}
+
+      const goToTerminatedPage = (result?: FinishInterviewResponse) => {
+        const params = new URLSearchParams();
+        if (session?.title) params.set("title", session.title);
+        if (result) {
+          params.set("score", String(result.total_score));
+          params.set("maxScore", String(result.max_score));
+        }
+        router.replace(
+          `${AI_INTERVIEW_ROUTE}${AI_INTERVIEW_TERMINATED}?${params.toString()}`,
+        );
+      };
+
+      abandonInterviewMutation.mutate(undefined, {
+        onSuccess: (result) => goToTerminatedPage(result),
+        // Even if the server call fails (e.g. the attempt had already been
+        // finalized by a timeout that raced with the tab switch), still
+        // pull the student out of the live interview UI rather than
+        // leaving it interactive in a hidden tab.
+        onError: () => goToTerminatedPage(),
+      });
+    };
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [finishResult, showResultsModal, session?.title]);
 
   // speech synthesis
   const synthRef = useRef<SpeechSynthesis | null>(null);
@@ -530,7 +571,6 @@ export default function InterviewClient() {
   /* ---------------------- server-authoritative timer ---------------------- */
 
   const [remainingSec, setRemainingSec] = useState<number | null>(null);
-  const expiredHandledRef = useRef(false);
 
   useEffect(() => {
     if (!session?.expires_at) return;
@@ -1041,6 +1081,20 @@ export default function InterviewClient() {
                 {questionText}
               </h2>
             </div>
+
+            {currentQuestion && !currentQuestion.already_answered && (
+              <div
+                className={`mt-4 inline-flex w-fit items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold tracking-wide ${
+                  smallCountdown !== null
+                    ? "bg-blue-50 text-blue-700 border border-blue-200"
+                    : "bg-green-50 text-green-700 border border-green-200"
+                }`}
+              >
+                {smallCountdown !== null
+                  ? "🤖 AI is asking the question — please wait, don't answer yet"
+                  : "🎤 Your turn — you can answer now"}
+              </div>
+            )}
 
             <div className="mt-6 flex items-center gap-3 text-xs text-gray-500 font-medium uppercase tracking-wide">
               <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />

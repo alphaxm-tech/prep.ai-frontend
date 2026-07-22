@@ -48,3 +48,19 @@ export const useFinishInterview = (attemptId: number) => {
     },
   });
 };
+
+export const useAbandonInterview = (attemptId: number) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => aiInterviewService.abandonInterview(attemptId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["assessments"] });
+      queryClient.invalidateQueries({
+        queryKey: ["ai-interview", "getInterviewStats"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["ai-interview", "getSession", attemptId],
+      });
+    },
+  });
+};
