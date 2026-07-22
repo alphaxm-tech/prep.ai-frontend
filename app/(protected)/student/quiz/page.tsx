@@ -121,9 +121,9 @@ export default function Quiz() {
         </section>
 
         {/* COLLEGE LEADERBOARD */}
-        <section className="max-w-6xl mx-auto mb-6">
+        {/* <section className="max-w-6xl mx-auto mb-6">
           <QuizCollegeLeaderboard />
-        </section>
+        </section> */}
 
         {/* PROGRESS + FILTER BAR */}
         <div className="max-w-6xl mx-auto mb-8">
