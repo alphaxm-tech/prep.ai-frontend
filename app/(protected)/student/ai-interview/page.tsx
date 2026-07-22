@@ -13,16 +13,14 @@ import InterviewReviewModal from "@/components/InterviewReviewModal";
 import { INTERVIEW_TIPS } from "@/constants/interview-tips";
 import {
   AI_INTERVIEW_ROUTE,
-  AI_INTERVIEW_SESSION,
+  AI_INTERVIEW_INSTRUCTIONS,
 } from "@/constants/ui-routes";
 import { useGetAllAssessments } from "@/server-api/queries/assessment.queries";
 import { useGetInterviewStats } from "@/server-api/queries/ai-interview.queries";
-import { useStartInterview } from "@/server-api/mutations/ai-interview.mutation";
 import {
   ASSESSMENT_TYPES,
   AssessmentResponse,
 } from "@/server-api/api/types/assessment.types";
-import WorkInProgressBanner from "@/components/WorkInProgressBanner";
 
 const DEFAULT_PAGE_SIZE = 10;
 
@@ -75,17 +73,18 @@ export default function AIInterviewPage() {
 
   const { data: interviewStats } = useGetInterviewStats();
 
-  const startInterviewMutation = useStartInterview();
-
+  // Starting the attempt (and its timer) happens on the instructions page,
+  // not here — clicking "Start" just routes there with enough context to
+  // render the instructions without a second fetch (same pattern as quiz).
   const handleStartInterview = (assessment: AssessmentResponse) => {
-    startInterviewMutation.mutate(assessment.assessment_id, {
-      onSuccess: (data) => {
-        const attemptId = data.attempt.AttemptID;
-        router.push(
-          `${AI_INTERVIEW_ROUTE}${AI_INTERVIEW_SESSION}?attemptId=${attemptId}`,
-        );
-      },
+    const query = new URLSearchParams({
+      title: assessment.title,
+      total_questions: String(assessment.total_questions),
+      duration_sec: String(assessment.duration_sec),
     });
+    router.push(
+      `${AI_INTERVIEW_ROUTE}${AI_INTERVIEW_INSTRUCTIONS}/${assessment.assessment_id}?${query.toString()}`,
+    );
   };
 
   const notTakenInterviews = untakenAssessments?.assessments || [];
@@ -96,12 +95,10 @@ export default function AIInterviewPage() {
   const takenTotal = takenAssessments?.total_count ?? takenInterviews.length;
   const totalInterviews = notTakenTotal + takenTotal;
 
-  const isPageLoading =
-    isUntakenLoading || isTakenLoading || startInterviewMutation.isPending;
+  const isPageLoading = isUntakenLoading || isTakenLoading;
 
   return (
     <>
-      <WorkInProgressBanner />
       <Loader show={isPageLoading} message="Loading your interviews" />
       <InterviewReviewModal
         assessmentId={reviewAssessmentId}
