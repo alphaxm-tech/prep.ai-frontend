@@ -1,5 +1,6 @@
 import api from "../api/axios";
 import {
+  ABANDON,
   AIINTERVIEW,
   ANSWER,
   ASSESSMENTS,
@@ -69,6 +70,15 @@ export const aiInterviewService = {
   ): Promise<FinishInterviewResponse> => {
     const response = await api.post<{ success: boolean; result: FinishInterviewResponse }>(
       `${BASE_API_URL}/${AIINTERVIEW}/${ATTEMPTS}/${attemptId}/${FINISH}`,
+    );
+    return response.data.result;
+  },
+
+  abandonInterview: async (
+    attemptId: number,
+  ): Promise<FinishInterviewResponse> => {
+    const response = await api.post<{ success: boolean; result: FinishInterviewResponse }>(
+      `${BASE_API_URL}/${AIINTERVIEW}/${ATTEMPTS}/${attemptId}/${ABANDON}`,
     );
     return response.data.result;
   },
