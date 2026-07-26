@@ -89,7 +89,7 @@ export default function Quiz() {
 
   return (
     <>
-      <WorkInProgressBanner />
+      {/* <WorkInProgressBanner /> */}
       <Loader show={isUntakenLoading || isTakenLoading} />
 
       <div className="min-h-screen px-4 md:px-8 py-10">
@@ -121,9 +121,9 @@ export default function Quiz() {
         </section>
 
         {/* COLLEGE LEADERBOARD */}
-        <section className="max-w-6xl mx-auto mb-6">
+        {/* <section className="max-w-6xl mx-auto mb-6">
           <QuizCollegeLeaderboard />
-        </section>
+        </section> */}
 
         {/* PROGRESS + FILTER BAR */}
         <div className="max-w-6xl mx-auto mb-8">
