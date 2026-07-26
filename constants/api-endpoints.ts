@@ -86,3 +86,8 @@ export const ACCEPT = "accept";
 export const QB_QUESTIONS = "questions";
 export const GROUPS = "groups";
 export const STATUS = "status";
+
+/// Students (college admin) ///
+export const STUDENTS = "students";
+export const FILTER_OPTIONS = "filter-options";
+export const PROFILE = "profile";

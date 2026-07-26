@@ -28,6 +28,8 @@ import {
   type CodingRecord,
   type ApplicationRecord,
 } from "@/constants/dummy-data/mock-students";
+import { useStudentProfile } from "@/server-api/queries/student.queries";
+import { StudentAssessmentAttempt } from "@/server-api/api/types/student.types";
 
 /* ─────────────────────── Types ─────────────────────────────── */
 type ProfileTab =
@@ -779,9 +781,28 @@ function CodingTab() {
   );
 }
 
-function AssessmentsTab() {
-  const { assessments } = MOCK_STUDENT_DETAIL;
-  const cleared = assessments.filter((a) => a.result === "Cleared").length;
+function AssessmentsTab({
+  assessments,
+}: {
+  assessments: StudentAssessmentAttempt[];
+}) {
+  const completed = assessments.filter(
+    (a) => a.status !== "started" && a.status !== "in_progress",
+  ).length;
+  const avgScore = assessments.length
+    ? Math.round(
+        assessments.reduce((sum, a) => sum + a.total_score, 0) /
+          assessments.length,
+      )
+    : 0;
+
+  if (assessments.length === 0) {
+    return (
+      <div className="py-16 text-center text-gray-400 text-sm">
+        No assessment attempts yet
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5">
@@ -794,14 +815,14 @@ function AssessmentsTab() {
             bg: "bg-gray-50 border-gray-200",
           },
           {
-            label: "Cleared",
-            value: cleared,
+            label: "Completed",
+            value: completed,
             color: "text-emerald-600",
             bg: "bg-emerald-50 border-emerald-100",
           },
           {
-            label: "Pass Rate",
-            value: `${Math.round((cleared / assessments.length) * 100)}%`,
+            label: "Avg Score",
+            value: avgScore,
             color: "text-yellow-700",
             bg: "bg-yellow-50 border-yellow-100",
           },
@@ -819,42 +840,43 @@ function AssessmentsTab() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {assessments.map((a) => (
           <div
-            key={a.id}
+            key={a.attempt_id}
             className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-all"
           >
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-400 to-amber-500 text-white flex items-center justify-center font-bold text-sm shadow-sm">
-                  {a.company[0]}
+                  {a.title[0]}
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-gray-900">{a.company}</p>
+                  <p className="text-sm font-bold text-gray-900">{a.title}</p>
                   <span
-                    className={`text-[11px] font-medium px-2 py-0.5 rounded-lg ${a.type === "Coding" ? "bg-blue-50 text-blue-700" : a.type === "MCQ" ? "bg-amber-50 text-amber-700" : "bg-violet-50 text-violet-700"}`}
+                    className={`text-[11px] font-medium px-2 py-0.5 rounded-lg ${a.assessment_type === "CODING" ? "bg-blue-50 text-blue-700" : a.assessment_type === "MCQ" ? "bg-amber-50 text-amber-700" : "bg-violet-50 text-violet-700"}`}
                   >
-                    {a.type}
+                    {a.assessment_type}
                   </span>
                 </div>
               </div>
               <span
                 className={`px-2.5 py-1 rounded-lg text-xs font-semibold border ${
-                  a.result === "Cleared"
+                  a.status === "evaluated"
                     ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                    : a.result === "Not Cleared"
-                      ? "bg-red-50 text-red-600 border-red-200"
-                      : "bg-yellow-50 text-yellow-700 border-yellow-200"
+                    : a.status === "in_progress" || a.status === "started"
+                      ? "bg-yellow-50 text-yellow-700 border-yellow-200"
+                      : "bg-blue-50 text-blue-700 border-blue-200"
                 }`}
               >
-                {a.result}
+                {a.status}
               </span>
             </div>
-            <p className="text-xs text-gray-600 mb-2 font-medium">{a.title}</p>
             <div className="flex items-center gap-3 text-[11px] text-gray-400 pt-3 border-t border-gray-50">
               <span>
                 Score:{" "}
-                <span className="font-bold text-gray-700">{a.score}</span>
+                <span className="font-bold text-gray-700">
+                  {a.total_score}
+                </span>
               </span>
-              <span>{a.date}</span>
+              <span>{new Date(a.started_at).toLocaleDateString()}</span>
             </div>
           </div>
         ))}
@@ -961,13 +983,26 @@ function ApplicationsTab() {
    PAGE COMPONENT
 ═══════════════════════════════════════════════════════════════ */
 export default function StudentProfilePage() {
-  const params = useParams<{ studentId: string }>();
+  const params = useParams<{ "college-id": string; studentId: string }>();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<ProfileTab>("Overview");
 
-  // Find student, fallback to first if not found
+  const collegeId = Number(params["college-id"]);
+  const studentUserId = Number(params.studentId);
+  const { data: profile } = useStudentProfile(collegeId, studentUserId);
+
+  // Find student, fallback to first if not found — still backs every field
+  // that has no real source yet (readiness, placement, CGPA, quiz/interview/
+  // coding activity). Real fields (name, roll no, resume count, assessments)
+  // are overridden below once the profile query resolves.
   const student =
     MOCK_STUDENTS.find((s) => s.id === params.studentId) ?? MOCK_STUDENTS[0];
+
+  const displayName = profile?.name || profile?.email || student.name;
+  const displayRollNo = profile?.roll_number || student.rollNo;
+  const displayEmail = profile?.email || student.email;
+  const resumeCount = profile?.resume_count ?? student.resumesMade;
+  const assessments = profile?.assessments ?? [];
 
   const c = readinessColor(student.readiness);
 
@@ -998,7 +1033,7 @@ export default function StudentProfilePage() {
       id: "Resumes",
       label: "Resumes",
       icon: <FileText className="w-4 h-4" />,
-      count: student.resumesMade,
+      count: resumeCount,
     },
     {
       id: "Coding",
@@ -1023,7 +1058,7 @@ export default function StudentProfilePage() {
       <div className="max-w-6xl mx-auto space-y-7">
         {/* ── BACK BUTTON ── */}
         <button
-          onClick={() => router.push("/placement/students")}
+          onClick={() => router.push(`/college/${params["college-id"]}/students`)}
           className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-yellow-700 transition group"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
@@ -1040,7 +1075,7 @@ export default function StudentProfilePage() {
               {/* Avatar */}
               <div className="flex-shrink-0">
                 <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-yellow-400 to-amber-500 text-white flex items-center justify-center text-3xl font-black shadow-lg">
-                  {student.name[0]}
+                  {displayName[0]?.toUpperCase()}
                 </div>
               </div>
 
@@ -1049,10 +1084,10 @@ export default function StudentProfilePage() {
                 <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
                   <div>
                     <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-                      {student.name}
+                      {displayName}
                     </h1>
                     <p className="text-sm text-gray-500 mt-0.5">
-                      {student.rollNo}
+                      {displayRollNo}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -1073,7 +1108,7 @@ export default function StudentProfilePage() {
                 <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-gray-500 mb-4">
                   <span className="flex items-center gap-1.5">
                     <Mail className="w-3.5 h-3.5 text-gray-400" />
-                    {student.email}
+                    {displayEmail}
                   </span>
                   {student.phone && (
                     <span className="flex items-center gap-1.5">
@@ -1129,7 +1164,7 @@ export default function StudentProfilePage() {
                 },
                 {
                   label: "Resumes",
-                  value: student.resumesMade,
+                  value: resumeCount,
                   icon: <FileText className="w-4 h-4 text-blue-500" />,
                   bg: "bg-blue-50 border-blue-100",
                 },
@@ -1191,7 +1226,9 @@ export default function StudentProfilePage() {
           {activeTab === "Interviews" && <InterviewsTab />}
           {activeTab === "Resumes" && <ResumesTab />}
           {activeTab === "Coding" && <CodingTab />}
-          {activeTab === "Assessments" && <AssessmentsTab />}
+          {activeTab === "Assessments" && (
+            <AssessmentsTab assessments={assessments} />
+          )}
           {activeTab === "Applications" && <ApplicationsTab />}
         </div>
       </div>

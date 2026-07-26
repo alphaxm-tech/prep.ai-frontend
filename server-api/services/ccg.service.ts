@@ -38,9 +38,10 @@ export const ccgService = {
     return response.data;
   },
 
-  getAllGroups: async (): Promise<Group[]> => {
+  getAllGroups: async (collegeId?: number): Promise<Group[]> => {
     const response = await api.get<{ success: boolean; data: Group[] }>(
       `${BASE_API_URL}/${CCG}/${GROUPS}`,
+      collegeId ? { params: { college_id: collegeId } } : undefined,
     );
     return response.data.data;
   },
