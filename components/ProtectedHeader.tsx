@@ -4,6 +4,7 @@ import {
   COLLEGE_ADMIN_ROUTE,
   PLATFORM_ROUTE,
   STUDENT_ROUTE,
+  STUDENTS,
 } from "@/constants/ui-routes";
 import { UserRole } from "@/enums/enums";
 import { SectionSwitcherRoles } from "@/lib/allowed-roles";
@@ -119,7 +120,7 @@ export function ProtectedHeader({ user }: { user: any }) {
           label: "College Section",
           action: () =>
             router.push(
-              `${COLLEGE_ADMIN_ROUTE}/${user?.college?.college_id ?? 1}`,
+              `${COLLEGE_ADMIN_ROUTE}/${user?.college?.college_id ?? 1}${STUDENTS}`,
             ),
         },
         {

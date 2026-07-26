@@ -42,3 +42,4 @@ export const COMMUNICATION = "/communication";
 export const ROLE = "/role";
 export const REPORT = "/report";
 export const STUDENTS = "/students";
+export const ANALYTICS = "/analytics";

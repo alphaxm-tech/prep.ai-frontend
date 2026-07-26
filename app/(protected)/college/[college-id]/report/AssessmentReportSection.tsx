@@ -12,7 +12,7 @@ import { ASSESSMENT_TYPES } from "@/server-api/api/types/assessment.types";
 const TYPE_OPTIONS = [
   { value: ASSESSMENT_TYPES.MCQ, label: "Quiz" },
   { value: ASSESSMENT_TYPES.DESCRIPTIVE, label: "AI Interview" },
-  { value: ASSESSMENT_TYPES.CODING, label: "Code Editor" },
+  // { value: ASSESSMENT_TYPES.CODING, label: "Code Editor" },
 ];
 
 export default function AssessmentReportSection({
@@ -147,9 +147,7 @@ export default function AssessmentReportSection({
       {assessmentId && report && (
         <>
           <div className="flex items-center justify-between">
-            <h3 className="text-lg font-bold text-gray-900">
-              {report.title}
-            </h3>
+            <h3 className="text-lg font-bold text-gray-900">{report.title}</h3>
             <button
               onClick={handleExport}
               disabled={exporting}

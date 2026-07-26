@@ -9,6 +9,7 @@ export const PLACEMENT_LABEL = "Placement";
 export const STUDENTS_LABEL = "Students";
 export const INTERVIEWS_LABEL = "Interviews";
 export const REPORTS_LABEL = "Reports";
+export const ANALYTICS_LABEL = "Analytics";
 export const ROLE_LABEL = "Role";
 export const COMMUNICATION_LABEL = "Communication";
 

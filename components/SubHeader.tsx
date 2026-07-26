@@ -2,6 +2,7 @@
 
 import {
   AI_INTERVIEWS_LABEL,
+  ANALYTICS_LABEL,
   ASSESSMENT_MANAGEMENT_LABEL,
   CODE_EDITOR_LABEL,
   COLLEGES_LABEL,
@@ -24,6 +25,7 @@ import {
 import {
   COLLEGE_ADMIN_ROUTE,
   AI_INTERVIEW_ROUTE,
+  ANALYTICS,
   CODE_EDITOR_ROUTE,
   COLLEGE,
   ONBOARD_COLLEGE,
@@ -83,34 +85,38 @@ export function SubHeader({ user }: { user: any }) {
       roles: CollegeAdminRoles,
       prefix: COLLEGE_ADMIN_ROUTE,
       links: [
-        {
-          label: HOME_LABEL,
-          route: `${COLLEGE_ADMIN_ROUTE}/${collegeId}`,
-        },
-        {
-          label: PLACEMENT_LABEL,
-          route: `${COLLEGE_ADMIN_ROUTE}/${collegeId}${PLACEMENT}`,
-        },
+        // {
+        //   label: HOME_LABEL,
+        //   route: `${COLLEGE_ADMIN_ROUTE}/${collegeId}`,
+        // },
+        // {
+        //   label: PLACEMENT_LABEL,
+        //   route: `${COLLEGE_ADMIN_ROUTE}/${collegeId}${PLACEMENT}`,
+        // },
         {
           label: STUDENTS_LABEL,
           route: `${COLLEGE_ADMIN_ROUTE}/${collegeId}${STUDENTS}`,
         },
         {
-          label: INTERVIEWS_LABEL,
-          route: `${COLLEGE_ADMIN_ROUTE}/${collegeId}${INTERVIEWS}`,
+          label: ANALYTICS_LABEL,
+          route: `${COLLEGE_ADMIN_ROUTE}/${collegeId}${ANALYTICS}`,
         },
-        {
-          label: REPORTS_LABEL,
-          route: `${COLLEGE_ADMIN_ROUTE}/${collegeId}${REPORT}`,
-        },
-        {
-          label: ROLE_LABEL,
-          route: `${COLLEGE_ADMIN_ROUTE}/${collegeId}${ROLE}`,
-        },
-        {
-          label: COMMUNICATION_LABEL,
-          route: `${COLLEGE_ADMIN_ROUTE}/${collegeId}${COMMUNICATION}`,
-        },
+        // {
+        //   label: INTERVIEWS_LABEL,
+        //   route: `${COLLEGE_ADMIN_ROUTE}/${collegeId}${INTERVIEWS}`,
+        // },
+        // {
+        //   label: REPORTS_LABEL,
+        //   route: `${COLLEGE_ADMIN_ROUTE}/${collegeId}${REPORT}`,
+        // },
+        // {
+        //   label: ROLE_LABEL,
+        //   route: `${COLLEGE_ADMIN_ROUTE}/${collegeId}${ROLE}`,
+        // },
+        // {
+        //   label: COMMUNICATION_LABEL,
+        //   route: `${COLLEGE_ADMIN_ROUTE}/${collegeId}${COMMUNICATION}`,
+        // },
       ],
     },
     {
