@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useParams } from "next/navigation";
 import {
   TrendingUp,
   Building2,
@@ -21,7 +22,9 @@ import {
   ArrowUp,
   Star,
   ClipboardCheck,
+  ClipboardList,
 } from "lucide-react";
+import AssessmentReportSection from "./AssessmentReportSection";
 
 /* ─────────────────────────────────────
    DATA
@@ -849,6 +852,7 @@ const TABS = [
   { id: "placement", label: "Placement", icon: TrendingUp, active: "bg-yellow-400 text-yellow-900" },
   { id: "company", label: "Company", icon: Building2, active: "bg-blue-500 text-white" },
   { id: "student", label: "Student", icon: GraduationCap, active: "bg-violet-500 text-white" },
+  { id: "assessment", label: "Assessment", icon: ClipboardList, active: "bg-teal-500 text-white" },
   { id: "drive", label: "Drive", icon: Target, active: "bg-emerald-500 text-white" },
   { id: "management", label: "Management", icon: BarChart3, active: "bg-orange-500 text-white" },
   { id: "compliance", label: "Compliance", icon: Shield, active: "bg-rose-500 text-white" },
@@ -859,12 +863,15 @@ const TABS = [
 ───────────────────────────────────── */
 
 export default function ReportsPage() {
+  const params = useParams<{ "college-id": string }>();
+  const collegeId = Number(params["college-id"]);
   const [activeTab, setActiveTab] = useState("placement");
 
   const sections: Record<string, React.ReactNode> = {
     placement: <PlacementSection />,
     company: <CompanySection />,
     student: <StudentSection />,
+    assessment: <AssessmentReportSection collegeId={collegeId} />,
     drive: <DriveSection />,
     management: <ManagementSection />,
     compliance: <ComplianceSection />,

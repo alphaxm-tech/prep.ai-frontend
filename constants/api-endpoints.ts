@@ -91,3 +91,7 @@ export const STATUS = "status";
 export const STUDENTS = "students";
 export const FILTER_OPTIONS = "filter-options";
 export const PROFILE = "profile";
+
+/// Assessment Reports (college admin) — reuses ASSESSMENTS from Quiz above ///
+export const ASSESSMENT_REPORTS = "assessment-reports";
+export const EXPORT = "export";
