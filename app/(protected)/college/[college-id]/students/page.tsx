@@ -24,6 +24,8 @@ const PAGE_SIZE = 20;
 /* ─────────────────────── Helpers ───────────────────────────── */
 // Fields with no backend source yet (placement, readiness, CGPA, per-activity
 // counts) render as a blurred placeholder instead of removing the UI slot.
+// Note: pointer-events-none is intentionally NOT set here — it would stop the
+// element from ever receiving hover, which silently kills the title tooltip.
 function ComingSoon({
   className = "",
   children,
@@ -34,7 +36,7 @@ function ComingSoon({
   return (
     <span
       title="This will be live soon"
-      className={`blur-[3px] select-none pointer-events-none ${className}`}
+      className={`blur-[3px] select-none cursor-help ${className}`}
     >
       {children}
     </span>

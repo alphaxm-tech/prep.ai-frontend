@@ -38,7 +38,9 @@ export interface StudentAssessmentAttempt {
   title: string;
   assessment_type: string;
   total_score: number;
+  max_score: number;
   status: string;
+  attempted: boolean;
   started_at: string;
   submitted_at: string | null;
 }
@@ -50,4 +52,6 @@ export interface StudentProfile {
   roll_number: string;
   resume_count: number;
   assessments: StudentAssessmentAttempt[] | null;
+  quizzes: StudentAssessmentAttempt[] | null;
+  interviews: StudentAssessmentAttempt[] | null;
 }
