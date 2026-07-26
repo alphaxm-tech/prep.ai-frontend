@@ -1,60 +1,49 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect, useMemo } from "react";
+import { useRouter, useParams } from "next/navigation";
 import {
   Search,
   Filter,
   ChevronDown,
   Users,
-  TrendingUp,
-  Award,
   AlertCircle,
   X,
   ArrowUpRight,
   LayoutGrid,
   List,
+  ChevronLeft,
+  ChevronRight as ChevronRightIcon,
 } from "lucide-react";
-import {
-  MOCK_STUDENTS,
-  COLLEGE_GROUPS,
-  BRANCHES,
-  type Student,
-} from "@/constants/dummy-data/mock-students";
+import { useListStudents, useStudentFilterOptions } from "@/server-api/queries/student.queries";
+import { useGetAllGroups } from "@/server-api/queries/ccg.queries";
+import { StudentListItem } from "@/server-api/api/types/student.types";
+
+const PAGE_SIZE = 20;
 
 /* ─────────────────────── Helpers ───────────────────────────── */
-function readinessColor(v: number) {
-  if (v >= 85)
-    return {
-      bar: "bg-emerald-400",
-      text: "text-emerald-700",
-      bg: "bg-emerald-50 border-emerald-200",
-    };
-  if (v >= 65)
-    return {
-      bar: "bg-yellow-400",
-      text: "text-yellow-700",
-      bg: "bg-yellow-50 border-yellow-200",
-    };
-  return {
-    bar: "bg-red-400",
-    text: "text-red-600",
-    bg: "bg-red-50 border-red-200",
-  };
+// Fields with no backend source yet (placement, readiness, CGPA, per-activity
+// counts) render as a blurred placeholder instead of removing the UI slot.
+function ComingSoon({
+  className = "",
+  children,
+}: {
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <span
+      title="This will be live soon"
+      className={`blur-[3px] select-none pointer-events-none ${className}`}
+    >
+      {children}
+    </span>
+  );
 }
 
-const PLACEMENT_STATUS_STYLES: Record<Student["placementStatus"], string> = {
-  Placed: "bg-emerald-50 text-emerald-700 border border-emerald-200",
-  Offered: "bg-blue-50 text-blue-700 border border-blue-200",
-  Shortlisted: "bg-yellow-50 text-yellow-700 border border-yellow-200",
-  Unplaced: "bg-gray-100 text-gray-500 border border-gray-200",
-};
-
-const YEAR_LABELS: Record<number, string> = {
-  1: "1st Year",
-  2: "2nd Year",
-  3: "3rd Year",
-  4: "4th Year",
+const STATUS_STYLES: Record<string, string> = {
+  active: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+  inactive: "bg-gray-100 text-gray-500 border border-gray-200",
 };
 
 /* ─────────────────────── Sub-components ────────────────────── */
@@ -63,18 +52,21 @@ function FilterSelect({
   value,
   options,
   onChange,
+  disabled,
 }: {
   label: string;
   value: string;
   options: string[];
   onChange: (v: string) => void;
+  disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   return (
     <div className="relative">
       <button
-        onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-2 px-3.5 py-2 text-sm rounded-xl border border-gray-200 bg-white shadow-sm hover:border-yellow-400 transition text-gray-700 whitespace-nowrap"
+        onClick={() => !disabled && setOpen((v) => !v)}
+        title={disabled ? "This will be live soon" : undefined}
+        className={`flex items-center gap-2 px-3.5 py-2 text-sm rounded-xl border border-gray-200 bg-white shadow-sm transition text-gray-700 whitespace-nowrap ${disabled ? "opacity-50 cursor-not-allowed" : "hover:border-yellow-400"}`}
       >
         <span
           className={value !== "All" ? "font-semibold text-yellow-700" : ""}
@@ -84,7 +76,7 @@ function FilterSelect({
         <ChevronDown
           className={`w-3.5 h-3.5 text-gray-400 flex-shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
         />
-        {value !== "All" && (
+        {value !== "All" && !disabled && (
           <span
             onClick={(e) => {
               e.stopPropagation();
@@ -97,7 +89,7 @@ function FilterSelect({
           </span>
         )}
       </button>
-      {open && (
+      {open && !disabled && (
         <div className="absolute z-20 top-full mt-1.5 left-0 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden min-w-[160px]">
           <button
             onClick={() => {
@@ -126,31 +118,23 @@ function FilterSelect({
   );
 }
 
-function ReadinessBar({ value }: { value: number }) {
-  const c = readinessColor(value);
-  return (
-    <div className="flex items-center gap-2 w-full">
-      <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-        <div
-          className={`h-full ${c.bar} rounded-full transition-all duration-500`}
-          style={{ width: `${value}%` }}
-        />
-      </div>
-      <span className={`text-xs font-bold w-8 text-right ${c.text}`}>
-        {value}%
-      </span>
-    </div>
-  );
-}
-
 /* ─── Student Row (table view) ─── */
-function StudentRow({ student, rank }: { student: Student; rank: number }) {
+function StudentRow({
+  student,
+  rank,
+  collegeId,
+}: {
+  student: StudentListItem;
+  rank: number;
+  collegeId: string;
+}) {
   const router = useRouter();
-  const c = readinessColor(student.readiness);
   return (
     <tr
       className="border-t border-gray-50 hover:bg-yellow-50/30 transition-colors cursor-pointer group"
-      onClick={() => router.push(`/placement/students/${student.id}`)}
+      onClick={() =>
+        router.push(`/college/${collegeId}/students/${student.user_id}`)
+      }
     >
       <td className="py-3.5 px-5">
         <span className="text-xs font-bold text-gray-400 w-5 inline-block text-center">
@@ -160,13 +144,15 @@ function StudentRow({ student, rank }: { student: Student; rank: number }) {
       <td className="py-3.5 px-4">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-yellow-400 to-amber-500 text-white flex items-center justify-center font-bold text-sm shadow-sm flex-shrink-0">
-            {student.name[0]}
+            {(student.name || student.email)[0]?.toUpperCase()}
           </div>
           <div className="min-w-0">
             <p className="text-sm font-semibold text-gray-900 group-hover:text-yellow-700 transition-colors truncate">
-              {student.name}
+              {student.name || student.email}
             </p>
-            <p className="text-xs text-gray-400 truncate">{student.rollNo}</p>
+            <p className="text-xs text-gray-400 truncate">
+              {student.roll_number || student.email}
+            </p>
           </div>
         </div>
       </td>
@@ -177,43 +163,50 @@ function StudentRow({ student, rank }: { student: Student; rank: number }) {
       </td>
       <td className="py-3.5 px-4">
         <span className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-600 border border-blue-100 text-xs font-medium whitespace-nowrap">
-          {YEAR_LABELS[student.year]}
+          {student.year}
         </span>
       </td>
       <td className="py-3.5 px-4 max-w-[180px]">
         <span className="px-2.5 py-1 rounded-lg bg-yellow-50 text-yellow-700 border border-yellow-100 text-xs font-medium truncate block">
-          {student.group}
+          {student.group || "—"}
         </span>
       </td>
       <td className="py-3.5 px-4 text-xs font-bold text-gray-700">
-        {student.cgpa}
+        <ComingSoon>8.4</ComingSoon>
       </td>
       <td className="py-3.5 px-4">
-        <div className="w-32">
-          <ReadinessBar value={student.readiness} />
+        <div className="w-32 flex items-center gap-2">
+          <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+            <ComingSoon className="block h-full w-full">
+              <div className="h-full w-3/4 bg-emerald-400 rounded-full" />
+            </ComingSoon>
+          </div>
+          <ComingSoon className="text-xs font-bold w-8 text-right">
+            75%
+          </ComingSoon>
         </div>
       </td>
       <td className="py-3.5 px-4">
         <span
-          className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${PLACEMENT_STATUS_STYLES[student.placementStatus]}`}
+          className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${STATUS_STYLES[student.status] ?? STATUS_STYLES.active}`}
         >
-          {student.placementStatus}
+          {student.status}
         </span>
       </td>
       <td className="py-3.5 px-4">
         <div className="flex items-center gap-3 text-xs text-gray-500">
-          <span className="flex items-center gap-1">
+          <ComingSoon className="flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-            {student.quizzesTaken}
-          </span>
-          <span className="flex items-center gap-1">
+            12
+          </ComingSoon>
+          <ComingSoon className="flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-violet-400" />
-            {student.aiInterviews}
-          </span>
-          <span className="flex items-center gap-1">
+            3
+          </ComingSoon>
+          <ComingSoon className="flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            {student.codingAttempts}
-          </span>
+            60
+          </ComingSoon>
         </div>
       </td>
       <td className="py-3.5 px-4">
@@ -226,12 +219,19 @@ function StudentRow({ student, rank }: { student: Student; rank: number }) {
 }
 
 /* ─── Student Card (grid view) ─── */
-function StudentCard({ student }: { student: Student }) {
+function StudentCard({
+  student,
+  collegeId,
+}: {
+  student: StudentListItem;
+  collegeId: string;
+}) {
   const router = useRouter();
-  const c = readinessColor(student.readiness);
   return (
     <div
-      onClick={() => router.push(`/placement/students/${student.id}`)}
+      onClick={() =>
+        router.push(`/college/${collegeId}/students/${student.user_id}`)
+      }
       className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-yellow-200 transition-all duration-200 overflow-hidden cursor-pointer"
     >
       <div className="h-1 w-full bg-gradient-to-r from-yellow-400 to-amber-300" />
@@ -239,19 +239,19 @@ function StudentCard({ student }: { student: Student }) {
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center gap-3">
             <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-yellow-400 to-amber-500 text-white flex items-center justify-center font-bold text-base shadow-sm flex-shrink-0">
-              {student.name[0]}
+              {(student.name || student.email)[0]?.toUpperCase()}
             </div>
             <div className="min-w-0">
               <p className="text-sm font-bold text-gray-900 group-hover:text-yellow-700 transition-colors truncate">
-                {student.name}
+                {student.name || student.email}
               </p>
-              <p className="text-xs text-gray-400">{student.rollNo}</p>
+              <p className="text-xs text-gray-400">
+                {student.roll_number || student.email}
+              </p>
             </div>
           </div>
-          <span
-            className={`px-2 py-0.5 rounded-lg text-[10px] font-bold flex-shrink-0 ${PLACEMENT_STATUS_STYLES[student.placementStatus]}`}
-          >
-            {student.placementStatus}
+          <span className="px-2 py-0.5 rounded-lg text-[10px] font-bold flex-shrink-0">
+            <ComingSoon>Placed</ComingSoon>
           </span>
         </div>
 
@@ -260,10 +260,10 @@ function StudentCard({ student }: { student: Student }) {
             {student.branch}
           </span>
           <span className="px-2 py-0.5 bg-blue-50 text-blue-600 border border-blue-100 rounded-lg text-[11px] font-medium">
-            {YEAR_LABELS[student.year]}
+            {student.year}
           </span>
           <span className="px-2 py-0.5 bg-yellow-50 text-yellow-700 border border-yellow-100 rounded-lg text-[11px] font-medium truncate max-w-[130px]">
-            {student.group}
+            {student.group || "—"}
           </span>
         </div>
 
@@ -273,43 +273,88 @@ function StudentCard({ student }: { student: Student }) {
             <span className="text-[11px] text-gray-400 font-medium">
               Readiness
             </span>
-            <span className={`text-[11px] font-bold ${c.text}`}>
-              {student.readiness}%
-            </span>
+            <ComingSoon className="text-[11px] font-bold">75%</ComingSoon>
           </div>
           <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-            <div
-              className={`h-full ${c.bar} rounded-full`}
-              style={{ width: `${student.readiness}%` }}
-            />
+            <ComingSoon className="block h-full w-full">
+              <div className="h-full w-3/4 bg-emerald-400 rounded-full" />
+            </ComingSoon>
           </div>
         </div>
 
         {/* Stats row */}
         <div className="flex items-center justify-between pt-3 border-t border-gray-50">
           <div className="text-center">
-            <p className="text-base font-bold text-amber-600">
-              {student.quizzesTaken}
-            </p>
+            <ComingSoon className="block text-base font-bold text-amber-600">
+              12
+            </ComingSoon>
             <p className="text-[10px] text-gray-400">Quizzes</p>
           </div>
           <div className="text-center">
-            <p className="text-base font-bold text-violet-600">
-              {student.aiInterviews}
-            </p>
+            <ComingSoon className="block text-base font-bold text-violet-600">
+              3
+            </ComingSoon>
             <p className="text-[10px] text-gray-400">Interviews</p>
           </div>
           <div className="text-center">
-            <p className="text-base font-bold text-emerald-600">
-              {student.codingAttempts}
-            </p>
+            <ComingSoon className="block text-base font-bold text-emerald-600">
+              60
+            </ComingSoon>
             <p className="text-[10px] text-gray-400">Coding</p>
           </div>
           <div className="text-center">
-            <p className="text-base font-bold text-gray-700">{student.cgpa}</p>
+            <ComingSoon className="block text-base font-bold text-gray-700">
+              8.4
+            </ComingSoon>
             <p className="text-[10px] text-gray-400">CGPA</p>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function Pagination({
+  pageNo,
+  count,
+  totalCount,
+  onPageChange,
+}: {
+  pageNo: number;
+  count: number;
+  totalCount: number;
+  onPageChange: (p: number) => void;
+}) {
+  const totalPages = Math.max(1, Math.ceil(totalCount / count));
+  const from = totalCount === 0 ? 0 : (pageNo - 1) * count + 1;
+  const to = Math.min(pageNo * count, totalCount);
+
+  return (
+    <div className="flex items-center justify-between px-5 py-3 border-t border-gray-50 bg-gray-50/50 text-xs text-gray-500">
+      <span>
+        Showing <span className="font-semibold text-gray-800">{from}</span>–
+        <span className="font-semibold text-gray-800">{to}</span> of{" "}
+        <span className="font-semibold text-gray-800">{totalCount}</span>{" "}
+        students
+      </span>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={() => onPageChange(Math.max(1, pageNo - 1))}
+          disabled={pageNo <= 1}
+          className="p-1.5 rounded-lg border border-gray-200 bg-white disabled:opacity-40 disabled:cursor-not-allowed hover:border-yellow-400 transition"
+        >
+          <ChevronLeft className="w-3.5 h-3.5" />
+        </button>
+        <span className="font-semibold text-gray-700">
+          Page {pageNo} of {totalPages}
+        </span>
+        <button
+          onClick={() => onPageChange(Math.min(totalPages, pageNo + 1))}
+          disabled={pageNo >= totalPages}
+          className="p-1.5 rounded-lg border border-gray-200 bg-white disabled:opacity-40 disabled:cursor-not-allowed hover:border-yellow-400 transition"
+        >
+          <ChevronRightIcon className="w-3.5 h-3.5" />
+        </button>
       </div>
     </div>
   );
@@ -319,68 +364,61 @@ function StudentCard({ student }: { student: Student }) {
    PAGE COMPONENT
 ═══════════════════════════════════════════════════════════════ */
 export default function StudentsPage() {
+  const params = useParams<{ "college-id": string }>();
+  const collegeId = Number(params["college-id"]);
+
+  const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [branchFilter, setBranchFilter] = useState("All");
-  const [groupFilter, setGroupFilter] = useState("All");
+  const [groupFilter, setGroupFilter] = useState("All"); // group name; resolved to group_id below
   const [yearFilter, setYearFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("All");
-  const [placementFilter, setPlacementFilter] = useState("All");
+  const [placementFilter, setPlacementFilter] = useState("All"); // not wired — no backend data yet
   const [viewMode, setViewMode] = useState<"table" | "grid">("table");
+  const [pageNo, setPageNo] = useState(1);
 
-  const filtered = useMemo(() => {
-    return MOCK_STUDENTS.filter((s) => {
-      const q = search.toLowerCase();
-      const matchSearch =
-        !q ||
-        s.name.toLowerCase().includes(q) ||
-        s.email.toLowerCase().includes(q) ||
-        s.rollNo.toLowerCase().includes(q);
-      const matchBranch = branchFilter === "All" || s.branch === branchFilter;
-      const matchGroup = groupFilter === "All" || s.group === groupFilter;
-      const matchYear = yearFilter === "All" || s.year === Number(yearFilter);
-      const matchStatus =
-        statusFilter === "All" || s.status === statusFilter.toLowerCase();
-      const matchPlacement =
-        placementFilter === "All" || s.placementStatus === placementFilter;
-      return (
-        matchSearch &&
-        matchBranch &&
-        matchGroup &&
-        matchYear &&
-        matchStatus &&
-        matchPlacement
-      );
-    });
-  }, [
-    search,
-    branchFilter,
-    groupFilter,
-    yearFilter,
-    statusFilter,
-    placementFilter,
-  ]);
+  // Debounce free-text search so we don't refetch on every keystroke.
+  useEffect(() => {
+    const t = setTimeout(() => setSearch(searchInput), 300);
+    return () => clearTimeout(t);
+  }, [searchInput]);
 
-  /* Summary stats */
-  const totalPlaced = MOCK_STUDENTS.filter(
-    (s) => s.placementStatus === "Placed",
-  ).length;
-  const totalOffered = MOCK_STUDENTS.filter(
-    (s) => s.placementStatus === "Offered",
-  ).length;
-  const totalShortlisted = MOCK_STUDENTS.filter(
-    (s) => s.placementStatus === "Shortlisted",
-  ).length;
-  const avgReadiness = Math.round(
-    MOCK_STUDENTS.reduce((sum, s) => sum + s.readiness, 0) /
-      MOCK_STUDENTS.length,
+  // Reset to page 1 whenever a filter changes.
+  useEffect(() => {
+    setPageNo(1);
+  }, [search, branchFilter, groupFilter, yearFilter, statusFilter]);
+
+  const { data: filterOptions } = useStudentFilterOptions(collegeId);
+  const { data: groups = [] } = useGetAllGroups(collegeId);
+
+  const selectedGroup = groups.find((g) => g.name === groupFilter);
+
+  const { data, isLoading, isError } = useListStudents({
+    college_id: collegeId,
+    search: search || undefined,
+    branch: branchFilter !== "All" ? branchFilter : undefined,
+    group_id: selectedGroup?.group_id,
+    year: yearFilter !== "All" ? Number(yearFilter) : undefined,
+    status: statusFilter !== "All" ? statusFilter.toLowerCase() : undefined,
+    page_no: pageNo,
+    count: PAGE_SIZE,
+  });
+
+  const students = data?.students ?? [];
+  const totalCount = data?.total_count ?? 0;
+
+  const branchOptions = filterOptions?.branches ?? [];
+  const yearOptions = useMemo(
+    () => (filterOptions?.years ?? []).map((y) => String(y)),
+    [filterOptions],
   );
+  const groupOptions = groups.map((g) => g.name);
 
   const activeFilters = [
     branchFilter,
     groupFilter,
     yearFilter,
     statusFilter,
-    placementFilter,
   ].filter((f) => f !== "All").length;
 
   const clearAll = () => {
@@ -389,6 +427,7 @@ export default function StudentsPage() {
     setYearFilter("All");
     setStatusFilter("All");
     setPlacementFilter("All");
+    setSearchInput("");
     setSearch("");
   };
 
@@ -412,34 +451,29 @@ export default function StudentsPage() {
 
           {/* KPI chips */}
           <div className="flex flex-wrap gap-2.5">
+            <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl border text-sm bg-gray-50 border-gray-200 text-gray-700">
+              <span className="w-2 h-2 rounded-full bg-gray-400" />
+              <span className="font-bold">{totalCount}</span>
+              <span className="text-xs opacity-70">Total</span>
+            </div>
             {[
               {
-                label: "Total",
-                value: MOCK_STUDENTS.length,
-                color: "bg-gray-50 border-gray-200 text-gray-700",
-                dot: "bg-gray-400",
-              },
-              {
                 label: "Placed",
-                value: totalPlaced,
                 color: "bg-emerald-50 border-emerald-200 text-emerald-700",
                 dot: "bg-emerald-500",
               },
               {
                 label: "Offered",
-                value: totalOffered,
                 color: "bg-blue-50 border-blue-200 text-blue-700",
                 dot: "bg-blue-500",
               },
               {
                 label: "Shortlisted",
-                value: totalShortlisted,
                 color: "bg-yellow-50 border-yellow-200 text-yellow-700",
                 dot: "bg-yellow-500",
               },
               {
                 label: "Avg Readiness",
-                value: `${avgReadiness}%`,
                 color: "bg-violet-50 border-violet-200 text-violet-700",
                 dot: "bg-violet-500",
               },
@@ -449,7 +483,9 @@ export default function StudentsPage() {
                 className={`flex items-center gap-2 px-3.5 py-2 rounded-xl border text-sm ${chip.color}`}
               >
                 <span className={`w-2 h-2 rounded-full ${chip.dot}`} />
-                <span className="font-bold">{chip.value}</span>
+                <ComingSoon className="font-bold">
+                  {chip.label === "Avg Readiness" ? "72%" : "18"}
+                </ComingSoon>
                 <span className="text-xs opacity-70">{chip.label}</span>
               </div>
             ))}
@@ -463,8 +499,8 @@ export default function StudentsPage() {
             <div className="relative flex-1 min-w-[220px]">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
                 placeholder="Search by name, roll no, email..."
                 className="w-full pl-10 pr-4 py-2 text-sm rounded-xl border border-gray-200 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-yellow-400/40 focus:border-yellow-400 transition"
               />
@@ -474,47 +510,37 @@ export default function StudentsPage() {
               <FilterSelect
                 label="Branch"
                 value={branchFilter}
-                options={BRANCHES}
+                options={branchOptions}
                 onChange={setBranchFilter}
               />
               <FilterSelect
                 label="Group"
                 value={groupFilter}
-                options={COLLEGE_GROUPS}
+                options={groupOptions}
                 onChange={setGroupFilter}
               />
               <FilterSelect
                 label="Year"
-                value={
-                  yearFilter === "All"
-                    ? "All"
-                    : (YEAR_LABELS[Number(yearFilter)] ?? "All")
-                }
-                options={["1", "2", "3", "4"].map(
-                  (y) => YEAR_LABELS[Number(y)],
-                )}
-                onChange={(v) => {
-                  if (v === "All") {
-                    setYearFilter("All");
-                    return;
-                  }
-                  const num = Object.entries(YEAR_LABELS).find(
-                    ([, label]) => label === v,
-                  )?.[0];
-                  setYearFilter(num ?? "All");
-                }}
+                value={yearFilter}
+                options={yearOptions}
+                onChange={setYearFilter}
               />
               <FilterSelect
                 label="Status"
-                value={statusFilter}
+                value={
+                  statusFilter === "All"
+                    ? "All"
+                    : statusFilter[0].toUpperCase() + statusFilter.slice(1)
+                }
                 options={["Active", "Inactive"]}
-                onChange={setStatusFilter}
+                onChange={(v) => setStatusFilter(v === "All" ? "All" : v)}
               />
               <FilterSelect
                 label="Placement"
                 value={placementFilter}
                 options={["Placed", "Offered", "Shortlisted", "Unplaced"]}
                 onChange={setPlacementFilter}
+                disabled
               />
 
               {activeFilters > 0 && (
@@ -550,11 +576,7 @@ export default function StudentsPage() {
             <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-2 flex-wrap text-xs text-gray-500">
               <Filter className="w-3.5 h-3.5 text-yellow-500" />
               <span>Showing</span>
-              <span className="font-bold text-gray-800">{filtered.length}</span>
-              <span>of</span>
-              <span className="font-bold text-gray-800">
-                {MOCK_STUDENTS.length}
-              </span>
+              <span className="font-bold text-gray-800">{totalCount}</span>
               <span>students</span>
               {branchFilter !== "All" && (
                 <span className="px-2 py-0.5 bg-yellow-100 text-yellow-700 rounded-lg font-semibold">
@@ -568,7 +590,7 @@ export default function StudentsPage() {
               )}
               {yearFilter !== "All" && (
                 <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded-lg font-semibold">
-                  {YEAR_LABELS[Number(yearFilter)]}
+                  {yearFilter}
                 </span>
               )}
               {statusFilter !== "All" && (
@@ -576,17 +598,19 @@ export default function StudentsPage() {
                   {statusFilter}
                 </span>
               )}
-              {placementFilter !== "All" && (
-                <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-lg font-semibold">
-                  {placementFilter}
-                </span>
-              )}
             </div>
           )}
         </div>
 
+        {isError && (
+          <div className="py-10 flex flex-col items-center gap-2 text-red-400">
+            <AlertCircle className="w-8 h-8" />
+            <p className="text-sm font-medium">Failed to load students</p>
+          </div>
+        )}
+
         {/* ── TABLE VIEW ── */}
-        {viewMode === "table" && (
+        {!isError && viewMode === "table" && (
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
               <div className="flex items-center gap-2">
@@ -597,7 +621,7 @@ export default function StudentsPage() {
                   All Students
                 </h2>
                 <span className="px-2 py-0.5 bg-yellow-100 text-yellow-800 rounded-full text-xs font-bold">
-                  {filtered.length}
+                  {totalCount}
                 </span>
               </div>
               <p className="text-xs text-gray-400">
@@ -631,14 +655,16 @@ export default function StudentsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((student, i) => (
-                    <StudentRow
-                      key={student.id}
-                      student={student}
-                      rank={i + 1}
-                    />
-                  ))}
-                  {filtered.length === 0 && (
+                  {!isLoading &&
+                    students.map((student, i) => (
+                      <StudentRow
+                        key={student.user_id}
+                        student={student}
+                        rank={(pageNo - 1) * PAGE_SIZE + i + 1}
+                        collegeId={params["college-id"]}
+                      />
+                    ))}
+                  {!isLoading && students.length === 0 && (
                     <tr>
                       <td colSpan={10} className="py-16 text-center">
                         <div className="flex flex-col items-center gap-2 text-gray-400">
@@ -656,9 +682,23 @@ export default function StudentsPage() {
                       </td>
                     </tr>
                   )}
+                  {isLoading && (
+                    <tr>
+                      <td colSpan={10} className="py-16 text-center text-gray-400 text-sm">
+                        Loading students…
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
+
+            <Pagination
+              pageNo={pageNo}
+              count={PAGE_SIZE}
+              totalCount={totalCount}
+              onPageChange={setPageNo}
+            />
 
             {/* Legend */}
             <div className="px-5 py-3 border-t border-gray-50 bg-gray-50/50 flex items-center gap-5 text-[11px] text-gray-400">
@@ -678,18 +718,22 @@ export default function StudentsPage() {
         )}
 
         {/* ── GRID VIEW ── */}
-        {viewMode === "grid" && (
+        {!isError && viewMode === "grid" && (
           <div>
             <div className="flex items-center justify-between mb-4">
               <p className="text-sm text-gray-500">
                 Showing{" "}
                 <span className="font-bold text-gray-800">
-                  {filtered.length}
+                  {totalCount}
                 </span>{" "}
                 students
               </p>
             </div>
-            {filtered.length === 0 ? (
+            {isLoading ? (
+              <div className="py-20 text-center text-gray-400 text-sm">
+                Loading students…
+              </div>
+            ) : students.length === 0 ? (
               <div className="py-20 flex flex-col items-center gap-2 text-gray-400">
                 <AlertCircle className="w-8 h-8 text-gray-200" />
                 <p className="text-sm font-medium">
@@ -703,107 +747,104 @@ export default function StudentsPage() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {filtered.map((student) => (
-                  <StudentCard key={student.id} student={student} />
-                ))}
-              </div>
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {students.map((student) => (
+                    <StudentCard
+                      key={student.user_id}
+                      student={student}
+                      collegeId={params["college-id"]}
+                    />
+                  ))}
+                </div>
+                <div className="mt-4 bg-white rounded-2xl border border-gray-100 shadow-sm">
+                  <Pagination
+                    pageNo={pageNo}
+                    count={PAGE_SIZE}
+                    totalCount={totalCount}
+                    onPageChange={setPageNo}
+                  />
+                </div>
+              </>
             )}
           </div>
         )}
 
-        {/* ── BRANCH + GROUP SUMMARY ── */}
+        {/* ── BRANCH + GROUP SUMMARY (placement/readiness-derived — not yet live) ── */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {/* Branch breakdown */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
             <div className="flex items-center gap-2 mb-4">
               <div className="p-1.5 bg-blue-50 rounded-lg border border-blue-100">
-                <TrendingUp className="w-4 h-4 text-blue-600" />
+                <Users className="w-4 h-4 text-blue-600" />
               </div>
               <h2 className="text-sm font-semibold text-gray-900">
                 Branch-wise Breakdown
               </h2>
             </div>
-            <div className="space-y-3">
-              {BRANCHES.map((branch) => {
-                const branchStudents = MOCK_STUDENTS.filter(
-                  (s) => s.branch === branch,
-                );
-                const placed = branchStudents.filter(
-                  (s) =>
-                    s.placementStatus === "Placed" ||
-                    s.placementStatus === "Offered",
-                ).length;
-                const pct =
-                  branchStudents.length > 0
-                    ? Math.round((placed / branchStudents.length) * 100)
-                    : 0;
-                if (branchStudents.length === 0) return null;
-                return (
-                  <div key={branch} className="flex items-center gap-3">
-                    <span className="w-20 text-xs font-semibold text-gray-700 flex-shrink-0">
-                      {branch}
-                    </span>
-                    <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-gradient-to-r from-yellow-400 to-amber-300 rounded-full transition-all duration-500"
-                        style={{ width: `${pct}%` }}
-                      />
+            <ComingSoon className="block">
+              <div className="space-y-3">
+                {(branchOptions.length ? branchOptions : ["CSE", "IT", "ECE"]).map(
+                  (branch) => (
+                    <div key={branch} className="flex items-center gap-3">
+                      <span className="w-20 text-xs font-semibold text-gray-700 flex-shrink-0 truncate">
+                        {branch}
+                      </span>
+                      <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-gradient-to-r from-yellow-400 to-amber-300 rounded-full"
+                          style={{ width: "60%" }}
+                        />
+                      </div>
+                      <span className="text-xs text-gray-500 w-28 text-right flex-shrink-0">
+                        <span className="font-bold text-gray-800">—</span>{" "}
+                        placed
+                      </span>
+                      <span className="w-10 text-right text-xs font-bold text-yellow-600 flex-shrink-0">
+                        60%
+                      </span>
                     </div>
-                    <span className="text-xs text-gray-500 w-28 text-right flex-shrink-0">
-                      <span className="font-bold text-gray-800">{placed}</span>/
-                      {branchStudents.length} placed
-                    </span>
-                    <span className="w-10 text-right text-xs font-bold text-yellow-600 flex-shrink-0">
-                      {pct}%
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
+                  ),
+                )}
+              </div>
+            </ComingSoon>
           </div>
 
           {/* Group breakdown */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
             <div className="flex items-center gap-2 mb-4">
               <div className="p-1.5 bg-yellow-50 rounded-lg border border-yellow-100">
-                <Award className="w-4 h-4 text-yellow-600" />
+                <Users className="w-4 h-4 text-yellow-600" />
               </div>
               <h2 className="text-sm font-semibold text-gray-900">
                 Group-wise Avg Readiness
               </h2>
             </div>
-            <div className="space-y-3">
-              {COLLEGE_GROUPS.map((group) => {
-                const gs = MOCK_STUDENTS.filter((s) => s.group === group);
-                if (gs.length === 0) return null;
-                const avg = Math.round(
-                  gs.reduce((sum, s) => sum + s.readiness, 0) / gs.length,
-                );
-                const c = readinessColor(avg);
-                return (
-                  <div key={group} className="flex items-center gap-3">
-                    <span className="w-36 text-xs font-semibold text-gray-700 truncate flex-shrink-0">
-                      {group}
-                    </span>
-                    <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full ${c.bar} rounded-full transition-all duration-500`}
-                        style={{ width: `${avg}%` }}
-                      />
+            <ComingSoon className="block">
+              <div className="space-y-3">
+                {(groupOptions.length ? groupOptions : ["Group A", "Group B"]).map(
+                  (group) => (
+                    <div key={group} className="flex items-center gap-3">
+                      <span className="w-36 text-xs font-semibold text-gray-700 truncate flex-shrink-0">
+                        {group}
+                      </span>
+                      <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-emerald-400 rounded-full"
+                          style={{ width: "70%" }}
+                        />
+                      </div>
+                      <span className="text-xs text-gray-400 flex-shrink-0 w-10 text-right">
+                        — stu.
+                      </span>
+                      <span className="text-xs font-bold w-10 text-right flex-shrink-0 text-emerald-600">
+                        70%
+                      </span>
                     </div>
-                    <span className="text-xs text-gray-400 flex-shrink-0 w-10 text-right">
-                      {gs.length} stu.
-                    </span>
-                    <span
-                      className={`text-xs font-bold w-10 text-right flex-shrink-0 ${c.text}`}
-                    >
-                      {avg}%
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
+                  ),
+                )}
+              </div>
+            </ComingSoon>
           </div>
         </div>
       </div>
