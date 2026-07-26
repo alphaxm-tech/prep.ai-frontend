@@ -52,7 +52,13 @@ import { useState, useEffect } from "react";
 export function SubHeader({ user }: { user: any }) {
   const router = useRouter();
   const pathname = usePathname();
-  console.log(user?.college?.college_id);
+
+  // The college id is already encoded in the current URL (/college/:id/...)
+  // whenever this nav section is shown, so read it from there instead of
+  // `user.college.college_id` — that field isn't reliably present on the
+  // /home/me response and was producing "/college/undefined/..." links.
+  const collegeIdFromPath = pathname.match(/^\/college\/([^/]+)/)?.[1];
+  const collegeId = collegeIdFromPath ?? user?.college?.college_id;
 
   const [pendingRoute, setPendingRoute] = useState<string | null>(null);
 
@@ -79,31 +85,31 @@ export function SubHeader({ user }: { user: any }) {
       links: [
         {
           label: HOME_LABEL,
-          route: `${COLLEGE_ADMIN_ROUTE}/${user?.college?.college_id}`,
+          route: `${COLLEGE_ADMIN_ROUTE}/${collegeId}`,
         },
         {
           label: PLACEMENT_LABEL,
-          route: `${COLLEGE_ADMIN_ROUTE}/${user?.college?.college_id}${PLACEMENT}`,
+          route: `${COLLEGE_ADMIN_ROUTE}/${collegeId}${PLACEMENT}`,
         },
         {
           label: STUDENTS_LABEL,
-          route: `${COLLEGE_ADMIN_ROUTE}/${user?.college?.college_id}${STUDENTS}`,
+          route: `${COLLEGE_ADMIN_ROUTE}/${collegeId}${STUDENTS}`,
         },
         {
           label: INTERVIEWS_LABEL,
-          route: `${COLLEGE_ADMIN_ROUTE}/${user?.college?.college_id}${INTERVIEWS}`,
+          route: `${COLLEGE_ADMIN_ROUTE}/${collegeId}${INTERVIEWS}`,
         },
         {
           label: REPORTS_LABEL,
-          route: `${COLLEGE_ADMIN_ROUTE}/${user?.college?.college_id}${REPORT}`,
+          route: `${COLLEGE_ADMIN_ROUTE}/${collegeId}${REPORT}`,
         },
         {
           label: ROLE_LABEL,
-          route: `${COLLEGE_ADMIN_ROUTE}/${user?.college?.college_id}${ROLE}`,
+          route: `${COLLEGE_ADMIN_ROUTE}/${collegeId}${ROLE}`,
         },
         {
           label: COMMUNICATION_LABEL,
-          route: `${COLLEGE_ADMIN_ROUTE}/${user?.college?.college_id}${COMMUNICATION}`,
+          route: `${COLLEGE_ADMIN_ROUTE}/${collegeId}${COMMUNICATION}`,
         },
       ],
     },
