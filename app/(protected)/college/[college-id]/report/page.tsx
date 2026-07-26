@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useParams } from "next/navigation";
 import {
   TrendingUp,
   Building2,
@@ -859,6 +860,8 @@ const TABS = [
 ───────────────────────────────────── */
 
 export default function ReportsPage() {
+  const params = useParams<{ "college-id": string }>();
+  const collegeId = Number(params["college-id"]);
   const [activeTab, setActiveTab] = useState("placement");
 
   const sections: Record<string, React.ReactNode> = {

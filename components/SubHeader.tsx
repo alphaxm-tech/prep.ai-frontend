@@ -2,6 +2,7 @@
 
 import {
   AI_INTERVIEWS_LABEL,
+  ANALYTICS_LABEL,
   ASSESSMENT_MANAGEMENT_LABEL,
   CODE_EDITOR_LABEL,
   COLLEGES_LABEL,
@@ -24,6 +25,7 @@ import {
 import {
   COLLEGE_ADMIN_ROUTE,
   AI_INTERVIEW_ROUTE,
+  ANALYTICS,
   CODE_EDITOR_ROUTE,
   COLLEGE,
   ONBOARD_COLLEGE,
@@ -52,7 +54,13 @@ import { useState, useEffect } from "react";
 export function SubHeader({ user }: { user: any }) {
   const router = useRouter();
   const pathname = usePathname();
-  console.log(user?.college?.college_id);
+
+  // The college id is already encoded in the current URL (/college/:id/...)
+  // whenever this nav section is shown, so read it from there instead of
+  // `user.college.college_id` — that field isn't reliably present on the
+  // /home/me response and was producing "/college/undefined/..." links.
+  const collegeIdFromPath = pathname.match(/^\/college\/([^/]+)/)?.[1];
+  const collegeId = collegeIdFromPath ?? user?.college?.college_id;
 
   const [pendingRoute, setPendingRoute] = useState<string | null>(null);
 
@@ -77,34 +85,38 @@ export function SubHeader({ user }: { user: any }) {
       roles: CollegeAdminRoles,
       prefix: COLLEGE_ADMIN_ROUTE,
       links: [
-        {
-          label: HOME_LABEL,
-          route: `${COLLEGE_ADMIN_ROUTE}/${user?.college?.college_id}`,
-        },
-        {
-          label: PLACEMENT_LABEL,
-          route: `${COLLEGE_ADMIN_ROUTE}/${user?.college?.college_id}${PLACEMENT}`,
-        },
+        // {
+        //   label: HOME_LABEL,
+        //   route: `${COLLEGE_ADMIN_ROUTE}/${collegeId}`,
+        // },
+        // {
+        //   label: PLACEMENT_LABEL,
+        //   route: `${COLLEGE_ADMIN_ROUTE}/${collegeId}${PLACEMENT}`,
+        // },
         {
           label: STUDENTS_LABEL,
-          route: `${COLLEGE_ADMIN_ROUTE}/${user?.college?.college_id}${STUDENTS}`,
+          route: `${COLLEGE_ADMIN_ROUTE}/${collegeId}${STUDENTS}`,
         },
         {
-          label: INTERVIEWS_LABEL,
-          route: `${COLLEGE_ADMIN_ROUTE}/${user?.college?.college_id}${INTERVIEWS}`,
+          label: ANALYTICS_LABEL,
+          route: `${COLLEGE_ADMIN_ROUTE}/${collegeId}${ANALYTICS}`,
         },
-        {
-          label: REPORTS_LABEL,
-          route: `${COLLEGE_ADMIN_ROUTE}/${user?.college?.college_id}${REPORT}`,
-        },
-        {
-          label: ROLE_LABEL,
-          route: `${COLLEGE_ADMIN_ROUTE}/${user?.college?.college_id}${ROLE}`,
-        },
-        {
-          label: COMMUNICATION_LABEL,
-          route: `${COLLEGE_ADMIN_ROUTE}/${user?.college?.college_id}${COMMUNICATION}`,
-        },
+        // {
+        //   label: INTERVIEWS_LABEL,
+        //   route: `${COLLEGE_ADMIN_ROUTE}/${collegeId}${INTERVIEWS}`,
+        // },
+        // {
+        //   label: REPORTS_LABEL,
+        //   route: `${COLLEGE_ADMIN_ROUTE}/${collegeId}${REPORT}`,
+        // },
+        // {
+        //   label: ROLE_LABEL,
+        //   route: `${COLLEGE_ADMIN_ROUTE}/${collegeId}${ROLE}`,
+        // },
+        // {
+        //   label: COMMUNICATION_LABEL,
+        //   route: `${COLLEGE_ADMIN_ROUTE}/${collegeId}${COMMUNICATION}`,
+        // },
       ],
     },
     {

@@ -2,6 +2,7 @@ import { decodeJwt } from "jose";
 import { UserRole } from "@/enums/enums";
 import {
   COLLEGE,
+  STUDENTS,
   STUDENT_ROUTE,
   PLATFORM_ROUTE,
   UNAUTHORIZED_ROUTE,
@@ -17,8 +18,10 @@ export function getRoleRedirectPath(
   data?: any,
 ): string {
   switch (role) {
-    case UserRole.ADMIN:
-      return `${COLLEGE}/1`;
+    case UserRole.ADMIN: {
+      const collegeId = data?.userRole?.college_id;
+      return collegeId ? `${COLLEGE}/${collegeId}${STUDENTS}` : UNAUTHORIZED_ROUTE;
+    }
     case UserRole.STUDENT:
     case UserRole.DEVELOPER:
     case UserRole.TESTER:

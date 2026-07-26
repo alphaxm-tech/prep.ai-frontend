@@ -28,6 +28,8 @@ import {
   type CodingRecord,
   type ApplicationRecord,
 } from "@/constants/dummy-data/mock-students";
+import { useStudentProfile } from "@/server-api/queries/student.queries";
+import { StudentAssessmentAttempt } from "@/server-api/api/types/student.types";
 
 /* ─────────────────────── Types ─────────────────────────────── */
 type ProfileTab =
@@ -370,12 +372,27 @@ function OverviewTab({ student }: { student: Student }) {
   );
 }
 
-function QuizzesTab() {
-  const { quizzes } = MOCK_STUDENT_DETAIL;
-  const passed = quizzes.filter((q) => q.result === "Passed").length;
-  const avg = Math.round(
-    quizzes.reduce((s, q) => s + q.score, 0) / quizzes.length,
-  );
+function QuizzesTab({ quizzes }: { quizzes: StudentAssessmentAttempt[] }) {
+  const attemptedQuizzes = quizzes.filter((q) => q.attempted);
+  const passed = attemptedQuizzes.filter(
+    (q) => q.max_score > 0 && q.total_score / q.max_score >= 0.6,
+  ).length;
+  const avg = attemptedQuizzes.length
+    ? Math.round(
+        attemptedQuizzes.reduce(
+          (s, q) => s + (q.max_score > 0 ? (q.total_score / q.max_score) * 100 : 0),
+          0,
+        ) / attemptedQuizzes.length,
+      )
+    : 0;
+
+  if (quizzes.length === 0) {
+    return (
+      <div className="py-16 text-center text-gray-400 text-sm">
+        No quizzes assigned yet
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5">
@@ -416,14 +433,7 @@ function QuizzesTab() {
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-100">
-              {[
-                "Quiz Title",
-                "Category",
-                "Score",
-                "Time",
-                "Date",
-                "Result",
-              ].map((h) => (
+              {["Quiz Title", "Score", "Date", "Result"].map((h) => (
                 <th
                   key={h}
                   className="py-3 px-5 text-left text-xs font-semibold text-gray-500 uppercase tracking-wide"
@@ -434,55 +444,73 @@ function QuizzesTab() {
             </tr>
           </thead>
           <tbody>
-            {quizzes.map((q) => (
-              <tr
-                key={q.id}
-                className="border-t border-gray-50 hover:bg-gray-50/60 transition-colors"
-              >
-                <td className="py-3.5 px-5 font-semibold text-gray-900">
-                  {q.title}
-                </td>
-                <td className="py-3.5 px-5">
-                  <span className="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-lg text-xs font-medium">
-                    {q.category}
-                  </span>
-                </td>
-                <td className="py-3.5 px-5">
-                  <div className="flex items-center gap-2">
-                    <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                      <div
-                        className={`h-full ${q.score >= 75 ? "bg-emerald-400" : q.score >= 60 ? "bg-yellow-400" : "bg-red-400"} rounded-full`}
-                        style={{ width: `${q.score}%` }}
-                      />
-                    </div>
-                    <span className="text-xs font-bold text-gray-700">
-                      {q.score}/{q.totalMarks}
-                    </span>
-                  </div>
-                </td>
-                <td className="py-3.5 px-5 text-xs text-gray-500">
-                  {q.timeTaken}
-                </td>
-                <td className="py-3.5 px-5 text-xs text-gray-500">{q.date}</td>
-                <td className="py-3.5 px-5">
-                  <span
-                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${q.result === "Passed" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-600 border border-red-200"}`}
-                  >
-                    {q.result === "Passed" ? (
-                      <span className="flex items-center gap-1">
-                        <CheckCircle2 className="w-3 h-3" />
-                        {q.result}
-                      </span>
+            {quizzes.map((q) => {
+              const percent =
+                q.max_score > 0 ? (q.total_score / q.max_score) * 100 : 0;
+              const result = !q.attempted
+                ? "Not Attempted"
+                : percent >= 60
+                  ? "Passed"
+                  : "Failed";
+
+              return (
+                <tr
+                  key={q.assessment_id}
+                  className="border-t border-gray-50 hover:bg-gray-50/60 transition-colors"
+                >
+                  <td className="py-3.5 px-5 font-semibold text-gray-900">
+                    {q.title}
+                  </td>
+                  <td className="py-3.5 px-5">
+                    {q.attempted ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full ${percent >= 75 ? "bg-emerald-400" : percent >= 60 ? "bg-yellow-400" : "bg-red-400"} rounded-full`}
+                            style={{ width: `${Math.min(percent, 100)}%` }}
+                          />
+                        </div>
+                        <span className="text-xs font-bold text-gray-700">
+                          {q.total_score}/{q.max_score}
+                        </span>
+                      </div>
                     ) : (
-                      <span className="flex items-center gap-1">
-                        <XCircle className="w-3 h-3" />
-                        {q.result}
-                      </span>
+                      <span className="text-xs text-gray-400">—</span>
                     )}
-                  </span>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                  <td className="py-3.5 px-5 text-xs text-gray-500">
+                    {q.attempted
+                      ? new Date(q.started_at).toLocaleDateString()
+                      : "—"}
+                  </td>
+                  <td className="py-3.5 px-5">
+                    <span
+                      className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${
+                        result === "Passed"
+                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                          : result === "Not Attempted"
+                            ? "bg-gray-100 text-gray-500 border border-gray-200"
+                            : "bg-red-50 text-red-600 border border-red-200"
+                      }`}
+                    >
+                      {result === "Passed" ? (
+                        <span className="flex items-center gap-1">
+                          <CheckCircle2 className="w-3 h-3" />
+                          {result}
+                        </span>
+                      ) : result === "Not Attempted" ? (
+                        result
+                      ) : (
+                        <span className="flex items-center gap-1">
+                          <XCircle className="w-3 h-3" />
+                          {result}
+                        </span>
+                      )}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -490,16 +518,33 @@ function QuizzesTab() {
   );
 }
 
-function InterviewsTab() {
-  const { interviews } = MOCK_STUDENT_DETAIL;
-  const avg = (
-    interviews.reduce((s, i) => s + i.rating, 0) / interviews.length
-  ).toFixed(1);
+function InterviewsTab({
+  interviews,
+}: {
+  interviews: StudentAssessmentAttempt[];
+}) {
+  const attemptedInterviews = interviews.filter((iv) => iv.attempted);
+  const avg = attemptedInterviews.length
+    ? (
+        attemptedInterviews.reduce(
+          (s, iv) => s + (iv.max_score > 0 ? (iv.total_score / iv.max_score) * 10 : 0),
+          0,
+        ) / attemptedInterviews.length
+      ).toFixed(1)
+    : "0.0";
+
+  if (interviews.length === 0) {
+    return (
+      <div className="py-16 text-center text-gray-400 text-sm">
+        No AI interviews assigned yet
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5">
       {/* Summary */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 gap-4">
         {[
           {
             label: "Total Interviews",
@@ -512,12 +557,6 @@ function InterviewsTab() {
             value: `${avg}/10`,
             color: "text-yellow-700",
             bg: "bg-yellow-50 border-yellow-100",
-          },
-          {
-            label: "Companies",
-            value: new Set(interviews.map((i) => i.company)).size,
-            color: "text-blue-600",
-            bg: "bg-blue-50 border-blue-100",
           },
         ].map((s) => (
           <div
@@ -532,51 +571,50 @@ function InterviewsTab() {
 
       {/* Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {interviews.map((iv) => (
-          <div
-            key={iv.id}
-            className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-all duration-200"
-          >
-            <div className="flex items-start justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-400 to-amber-500 text-white flex items-center justify-center font-bold text-sm shadow-sm">
-                  {iv.company[0]}
+        {interviews.map((iv) => {
+          const rating =
+            iv.attempted && iv.max_score > 0
+              ? Math.round((iv.total_score / iv.max_score) * 10)
+              : 0;
+
+          return (
+            <div
+              key={iv.assessment_id}
+              className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-all duration-200"
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-400 to-amber-500 text-white flex items-center justify-center font-bold text-sm shadow-sm">
+                    {iv.title[0]}
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-gray-900">
+                      {iv.title}
+                    </p>
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-lg bg-violet-50 text-violet-700">
+                      AI Interview
+                    </span>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-bold text-gray-900">
-                    {iv.company}
-                  </p>
-                  <span
-                    className={`text-[11px] font-semibold px-2 py-0.5 rounded-lg ${
-                      iv.type === "Technical"
-                        ? "bg-blue-50 text-blue-700"
-                        : iv.type === "HR"
-                          ? "bg-emerald-50 text-emerald-700"
-                          : iv.type === "Behavioral"
-                            ? "bg-violet-50 text-violet-700"
-                            : "bg-gray-100 text-gray-600"
-                    }`}
-                  >
-                    {iv.type}
+                {iv.attempted ? (
+                  <RatingStars rating={rating} />
+                ) : (
+                  <span className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-gray-100 text-gray-500 border border-gray-200">
+                    Not Attempted
                   </span>
-                </div>
+                )}
               </div>
-              <RatingStars rating={iv.rating} />
-            </div>
 
-            <p className="text-xs text-gray-500 leading-relaxed mb-3 italic">
-              "{iv.feedback}"
-            </p>
-
-            <div className="flex items-center gap-3 text-[11px] text-gray-400 pt-3 border-t border-gray-50">
-              <span className="flex items-center gap-1">
-                <Clock className="w-3 h-3" />
-                {iv.duration}
-              </span>
-              <span>{iv.date}</span>
+              <div className="flex items-center gap-3 text-[11px] text-gray-400 pt-3 border-t border-gray-50">
+                {iv.attempted ? (
+                  <span>{new Date(iv.started_at).toLocaleDateString()}</span>
+                ) : (
+                  <span>Not started yet</span>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
@@ -779,9 +817,29 @@ function CodingTab() {
   );
 }
 
-function AssessmentsTab() {
-  const { assessments } = MOCK_STUDENT_DETAIL;
-  const cleared = assessments.filter((a) => a.result === "Cleared").length;
+function AssessmentsTab({
+  assessments,
+}: {
+  assessments: StudentAssessmentAttempt[];
+}) {
+  const attemptedAssessments = assessments.filter((a) => a.attempted);
+  const completed = attemptedAssessments.filter(
+    (a) => a.status !== "started" && a.status !== "in_progress",
+  ).length;
+  const avgScore = attemptedAssessments.length
+    ? Math.round(
+        attemptedAssessments.reduce((sum, a) => sum + a.total_score, 0) /
+          attemptedAssessments.length,
+      )
+    : 0;
+
+  if (assessments.length === 0) {
+    return (
+      <div className="py-16 text-center text-gray-400 text-sm">
+        No assessment attempts yet
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-5">
@@ -794,14 +852,14 @@ function AssessmentsTab() {
             bg: "bg-gray-50 border-gray-200",
           },
           {
-            label: "Cleared",
-            value: cleared,
+            label: "Completed",
+            value: completed,
             color: "text-emerald-600",
             bg: "bg-emerald-50 border-emerald-100",
           },
           {
-            label: "Pass Rate",
-            value: `${Math.round((cleared / assessments.length) * 100)}%`,
+            label: "Avg Score",
+            value: avgScore,
             color: "text-yellow-700",
             bg: "bg-yellow-50 border-yellow-100",
           },
@@ -819,42 +877,51 @@ function AssessmentsTab() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {assessments.map((a) => (
           <div
-            key={a.id}
+            key={a.assessment_id}
             className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:shadow-md transition-all"
           >
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-400 to-amber-500 text-white flex items-center justify-center font-bold text-sm shadow-sm">
-                  {a.company[0]}
+                  {a.title[0]}
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-gray-900">{a.company}</p>
+                  <p className="text-sm font-bold text-gray-900">{a.title}</p>
                   <span
-                    className={`text-[11px] font-medium px-2 py-0.5 rounded-lg ${a.type === "Coding" ? "bg-blue-50 text-blue-700" : a.type === "MCQ" ? "bg-amber-50 text-amber-700" : "bg-violet-50 text-violet-700"}`}
+                    className={`text-[11px] font-medium px-2 py-0.5 rounded-lg ${a.assessment_type === "CODING" ? "bg-blue-50 text-blue-700" : a.assessment_type === "MCQ" ? "bg-amber-50 text-amber-700" : "bg-violet-50 text-violet-700"}`}
                   >
-                    {a.type}
+                    {a.assessment_type}
                   </span>
                 </div>
               </div>
               <span
                 className={`px-2.5 py-1 rounded-lg text-xs font-semibold border ${
-                  a.result === "Cleared"
-                    ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                    : a.result === "Not Cleared"
-                      ? "bg-red-50 text-red-600 border-red-200"
-                      : "bg-yellow-50 text-yellow-700 border-yellow-200"
+                  !a.attempted
+                    ? "bg-gray-100 text-gray-500 border-gray-200"
+                    : a.status === "evaluated"
+                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                      : a.status === "in_progress" || a.status === "started"
+                        ? "bg-yellow-50 text-yellow-700 border-yellow-200"
+                        : "bg-blue-50 text-blue-700 border-blue-200"
                 }`}
               >
-                {a.result}
+                {a.attempted ? a.status : "Not Attempted"}
               </span>
             </div>
-            <p className="text-xs text-gray-600 mb-2 font-medium">{a.title}</p>
             <div className="flex items-center gap-3 text-[11px] text-gray-400 pt-3 border-t border-gray-50">
-              <span>
-                Score:{" "}
-                <span className="font-bold text-gray-700">{a.score}</span>
-              </span>
-              <span>{a.date}</span>
+              {a.attempted ? (
+                <>
+                  <span>
+                    Score:{" "}
+                    <span className="font-bold text-gray-700">
+                      {a.total_score}/{a.max_score}
+                    </span>
+                  </span>
+                  <span>{new Date(a.started_at).toLocaleDateString()}</span>
+                </>
+              ) : (
+                <span>Not started yet</span>
+              )}
             </div>
           </div>
         ))}
@@ -961,13 +1028,28 @@ function ApplicationsTab() {
    PAGE COMPONENT
 ═══════════════════════════════════════════════════════════════ */
 export default function StudentProfilePage() {
-  const params = useParams<{ studentId: string }>();
+  const params = useParams<{ "college-id": string; studentId: string }>();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<ProfileTab>("Overview");
 
-  // Find student, fallback to first if not found
+  const collegeId = Number(params["college-id"]);
+  const studentUserId = Number(params.studentId);
+  const { data: profile } = useStudentProfile(collegeId, studentUserId);
+
+  // Find student, fallback to first if not found — still backs every field
+  // that has no real source yet (readiness, placement, CGPA, quiz/interview/
+  // coding activity). Real fields (name, roll no, resume count, assessments)
+  // are overridden below once the profile query resolves.
   const student =
     MOCK_STUDENTS.find((s) => s.id === params.studentId) ?? MOCK_STUDENTS[0];
+
+  const displayName = profile?.name || profile?.email || student.name;
+  const displayRollNo = profile?.roll_number || student.rollNo;
+  const displayEmail = profile?.email || student.email;
+  const resumeCount = profile?.resume_count ?? student.resumesMade;
+  const assessments = profile?.assessments ?? [];
+  const quizzes = profile?.quizzes ?? [];
+  const interviews = profile?.interviews ?? [];
 
   const c = readinessColor(student.readiness);
 
@@ -986,19 +1068,19 @@ export default function StudentProfilePage() {
       id: "Quizzes",
       label: "Quizzes",
       icon: <ClipboardList className="w-4 h-4" />,
-      count: student.quizzesTaken,
+      count: quizzes.length,
     },
     {
       id: "Interviews",
       label: "AI Interviews",
       icon: <Brain className="w-4 h-4" />,
-      count: student.aiInterviews,
+      count: interviews.length,
     },
     {
       id: "Resumes",
       label: "Resumes",
       icon: <FileText className="w-4 h-4" />,
-      count: student.resumesMade,
+      count: resumeCount,
     },
     {
       id: "Coding",
@@ -1023,7 +1105,7 @@ export default function StudentProfilePage() {
       <div className="max-w-6xl mx-auto space-y-7">
         {/* ── BACK BUTTON ── */}
         <button
-          onClick={() => router.push("/placement/students")}
+          onClick={() => router.push(`/college/${params["college-id"]}/students`)}
           className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-yellow-700 transition group"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
@@ -1040,7 +1122,7 @@ export default function StudentProfilePage() {
               {/* Avatar */}
               <div className="flex-shrink-0">
                 <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-yellow-400 to-amber-500 text-white flex items-center justify-center text-3xl font-black shadow-lg">
-                  {student.name[0]}
+                  {displayName[0]?.toUpperCase()}
                 </div>
               </div>
 
@@ -1049,10 +1131,10 @@ export default function StudentProfilePage() {
                 <div className="flex flex-wrap items-start justify-between gap-3 mb-2">
                   <div>
                     <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-                      {student.name}
+                      {displayName}
                     </h1>
                     <p className="text-sm text-gray-500 mt-0.5">
-                      {student.rollNo}
+                      {displayRollNo}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
@@ -1073,7 +1155,7 @@ export default function StudentProfilePage() {
                 <div className="flex flex-wrap gap-x-5 gap-y-1.5 text-sm text-gray-500 mb-4">
                   <span className="flex items-center gap-1.5">
                     <Mail className="w-3.5 h-3.5 text-gray-400" />
-                    {student.email}
+                    {displayEmail}
                   </span>
                   {student.phone && (
                     <span className="flex items-center gap-1.5">
@@ -1117,19 +1199,19 @@ export default function StudentProfilePage() {
               {[
                 {
                   label: "Quizzes",
-                  value: student.quizzesTaken,
+                  value: quizzes.length,
                   icon: <ClipboardList className="w-4 h-4 text-amber-500" />,
                   bg: "bg-amber-50 border-amber-100",
                 },
                 {
                   label: "AI Interviews",
-                  value: student.aiInterviews,
+                  value: interviews.length,
                   icon: <Brain className="w-4 h-4 text-violet-500" />,
                   bg: "bg-violet-50 border-violet-100",
                 },
                 {
                   label: "Resumes",
-                  value: student.resumesMade,
+                  value: resumeCount,
                   icon: <FileText className="w-4 h-4 text-blue-500" />,
                   bg: "bg-blue-50 border-blue-100",
                 },
@@ -1187,11 +1269,15 @@ export default function StudentProfilePage() {
         {/* ── TAB CONTENT ── */}
         <div>
           {activeTab === "Overview" && <OverviewTab student={student} />}
-          {activeTab === "Quizzes" && <QuizzesTab />}
-          {activeTab === "Interviews" && <InterviewsTab />}
+          {activeTab === "Quizzes" && <QuizzesTab quizzes={quizzes} />}
+          {activeTab === "Interviews" && (
+            <InterviewsTab interviews={interviews} />
+          )}
           {activeTab === "Resumes" && <ResumesTab />}
           {activeTab === "Coding" && <CodingTab />}
-          {activeTab === "Assessments" && <AssessmentsTab />}
+          {activeTab === "Assessments" && (
+            <AssessmentsTab assessments={assessments} />
+          )}
           {activeTab === "Applications" && <ApplicationsTab />}
         </div>
       </div>

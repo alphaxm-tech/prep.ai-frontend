@@ -13,9 +13,9 @@ export const useGetAllCourses = () => {
   });
 };
 
-export const useGetAllGroups = () => {
+export const useGetAllGroups = (collegeId?: number) => {
   return useQuery({
-    queryKey: ["ccg", "groups"],
-    queryFn: ccgService.getAllGroups,
+    queryKey: ["ccg", "groups", collegeId ?? "all"],
+    queryFn: () => ccgService.getAllGroups(collegeId),
   });
 };
