@@ -30,6 +30,8 @@ import {
 } from "@/constants/dummy-data/mock-students";
 import { useStudentProfile } from "@/server-api/queries/student.queries";
 import { StudentAssessmentAttempt } from "@/server-api/api/types/student.types";
+import Loader from "@/components/Loader";
+import { Island_Moments } from "next/font/google";
 
 /* ─────────────────────── Types ─────────────────────────────── */
 type ProfileTab =
@@ -37,7 +39,7 @@ type ProfileTab =
   | "Quizzes"
   | "Interviews"
   | "Resumes"
-  | "Coding"
+  // | "Coding"
   | "Assessments"
   | "Applications";
 
@@ -128,10 +130,10 @@ function OverviewTab({ student }: { student: Student }) {
   return (
     <div className="space-y-6">
       {/* Readiness Gauge */}
-      <div className="bg-white/70 backdrop-blur-xl border border-yellow-100/80 rounded-3xl p-6 shadow-sm">
-        <div className="flex flex-col md:flex-row md:items-center gap-6">
-          {/* Big readiness score */}
-          <div className="flex-shrink-0 text-center">
+      {/* <div className="bg-white/70 backdrop-blur-xl border border-yellow-100/80 rounded-3xl p-6 shadow-sm">
+        <div className="flex flex-col md:flex-row md:items-center gap-6"> */}
+      {/* Big readiness score */}
+      {/* <div className="flex-shrink-0 text-center">
             <div className="relative w-28 h-28 mx-auto">
               <svg className="w-28 h-28 -rotate-90" viewBox="0 0 100 100">
                 <circle
@@ -168,10 +170,10 @@ function OverviewTab({ student }: { student: Student }) {
                 </span>
               </div>
             </div>
-          </div>
+          </div> */}
 
-          {/* Score breakdown */}
-          <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4">
+      {/* Score breakdown */}
+      {/* <div className="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
               {
                 label: "Avg Quiz Score",
@@ -185,12 +187,12 @@ function OverviewTab({ student }: { student: Student }) {
                 color: "bg-violet-400",
                 icon: <Brain className="w-4 h-4 text-violet-500" />,
               },
-              {
-                label: "Coding Solved",
-                value: `${solvedCoding}/${coding.length}`,
-                color: "bg-emerald-400",
-                icon: <Code2 className="w-4 h-4 text-emerald-500" />,
-              },
+              // {
+              //   label: "Coding Solved",
+              //   value: `${solvedCoding}/${coding.length}`,
+              //   color: "bg-emerald-400",
+              //   icon: <Code2 className="w-4 h-4 text-emerald-500" />,
+              // },
               {
                 label: "Assessments Cleared",
                 value: `${clearedAssessments}/${assessments.length}`,
@@ -207,13 +209,13 @@ function OverviewTab({ student }: { student: Student }) {
                 <p className="text-[10px] text-gray-400 mt-0.5">{item.label}</p>
               </div>
             ))}
-          </div>
-        </div>
-      </div>
+          </div> */}
+      {/* </div>
+      </div> */}
 
       {/* Skill Breakdown */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        {/* <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
           <div className="flex items-center gap-2 mb-5">
             <div className="p-1.5 bg-yellow-50 border border-yellow-100 rounded-xl">
               <Target className="w-4 h-4 text-yellow-600" />
@@ -258,10 +260,10 @@ function OverviewTab({ student }: { student: Student }) {
               </div>
             ))}
           </div>
-        </div>
+        </div> */}
 
         {/* Recent Activity */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        {/* <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
           <div className="flex items-center gap-2 mb-5">
             <div className="p-1.5 bg-gray-50 border border-gray-100 rounded-xl">
               <TrendingUp className="w-4 h-4 text-gray-500" />
@@ -321,7 +323,7 @@ function OverviewTab({ student }: { student: Student }) {
               </div>
             ))}
           </div>
-        </div>
+        </div> */}
       </div>
 
       {/* Placement Progress */}
@@ -352,7 +354,8 @@ function OverviewTab({ student }: { student: Student }) {
                   <div
                     className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-all ${isDone ? "bg-yellow-400 border-yellow-400 text-yellow-900" : "bg-gray-50 border-gray-200 text-gray-300"}`}
                   >
-                    {isDone ? count : "—"}
+                    {/* {isDone ? count : "—"} */}
+                    {"—"}
                   </div>
                   <span className="text-[10px] font-medium text-gray-500 text-center whitespace-nowrap">
                     {stage}
@@ -380,7 +383,8 @@ function QuizzesTab({ quizzes }: { quizzes: StudentAssessmentAttempt[] }) {
   const avg = attemptedQuizzes.length
     ? Math.round(
         attemptedQuizzes.reduce(
-          (s, q) => s + (q.max_score > 0 ? (q.total_score / q.max_score) * 100 : 0),
+          (s, q) =>
+            s + (q.max_score > 0 ? (q.total_score / q.max_score) * 100 : 0),
           0,
         ) / attemptedQuizzes.length,
       )
@@ -485,7 +489,7 @@ function QuizzesTab({ quizzes }: { quizzes: StudentAssessmentAttempt[] }) {
                   </td>
                   <td className="py-3.5 px-5">
                     <span
-                      className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${
+                      className={`flex items-center gap-1 w-fit px-2.5 py-1 rounded-lg text-xs font-semibold ${
                         result === "Passed"
                           ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                           : result === "Not Attempted"
@@ -493,19 +497,11 @@ function QuizzesTab({ quizzes }: { quizzes: StudentAssessmentAttempt[] }) {
                             : "bg-red-50 text-red-600 border border-red-200"
                       }`}
                     >
-                      {result === "Passed" ? (
-                        <span className="flex items-center gap-1">
-                          <CheckCircle2 className="w-3 h-3" />
-                          {result}
-                        </span>
-                      ) : result === "Not Attempted" ? (
-                        result
-                      ) : (
-                        <span className="flex items-center gap-1">
-                          <XCircle className="w-3 h-3" />
-                          {result}
-                        </span>
+                      {result === "Passed" && (
+                        <CheckCircle2 className="w-3 h-3" />
                       )}
+                      {result === "Failed" && <XCircle className="w-3 h-3" />}
+                      {result}
                     </span>
                   </td>
                 </tr>
@@ -527,7 +523,8 @@ function InterviewsTab({
   const avg = attemptedInterviews.length
     ? (
         attemptedInterviews.reduce(
-          (s, iv) => s + (iv.max_score > 0 ? (iv.total_score / iv.max_score) * 10 : 0),
+          (s, iv) =>
+            s + (iv.max_score > 0 ? (iv.total_score / iv.max_score) * 10 : 0),
           0,
         ) / attemptedInterviews.length
       ).toFixed(1)
@@ -1034,7 +1031,10 @@ export default function StudentProfilePage() {
 
   const collegeId = Number(params["college-id"]);
   const studentUserId = Number(params.studentId);
-  const { data: profile } = useStudentProfile(collegeId, studentUserId);
+  const { data: profile, isLoading } = useStudentProfile(
+    collegeId,
+    studentUserId,
+  );
 
   // Find student, fallback to first if not found — still backs every field
   // that has no real source yet (readiness, placement, CGPA, quiz/interview/
@@ -1082,12 +1082,12 @@ export default function StudentProfilePage() {
       icon: <FileText className="w-4 h-4" />,
       count: resumeCount,
     },
-    {
-      id: "Coding",
-      label: "Coding",
-      icon: <Code2 className="w-4 h-4" />,
-      count: student.codingAttempts,
-    },
+    // {
+    //   id: "Coding",
+    //   label: "Coding",
+    //   icon: <Code2 className="w-4 h-4" />,
+    //   count: student.codingAttempts,
+    // },
     {
       id: "Assessments",
       label: "Assessments",
@@ -1102,10 +1102,13 @@ export default function StudentProfilePage() {
 
   return (
     <div className="min-h-screen bg-white px-6 py-10">
+      <Loader show={isLoading}></Loader>
       <div className="max-w-6xl mx-auto space-y-7">
         {/* ── BACK BUTTON ── */}
         <button
-          onClick={() => router.push(`/college/${params["college-id"]}/students`)}
+          onClick={() =>
+            router.push(`/college/${params["college-id"]}/students`)
+          }
           className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-yellow-700 transition group"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
@@ -1138,7 +1141,7 @@ export default function StudentProfilePage() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span
+                    {/* <span
                       className={`px-3 py-1.5 rounded-xl text-xs font-bold border ${PLACEMENT_BADGE[student.placementStatus]}`}
                     >
                       {student.placementStatus}
@@ -1147,7 +1150,7 @@ export default function StudentProfilePage() {
                       className={`px-3 py-1.5 rounded-xl text-xs font-bold border ${c.badge}`}
                     >
                       {student.readiness}% Readiness
-                    </span>
+                    </span> */}
                   </div>
                 </div>
 
@@ -1182,9 +1185,9 @@ export default function StudentProfilePage() {
                   <span className="px-3 py-1 bg-yellow-50 text-yellow-700 border border-yellow-100 rounded-xl text-xs font-semibold">
                     {student.group}
                   </span>
-                  <span className="px-3 py-1 bg-violet-50 text-violet-700 border border-violet-100 rounded-xl text-xs font-semibold">
+                  {/* <span className="px-3 py-1 bg-violet-50 text-violet-700 border border-violet-100 rounded-xl text-xs font-semibold">
                     CGPA {student.cgpa}
-                  </span>
+                  </span> */}
                   <span
                     className={`px-3 py-1 rounded-xl text-xs font-semibold ${student.status === "active" ? "bg-emerald-50 text-emerald-700 border border-emerald-100" : "bg-gray-100 text-gray-500"}`}
                   >
@@ -1215,12 +1218,12 @@ export default function StudentProfilePage() {
                   icon: <FileText className="w-4 h-4 text-blue-500" />,
                   bg: "bg-blue-50 border-blue-100",
                 },
-                {
-                  label: "Coding",
-                  value: student.codingAttempts,
-                  icon: <Code2 className="w-4 h-4 text-emerald-500" />,
-                  bg: "bg-emerald-50 border-emerald-100",
-                },
+                // {
+                //   label: "Coding",
+                //   value: student.codingAttempts,
+                //   icon: <Code2 className="w-4 h-4 text-emerald-500" />,
+                //   bg: "bg-emerald-50 border-emerald-100",
+                // },
               ].map((kpi) => (
                 <div
                   key={kpi.label}
@@ -1274,7 +1277,7 @@ export default function StudentProfilePage() {
             <InterviewsTab interviews={interviews} />
           )}
           {activeTab === "Resumes" && <ResumesTab />}
-          {activeTab === "Coding" && <CodingTab />}
+          {/* {activeTab === "Coding" && <CodingTab />} */}
           {activeTab === "Assessments" && (
             <AssessmentsTab assessments={assessments} />
           )}
