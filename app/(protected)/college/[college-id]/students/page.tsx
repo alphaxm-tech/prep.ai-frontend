@@ -15,7 +15,10 @@ import {
   ChevronLeft,
   ChevronRight as ChevronRightIcon,
 } from "lucide-react";
-import { useListStudents, useStudentFilterOptions } from "@/server-api/queries/student.queries";
+import {
+  useListStudents,
+  useStudentFilterOptions,
+} from "@/server-api/queries/student.queries";
 import { useGetAllGroups } from "@/server-api/queries/ccg.queries";
 import { StudentListItem } from "@/server-api/api/types/student.types";
 
@@ -173,7 +176,7 @@ function StudentRow({
           {student.group || "—"}
         </span>
       </td>
-      <td className="py-3.5 px-4 text-xs font-bold text-gray-700">
+      {/* <td className="py-3.5 px-4 text-xs font-bold text-gray-700">
         <ComingSoon>8.4</ComingSoon>
       </td>
       <td className="py-3.5 px-4">
@@ -187,7 +190,7 @@ function StudentRow({
             75%
           </ComingSoon>
         </div>
-      </td>
+      </td> */}
       <td className="py-3.5 px-4">
         <span
           className={`px-2.5 py-1 rounded-lg text-xs font-semibold ${STATUS_STYLES[student.status] ?? STATUS_STYLES.active}`}
@@ -196,20 +199,19 @@ function StudentRow({
         </span>
       </td>
       <td className="py-3.5 px-4">
-        <div className="flex items-center gap-3 text-xs text-gray-500">
+        {/* <div className="flex items-center gap-3 text-xs text-gray-500">
           <ComingSoon className="flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
             12
           </ComingSoon>
           <ComingSoon className="flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-violet-400" />
-            3
+            <span className="w-1.5 h-1.5 rounded-full bg-violet-400" />3
           </ComingSoon>
           <ComingSoon className="flex items-center gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
             60
           </ComingSoon>
-        </div>
+        </div> */}
       </td>
       <td className="py-3.5 px-4">
         <button className="p-1.5 rounded-lg bg-white border border-gray-200 text-gray-400 group-hover:text-yellow-600 group-hover:border-yellow-200 transition shadow-sm">
@@ -458,7 +460,7 @@ export default function StudentsPage() {
               <span className="font-bold">{totalCount}</span>
               <span className="text-xs opacity-70">Total</span>
             </div>
-            {[
+            {/* {[
               {
                 label: "Placed",
                 color: "bg-emerald-50 border-emerald-200 text-emerald-700",
@@ -490,7 +492,7 @@ export default function StudentsPage() {
                 </ComingSoon>
                 <span className="text-xs opacity-70">{chip.label}</span>
               </div>
-            ))}
+            ))} */}
           </div>
         </div>
 
@@ -640,11 +642,11 @@ export default function StudentsPage() {
                       "Student",
                       "Branch",
                       "Year",
-                      "Group",
-                      "CGPA",
-                      "Readiness",
-                      "Status",
-                      "Activity",
+                      // "Group",
+                      // "CGPA",
+                      // "Readiness",
+                      // "Status",
+                      // "Activity",
                       "",
                     ].map((h) => (
                       <th
@@ -686,7 +688,10 @@ export default function StudentsPage() {
                   )}
                   {isLoading && (
                     <tr>
-                      <td colSpan={10} className="py-16 text-center text-gray-400 text-sm">
+                      <td
+                        colSpan={10}
+                        className="py-16 text-center text-gray-400 text-sm"
+                      >
                         Loading students…
                       </td>
                     </tr>
@@ -725,9 +730,7 @@ export default function StudentsPage() {
             <div className="flex items-center justify-between mb-4">
               <p className="text-sm text-gray-500">
                 Showing{" "}
-                <span className="font-bold text-gray-800">
-                  {totalCount}
-                </span>{" "}
+                <span className="font-bold text-gray-800">{totalCount}</span>{" "}
                 students
               </p>
             </div>
@@ -775,7 +778,7 @@ export default function StudentsPage() {
         {/* ── BRANCH + GROUP SUMMARY (placement/readiness-derived — not yet live) ── */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {/* Branch breakdown */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          {/* <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
             <div className="flex items-center gap-2 mb-4">
               <div className="p-1.5 bg-blue-50 rounded-lg border border-blue-100">
                 <Users className="w-4 h-4 text-blue-600" />
@@ -786,34 +789,34 @@ export default function StudentsPage() {
             </div>
             <ComingSoon className="block">
               <div className="space-y-3">
-                {(branchOptions.length ? branchOptions : ["CSE", "IT", "ECE"]).map(
-                  (branch) => (
-                    <div key={branch} className="flex items-center gap-3">
-                      <span className="w-20 text-xs font-semibold text-gray-700 flex-shrink-0 truncate">
-                        {branch}
-                      </span>
-                      <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-gradient-to-r from-yellow-400 to-amber-300 rounded-full"
-                          style={{ width: "60%" }}
-                        />
-                      </div>
-                      <span className="text-xs text-gray-500 w-28 text-right flex-shrink-0">
-                        <span className="font-bold text-gray-800">—</span>{" "}
-                        placed
-                      </span>
-                      <span className="w-10 text-right text-xs font-bold text-yellow-600 flex-shrink-0">
-                        60%
-                      </span>
+                {(branchOptions.length
+                  ? branchOptions
+                  : ["CSE", "IT", "ECE"]
+                ).map((branch) => (
+                  <div key={branch} className="flex items-center gap-3">
+                    <span className="w-20 text-xs font-semibold text-gray-700 flex-shrink-0 truncate">
+                      {branch}
+                    </span>
+                    <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-yellow-400 to-amber-300 rounded-full"
+                        style={{ width: "60%" }}
+                      />
                     </div>
-                  ),
-                )}
+                    <span className="text-xs text-gray-500 w-28 text-right flex-shrink-0">
+                      <span className="font-bold text-gray-800">—</span> placed
+                    </span>
+                    <span className="w-10 text-right text-xs font-bold text-yellow-600 flex-shrink-0">
+                      60%
+                    </span>
+                  </div>
+                ))}
               </div>
             </ComingSoon>
-          </div>
+          </div> */}
 
           {/* Group breakdown */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+          {/* <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
             <div className="flex items-center gap-2 mb-4">
               <div className="p-1.5 bg-yellow-50 rounded-lg border border-yellow-100">
                 <Users className="w-4 h-4 text-yellow-600" />
@@ -824,30 +827,31 @@ export default function StudentsPage() {
             </div>
             <ComingSoon className="block">
               <div className="space-y-3">
-                {(groupOptions.length ? groupOptions : ["Group A", "Group B"]).map(
-                  (group) => (
-                    <div key={group} className="flex items-center gap-3">
-                      <span className="w-36 text-xs font-semibold text-gray-700 truncate flex-shrink-0">
-                        {group}
-                      </span>
-                      <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-emerald-400 rounded-full"
-                          style={{ width: "70%" }}
-                        />
-                      </div>
-                      <span className="text-xs text-gray-400 flex-shrink-0 w-10 text-right">
-                        — stu.
-                      </span>
-                      <span className="text-xs font-bold w-10 text-right flex-shrink-0 text-emerald-600">
-                        70%
-                      </span>
+                {(groupOptions.length
+                  ? groupOptions
+                  : ["Group A", "Group B"]
+                ).map((group) => (
+                  <div key={group} className="flex items-center gap-3">
+                    <span className="w-36 text-xs font-semibold text-gray-700 truncate flex-shrink-0">
+                      {group}
+                    </span>
+                    <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-emerald-400 rounded-full"
+                        style={{ width: "70%" }}
+                      />
                     </div>
-                  ),
-                )}
+                    <span className="text-xs text-gray-400 flex-shrink-0 w-10 text-right">
+                      — stu.
+                    </span>
+                    <span className="text-xs font-bold w-10 text-right flex-shrink-0 text-emerald-600">
+                      70%
+                    </span>
+                  </div>
+                ))}
               </div>
             </ComingSoon>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>
