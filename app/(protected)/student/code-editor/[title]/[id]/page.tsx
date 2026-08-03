@@ -193,8 +193,14 @@ export default function AssessmentTestPage() {
   );
   const [questionDetailLoading, setQuestionDetailLoading] = useState(false);
 
-  // Timer
-  const [timeLeft, setTimeLeft] = useState(0);
+  // Timer. `null` specifically means "not yet known" (before the first
+  // tick after expiresAt loads) — distinct from `0` ("genuinely expired").
+  // Collapsing those into the same value (as a plain `useState(0)` would)
+  // creates a one-render window, right when expiresAt first gets set by
+  // startSession(), where expiresAt is truthy but timeLeft hasn't been
+  // computed yet — isTimeUp below would read that as "time's up" and
+  // auto-finalize the attempt before the student ever sees a question.
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
 
   // Per-question code persistence: { [questionId]: { [language]: code } }
   const codePerQuestionRef = useRef<Record<number, Record<string, string>>>({});
@@ -526,8 +532,12 @@ export default function AssessmentTestPage() {
     return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
   }
 
-  const isTimeCritical = timeLeft <= 60 && timeLeft > 0;
-  const isTimeUp = expiresAt !== null && timeLeft === 0;
+  const isTimeCritical = timeLeft !== null && timeLeft <= 60 && timeLeft > 0;
+  // timeLeft !== null is required here: it's what keeps this from firing
+  // during the render where expiresAt has just loaded but the countdown
+  // hasn't ticked yet (see the state comment above) — without it, that
+  // render reads as "time's up" and auto-finalizes the attempt on load.
+  const isTimeUp = expiresAt !== null && timeLeft !== null && timeLeft <= 0;
   const isRunning = outputState.phase === "running";
 
   // Auto-submit when the client-side countdown reaches zero. This is a
@@ -572,7 +582,13 @@ export default function AssessmentTestPage() {
               }`}
             >
               <span>⏱</span>
-              <span>{isTimeUp ? "Time's up" : formatTime(timeLeft)}</span>
+              <span>
+                {isTimeUp
+                  ? "Time's up"
+                  : timeLeft !== null
+                    ? formatTime(timeLeft)
+                    : "--:--"}
+              </span>
             </div>
           )}
 
