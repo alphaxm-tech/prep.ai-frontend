@@ -67,6 +67,7 @@ export const GET_CODING_QUESTIONS = "questions";
 export const RUN_JOBS = "run-jobs";
 export const SUBMISSIONS = "submissions";
 export const CODE_EDITOR_ASSESSMENTS = "assessments";
+export const CODE_EDITOR_STATS = "stats";
 
 /// AI Interview ///
 export const START = "start";

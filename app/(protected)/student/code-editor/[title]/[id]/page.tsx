@@ -5,6 +5,10 @@ import { useParams, useRouter } from "next/navigation";
 import CodeEditor from "@/components/CodeEditor";
 import { codeEditorService } from "@/server-api/services/code-editor.service";
 import {
+  useAbandonCodeAssessment,
+  useFinalizeCodeAssessment,
+} from "@/server-api/mutations/code-editor.mutation";
+import {
   AssessmentSessionQuestion,
   ExecutionResult,
   ExecutionStatus,
@@ -12,6 +16,7 @@ import {
 } from "@/server-api/api/types/code-editor.types";
 import { useToast } from "@/components/toast/ToastContext";
 import Loader from "@/components/Loader";
+import { CODE_EDITOR_ROUTE, CODE_EDITOR_TERMINATED } from "@/constants/ui-routes";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -215,6 +220,11 @@ export default function AssessmentTestPage() {
   const [showFinalizeModal, setShowFinalizeModal] = useState(false);
   const [finalizing, setFinalizing] = useState(false);
 
+  const finalizeMutation = useFinalizeCodeAssessment(assessmentId);
+  const abandonMutation = useAbandonCodeAssessment(assessmentId);
+  const autoFinalizedRef = useRef(false);
+  const abandonedRef = useRef(false);
+
   // ---------------------------------------------------------------------------
   // Lifecycle
   // ---------------------------------------------------------------------------
@@ -224,7 +234,10 @@ export default function AssessmentTestPage() {
     return () => clearPolling();
   }, []);
 
-  // Countdown timer
+  // Countdown timer — display only. The backend independently tracks and
+  // enforces ExpiresAt on every write (submit-question, finalize); this
+  // local countdown just drives the UI and the auto-finalize-on-timeout
+  // effect below, it isn't itself the source of truth.
   useEffect(() => {
     if (!expiresAt) return;
     const tick = () => {
@@ -237,6 +250,47 @@ export default function AssessmentTestPage() {
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
   }, [expiresAt]);
+
+  // Tab-switch / focus-loss enforcement — modeled on components/Quiz.tsx's
+  // equivalent mechanism. Page Visibility API only (not window.blur, which
+  // also fires on plenty of legitimate in-page interactions and would cause
+  // false-positive closures). Fires once per session; the backend scores
+  // whatever was submitted before the switch, same as a normal finalize.
+  useEffect(() => {
+    if (sessionLoading || showFinalizeModal) return;
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) return;
+      if (abandonedRef.current || autoFinalizedRef.current) return;
+      abandonedRef.current = true;
+
+      const goToTerminatedPage = () => {
+        const titleParam = assessmentTitle
+          ? `?title=${encodeURIComponent(assessmentTitle)}`
+          : "";
+        router.push(
+          `${CODE_EDITOR_ROUTE}${CODE_EDITOR_TERMINATED}${titleParam}`,
+        );
+      };
+
+      abandonMutation.mutate(undefined, {
+        onSuccess: goToTerminatedPage,
+        // Even if the call fails (e.g. the attempt was already finalized by
+        // a timeout that raced with the tab switch), still pull the student
+        // out of the live test UI rather than leaving it interactive in a
+        // hidden tab.
+        onError: goToTerminatedPage,
+      });
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () =>
+      document.removeEventListener(
+        "visibilitychange",
+        handleVisibilityChange,
+      );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionLoading, showFinalizeModal, assessmentTitle]);
 
   // Update effective starter code whenever question or selection changes
   useEffect(() => {
@@ -442,23 +496,24 @@ export default function AssessmentTestPage() {
   // Finalize test
   // ---------------------------------------------------------------------------
 
-  async function handleFinalizeTest() {
+  function handleFinalizeTest() {
     setFinalizing(true);
-    try {
-      await codeEditorService.finalizeAssessment(assessmentId);
-      setShowFinalizeModal(false);
-      router.push(
-        `/student/code-editor/${params.title}/${assessmentId}/result`,
-      );
-    } catch (err: any) {
-      showToast(
-        "error",
-        err?.response?.data?.error ??
-          "Failed to finalize test. Please try again.",
-      );
-    } finally {
-      setFinalizing(false);
-    }
+    finalizeMutation.mutate(undefined, {
+      onSuccess: () => {
+        setShowFinalizeModal(false);
+        router.push(
+          `/student/code-editor/${params.title}/${assessmentId}/result`,
+        );
+      },
+      onError: (err: any) => {
+        showToast(
+          "error",
+          err?.response?.data?.error ??
+            "Failed to finalize test. Please try again.",
+        );
+      },
+      onSettled: () => setFinalizing(false),
+    });
   }
 
   // ---------------------------------------------------------------------------
@@ -474,6 +529,20 @@ export default function AssessmentTestPage() {
   const isTimeCritical = timeLeft <= 60 && timeLeft > 0;
   const isTimeUp = expiresAt !== null && timeLeft === 0;
   const isRunning = outputState.phase === "running";
+
+  // Auto-submit when the client-side countdown reaches zero. This is a
+  // convenience for the student (closes the test promptly instead of
+  // leaving it sitting idle) — it is NOT what actually enforces the
+  // deadline. The backend independently rejects/auto-expires past
+  // ExpiresAt regardless of whether this fires (see FinalizeAssessment /
+  // SubmitCode server-side), so a stalled tab or a client clock skew can't
+  // extend an attempt past its real deadline.
+  useEffect(() => {
+    if (!isTimeUp || autoFinalizedRef.current || abandonedRef.current) return;
+    autoFinalizedRef.current = true;
+    handleFinalizeTest();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isTimeUp]);
 
   // ---------------------------------------------------------------------------
   // Render

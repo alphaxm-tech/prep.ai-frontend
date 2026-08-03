@@ -23,3 +23,14 @@ export const useGetAssessmentResult = (assessmentId: number) => {
     enabled: assessmentId > 0,
   });
 };
+
+// Backs the stats cards on the Code Editor main page. Invalidated (see
+// mutations/code-editor.mutation.ts's useFinalizeCodeAssessment) after a
+// test is submitted so the cards update immediately without a manual
+// refresh.
+export const useGetCodeEditorStats = () => {
+  return useQuery({
+    queryKey: ["code-editor", "stats"],
+    queryFn: () => codeEditorService.getStats(),
+  });
+};

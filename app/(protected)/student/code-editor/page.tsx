@@ -1,22 +1,19 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useGetCodingQuestions } from "@/server-api/queries/code-editor.queries";
-import { useToast } from "@/components/toast/ToastContext";
-import Loader from "@/components/Loader";
-import { Assessment } from "@/server-api/api/types/code-editor.types";
 import { StatCard } from "@/components/StatCard";
 
 import { useGetAllAssessments } from "@/server-api/queries/assessment.queries";
+import { useGetCodeEditorStats } from "@/server-api/queries/code-editor.queries";
 import {
   ASSESSMENT_TYPES,
   AssessmentResponse,
 } from "@/server-api/api/types/assessment.types";
 import AssessmentRow from "@/components/AssessmentRow";
-import CompactAssessmentRow from "@/components/CompactAssessmentRow";
-import WorkInProgressBanner from "@/components/WorkInProgressBanner";
+import CodeEditorProgressRow from "@/components/CodeEditorProgressRow";
 import EmptyStateCard from "@/components/EmptyStateCard";
+import { CODE_EDITOR_INSTRUCTIONS, CODE_EDITOR_ROUTE } from "@/constants/ui-routes";
 
 function slugify(title: string) {
   return title
@@ -26,30 +23,30 @@ function slugify(title: string) {
     .replace(/\s+/g, "-");
 }
 
-const DIFFICULTY_COLORS: Record<string, string> = {
-  easy: "bg-green-100 text-green-700",
-  medium: "bg-yellow-100 text-yellow-700",
-  hard: "bg-red-100 text-red-700",
-};
+// Cap on how many assessments each list query pulls back. There's no
+// pagination UI on this page, so this is a practical ceiling rather than
+// real pagination — the stats cards above (tests_assigned/tests_taken) come
+// from a dedicated backend aggregate and are correct regardless of this cap.
+const LIST_PAGE_SIZE = 50;
+
+function formatScore(score: number | null | undefined) {
+  if (score === null || score === undefined) return "—";
+  return `${Math.round(score)}%`;
+}
 
 export default function CodeEditorListPage() {
   const router = useRouter();
-  const { showToast } = useToast();
   const [difficultyFilter, setDifficultyFilter] = useState("ALL");
-  const [totalQuizzes, setTotalQuizzes] = useState<any>();
 
-  const {
-    data: codingQuestionData,
-    isLoading,
-    isError,
-  } = useGetCodingQuestions();
+  const { data: statsResponse } = useGetCodeEditorStats();
+  const stats = statsResponse?.data;
 
   const { data: untakenAssessments, isLoading: isUntakenLoading } =
     useGetAllAssessments({
       assessmentType: ASSESSMENT_TYPES.CODING,
       hasTaken: false,
       pageNo: 1,
-      count: 10,
+      count: LIST_PAGE_SIZE,
     });
 
   const { data: takenAssessments, isLoading: isTakenLoading } =
@@ -57,97 +54,31 @@ export default function CodeEditorListPage() {
       assessmentType: ASSESSMENT_TYPES.CODING,
       hasTaken: true,
       pageNo: 1,
-      count: 10,
+      count: LIST_PAGE_SIZE,
     });
-
-  const assessments: Assessment[] =
-    codingQuestionData?.response?.assessments ?? [];
-
-  useEffect(() => {
-    let totalAssessments =
-      (takenAssessments?.assessments?.length ?? 0) +
-      (untakenAssessments?.assessments?.length ?? 0);
-    setTotalQuizzes(totalAssessments);
-  }, [takenAssessments, untakenAssessments]);
-
-  // useEffect(() => {
-  //   if (!isLoading && isError) {
-  //     showToast("error", "Failed to load assessments. Please try again.");
-  //   } else if (
-  //     !isLoading &&
-  //     !isError &&
-  //     assessments.length === 0 &&
-  //     codingQuestionData
-  //   ) {
-  //     showToast(
-  //       "info",
-  //       "No coding assessments are available for you right now.",
-  //     );
-  //   }
-  // }, [isLoading, isError, codingQuestionData]);
 
   const handleStartCodingTest = (assessment: AssessmentResponse) => {
     const slug = slugify(assessment.title);
-    router.push(`/student/code-editor/${slug}/${assessment.assessment_id}`);
+    router.push(
+      `${CODE_EDITOR_ROUTE}${CODE_EDITOR_INSTRUCTIONS}/${assessment.assessment_id}?title=${encodeURIComponent(
+        assessment.title,
+      )}&total_questions=${assessment.total_questions}&duration_sec=${assessment.duration_sec}`,
+    );
   };
 
-  const { takenQuizzes, notTakenQuizzes } = useMemo(() => {
-    const assessments = untakenAssessments?.assessments || [];
-    return {
-      takenQuizzes: assessments.filter((q) => q.has_taken),
-      notTakenQuizzes: assessments.filter((q) => !q.has_taken),
-    };
-  }, [untakenAssessments]);
+  const notTakenTests = untakenAssessments?.assessments ?? [];
 
-  const filteredQuizzes =
+  const filteredTests =
     difficultyFilter === "ALL"
-      ? notTakenQuizzes
-      : notTakenQuizzes.filter((q) => q.difficulty === difficultyFilter);
-
-  const total = untakenAssessments?.assessments?.length || 0;
-  const completed = takenAssessments?.assessments?.length as number;
-  const completionPercent = total ? Math.round((completed! / total) * 100) : 0;
+      ? notTakenTests
+      : notTakenTests.filter((q) => q.difficulty === difficultyFilter);
 
   const loadingMessageMain = useMemo(() => {
     if (isUntakenLoading || isTakenLoading) return "Loading tests..";
-    if (isError) return "";
-  }, [isUntakenLoading, isError]);
-
-  const getDifficultyStyles = (level: string, active: boolean) => {
-    if (active) {
-      switch (level) {
-        case "EASY":
-          return "bg-green-500/10 text-green-700 border border-green-200 shadow-sm";
-
-        case "MEDIUM":
-          return "bg-yellow-500/10 text-yellow-700 border border-yellow-200 shadow-sm";
-
-        case "HARD":
-          return "bg-red-500/10 text-red-700 border border-red-200 shadow-sm";
-
-        default:
-          return "bg-slate-900 text-white border border-slate-900 shadow-sm";
-      }
-    }
-
-    return `
-    bg-white/70
-    backdrop-blur-sm
-    border border-gray-200
-    text-gray-600
-    hover:bg-gray-50
-    hover:border-gray-300
-  `;
-  };
+  }, [isUntakenLoading, isTakenLoading]);
 
   return (
     <>
-      <WorkInProgressBanner />
-      {/* <Loader
-        show={isLoading || isUntakenLoading || isTakenLoading}
-        message={loadingMessageMain}
-      /> */}
-
       <div className="min-h-screen px-4 md:px-8 py-10">
         <div className="max-w-6xl mx-auto">
           <div className="mb-8 flex items-start justify-between gap-4">
@@ -176,36 +107,51 @@ export default function CodeEditorListPage() {
                 Coding Tests
               </button>
 
-              <button
-                className="
+              {/* Question Bank is out of scope for now — hover tooltip only,
+                  no navigation, nothing built out behind it. */}
+              <div className="relative group">
+                <button
+                  className="
         px-4 py-2
         rounded-lg
         text-sm font-medium
         text-gray-600
         hover:text-gray-900
+        cursor-not-allowed
       "
-              >
-                Question Bank
-              </button>
+                >
+                  Question Bank
+                </button>
+                <div className="pointer-events-none absolute right-0 top-full mt-1 whitespace-nowrap rounded-md bg-gray-900 px-2 py-1 text-xs text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 z-10">
+                  Work in progress
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* 🔥 STAT CARDS BACK AGAIN */}
+          {/* STAT CARDS — real data from GET /code-editor/stats */}
           <section className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
             <StatCard
-              label="Total Quizzes"
-              value={totalQuizzes}
+              label="Tests Assigned"
+              value={stats?.tests_assigned ?? "—"}
               variant="blue"
             />
-            <StatCard label="Quizzes Taken" value={0} variant="green" />
-            <StatCard label="Best Score" value={"92%"} variant="yellow" />
-            <StatCard label="Avg Score" value={"78%"} variant="purple" />
+            <StatCard
+              label="Tests Taken"
+              value={stats?.tests_taken ?? "—"}
+              variant="green"
+            />
+            <StatCard
+              label="Best Score"
+              value={formatScore(stats?.best_score)}
+              variant="yellow"
+            />
+            <StatCard
+              label="Avg Score"
+              value={formatScore(stats?.average_score)}
+              variant="purple"
+            />
           </section>
-          {/* {!isLoading && assessments.length === 0 && (
-            <div className="py-20 text-center text-gray-500 text-sm">
-              No assessments available right now.
-            </div>
-          )} */}
 
           {/* PROGRESS + FILTER BAR */}
           <div className="max-w-6xl mx-auto mb-8">
@@ -258,7 +204,7 @@ export default function CodeEditorListPage() {
                 })}
               </div>
               <p className="text-sm text-gray-500">
-                {filteredQuizzes.length} quizzes found
+                {loadingMessageMain ?? `${filteredTests.length} tests found`}
               </p>
             </div>
           </div>
@@ -266,16 +212,17 @@ export default function CodeEditorListPage() {
           {/* MAIN GRID */}
           <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
             <section className="lg:col-span-2 space-y-6">
-              {filteredQuizzes?.length === 0 && (
+              {!isUntakenLoading && filteredTests.length === 0 && (
                 <EmptyStateCard
                   title="No assessments found"
                   subtitle="No coding assessments match the selected difficulty filter."
                 />
               )}
-              {filteredQuizzes?.map((quiz) => (
+              {filteredTests.map((test) => (
                 <AssessmentRow
-                  quiz={quiz}
-                  index={quiz.assessment_id}
+                  key={test.assessment_id}
+                  quiz={test}
+                  index={test.assessment_id}
                   onStartQuiz={handleStartCodingTest}
                 ></AssessmentRow>
               ))}
@@ -307,13 +254,16 @@ export default function CodeEditorListPage() {
                     <div className="text-4xl mb-3">🚀</div>
 
                     <p className="text-sm text-gray-500">
-                      No quizzes attempted yet.
+                      No tests attempted yet.
                     </p>
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {takenAssessments?.assessments?.map((quiz) => (
-                      <CompactAssessmentRow quiz={quiz} />
+                    {takenAssessments?.assessments?.map((test) => (
+                      <CodeEditorProgressRow
+                        key={test.assessment_id}
+                        quiz={test}
+                      />
                     ))}
                   </div>
                 )}
