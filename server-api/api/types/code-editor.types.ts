@@ -18,6 +18,27 @@ export interface GetCodingQuestionsResponse {
   response: { assessments: Assessment[] };
 }
 
+export interface CodeEditorStats {
+  tests_assigned: number;
+  tests_taken: number;
+  best_score: number | null;
+  average_score: number | null;
+}
+
+export interface GetCodeEditorStatsResponse {
+  success: boolean;
+  data: CodeEditorStats;
+}
+
+export interface AbandonAssessmentResponse {
+  success: boolean;
+  data: {
+    attempt_id: number;
+    status: string;
+    total_score: number;
+  };
+}
+
 export type QuestionStatus =
   | "not_started"
   | "pending"

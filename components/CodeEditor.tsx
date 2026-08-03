@@ -39,9 +39,18 @@ int main() {
     cout << "Hello World" << endl;
     return 0;
 }`,
+
+  go: `// Go
+package main
+
+import "fmt"
+
+func main() {
+    fmt.Println("Hello World")
+}`,
 };
 
-const ALL_LANGUAGES = ["javascript", "python", "java", "cpp"];
+const ALL_LANGUAGES = ["javascript", "python", "go", "java", "cpp"];
 
 interface CodeEditorProps {
   onCodeChange?: (code: string, language: string) => void;
@@ -92,6 +101,7 @@ export default function CodeEditor({
   const languageLabel: Record<string, string> = {
     javascript: "JavaScript",
     python: "Python",
+    go: "Go",
     java: "Java",
     cpp: "C++",
   };

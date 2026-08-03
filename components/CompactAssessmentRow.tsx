@@ -3,9 +3,13 @@ import { AssessmentResponse } from "@/server-api/api/types/assessment.types";
 export default function CompactAssessmentRow({
   quiz,
   onReview,
+  scoreLabel,
 }: {
   quiz: AssessmentResponse;
   onReview?: (quiz: AssessmentResponse) => void;
+  // Optional extra line under the question count — e.g. "7/10 correct • 42/50 marks".
+  // Opt-in per caller; omitted entirely (no layout change) when not passed.
+  scoreLabel?: string;
 }) {
   return (
     <div className="bg-white rounded-xl border border-yellow-200 px-4 py-4 shadow-sm hover:shadow-md transition-all duration-200">
@@ -17,6 +21,11 @@ export default function CompactAssessmentRow({
           <p className="text-xs text-gray-500">
             {quiz.total_questions} questions
           </p>
+          {scoreLabel && (
+            <p className="text-xs text-gray-600 font-medium mt-0.5">
+              {scoreLabel}
+            </p>
+          )}
         </div>
 
         <button

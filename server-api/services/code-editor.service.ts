@@ -1,16 +1,20 @@
 import api from "../api/axios";
 import {
+  ABANDON,
   BASE_API_URL,
   CODE_EDITOR_ASSESSMENTS,
+  CODE_EDITOR_STATS,
   CODEEDITOR,
   GET_CODING_QUESTIONS,
   RUN_JOBS,
   SUBMISSIONS,
 } from "../../constants/api-endpoints";
 import {
+  AbandonAssessmentResponse,
   FinalizeAssessmentResponse,
   GetAssessmentQuestionsResponse,
   GetAssessmentResultResponse,
+  GetCodeEditorStatsResponse,
   GetCodingQuestionsResponse,
   GetQuestionDetailsResponse,
   GetRunJobResponse,
@@ -109,6 +113,22 @@ export const codeEditorService = {
   ): Promise<GetAssessmentResultResponse> => {
     const response = await api.get(
       `${BASE_API_URL}/${CODEEDITOR}/${CODE_EDITOR_ASSESSMENTS}/${assessmentId}/result`,
+    );
+    return response.data;
+  },
+
+  abandonAssessment: async (
+    assessmentId: number,
+  ): Promise<AbandonAssessmentResponse> => {
+    const response = await api.post(
+      `${BASE_API_URL}/${CODEEDITOR}/${CODE_EDITOR_ASSESSMENTS}/${assessmentId}/${ABANDON}`,
+    );
+    return response.data;
+  },
+
+  getStats: async (): Promise<GetCodeEditorStatsResponse> => {
+    const response = await api.get(
+      `${BASE_API_URL}/${CODEEDITOR}/${CODE_EDITOR_STATS}`,
     );
     return response.data;
   },
