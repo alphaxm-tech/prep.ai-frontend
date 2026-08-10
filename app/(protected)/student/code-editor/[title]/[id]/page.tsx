@@ -561,6 +561,14 @@ export default function AssessmentTestPage() {
   return (
     <>
       <Loader show={sessionLoading} />
+      <Loader
+        show={isRunning}
+        message={
+          outputState.phase === "running" && outputState.mode === "submit"
+            ? "Submitting your solution..."
+            : "Running your code..."
+        }
+      />
 
       <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
         {/* ─── TOP BAR ─────────────────────────────────────────────────── */}
