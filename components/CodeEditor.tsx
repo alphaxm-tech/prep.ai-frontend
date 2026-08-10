@@ -109,15 +109,15 @@ export default function CodeEditor({
   return (
     <div className="h-full flex flex-col bg-white">
       {/* HEADER */}
-      <div className="h-10 flex items-center justify-between px-3 bg-gray-50/70 text-xs text-gray-600">
-        <span className="font-medium text-gray-700">
+      <div className="h-12 flex-shrink-0 flex items-center justify-between px-3 bg-gray-50/70">
+        <span className="text-sm font-semibold text-gray-800">
           {languageLabel[language] ?? language.toUpperCase()}
         </span>
 
         <select
           value={language}
           onChange={(e) => handleLanguageChange(e.target.value)}
-          className="text-xs bg-transparent outline-none cursor-pointer text-gray-600 hover:text-gray-900 transition"
+          className="text-sm font-semibold text-gray-800 bg-white border border-gray-300 rounded-lg px-3 py-1.5 outline-none cursor-pointer hover:border-yellow-400 focus:border-yellow-400 focus:ring-2 focus:ring-yellow-200 shadow-sm transition"
         >
           {languages.map((lang) => (
             <option key={lang} value={lang}>
