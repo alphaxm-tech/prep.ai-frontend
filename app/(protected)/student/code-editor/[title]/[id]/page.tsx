@@ -16,6 +16,7 @@ import {
 } from "@/server-api/api/types/code-editor.types";
 import { useToast } from "@/components/toast/ToastContext";
 import Loader from "@/components/Loader";
+import { extractErrorMessage } from "@/lib/extract-error-message";
 import { CODE_EDITOR_ROUTE, CODE_EDITOR_TERMINATED } from "@/constants/ui-routes";
 
 // ---------------------------------------------------------------------------
@@ -419,7 +420,7 @@ export default function AssessmentTestPage() {
       // setSessionLoading(false);
       setOutputState({
         phase: "error",
-        message: err?.response?.data?.error ?? "Failed to run code.",
+        message: extractErrorMessage(err, "Failed to run code."),
       });
     }
   }
@@ -480,7 +481,7 @@ export default function AssessmentTestPage() {
       setSessionLoading(false);
       setOutputState({
         phase: "error",
-        message: err?.response?.data?.error ?? "Failed to submit question.",
+        message: extractErrorMessage(err, "Failed to submit question."),
       });
     }
   }
@@ -514,8 +515,7 @@ export default function AssessmentTestPage() {
       onError: (err: any) => {
         showToast(
           "error",
-          err?.response?.data?.error ??
-            "Failed to finalize test. Please try again.",
+          extractErrorMessage(err, "Failed to finalize test. Please try again."),
         );
       },
       onSettled: () => setFinalizing(false),
