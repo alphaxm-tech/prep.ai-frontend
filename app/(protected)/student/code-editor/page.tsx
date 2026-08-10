@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { StatCard } from "@/components/StatCard";
+import Loader from "@/components/Loader";
 
 import { useGetAllAssessments } from "@/server-api/queries/assessment.queries";
 import { useGetCodeEditorStats } from "@/server-api/queries/code-editor.queries";
@@ -38,7 +39,8 @@ export default function CodeEditorListPage() {
   const router = useRouter();
   const [difficultyFilter, setDifficultyFilter] = useState("ALL");
 
-  const { data: statsResponse } = useGetCodeEditorStats();
+  const { data: statsResponse, isLoading: isStatsLoading } =
+    useGetCodeEditorStats();
   const stats = statsResponse?.data;
 
   const { data: untakenAssessments, isLoading: isUntakenLoading } =
@@ -57,6 +59,14 @@ export default function CodeEditorListPage() {
       count: LIST_PAGE_SIZE,
     });
 
+  // isLoading (not isFetching) is deliberate here: it's only true on the
+  // very first fetch with no cached data yet, not on the background
+  // refetches useFinalizeCodeAssessment/useAbandonCodeAssessment trigger
+  // when the student returns from a completed test — those should update
+  // the page live without a blocking overlay flashing over it.
+  const isInitialPageLoading =
+    isStatsLoading || isUntakenLoading || isTakenLoading;
+
   const handleStartCodingTest = (assessment: AssessmentResponse) => {
     const slug = slugify(assessment.title);
     router.push(
@@ -73,12 +83,10 @@ export default function CodeEditorListPage() {
       ? notTakenTests
       : notTakenTests.filter((q) => q.difficulty === difficultyFilter);
 
-  const loadingMessageMain = useMemo(() => {
-    if (isUntakenLoading || isTakenLoading) return "Loading tests..";
-  }, [isUntakenLoading, isTakenLoading]);
-
   return (
     <>
+      <Loader show={isInitialPageLoading} message="Loading your code tests..." />
+
       <div className="min-h-screen px-4 md:px-8 py-10">
         <div className="max-w-6xl mx-auto">
           <div className="mb-8 flex items-start justify-between gap-4">
@@ -204,7 +212,7 @@ export default function CodeEditorListPage() {
                 })}
               </div>
               <p className="text-sm text-gray-500">
-                {loadingMessageMain ?? `${filteredTests.length} tests found`}
+                {`${filteredTests.length} tests found`}
               </p>
             </div>
           </div>
