@@ -17,7 +17,10 @@ import {
 import { useToast } from "@/components/toast/ToastContext";
 import Loader from "@/components/Loader";
 import { extractErrorMessage } from "@/lib/extract-error-message";
-import { CODE_EDITOR_ROUTE, CODE_EDITOR_TERMINATED } from "@/constants/ui-routes";
+import {
+  CODE_EDITOR_ROUTE,
+  CODE_EDITOR_TERMINATED,
+} from "@/constants/ui-routes";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -292,10 +295,7 @@ export default function AssessmentTestPage() {
 
     document.addEventListener("visibilitychange", handleVisibilityChange);
     return () =>
-      document.removeEventListener(
-        "visibilitychange",
-        handleVisibilityChange,
-      );
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [sessionLoading, showFinalizeModal, assessmentTitle]);
 
@@ -515,7 +515,10 @@ export default function AssessmentTestPage() {
       onError: (err: any) => {
         showToast(
           "error",
-          extractErrorMessage(err, "Failed to finalize test. Please try again."),
+          extractErrorMessage(
+            err,
+            "Failed to finalize test. Please try again.",
+          ),
         );
       },
       onSettled: () => setFinalizing(false),
@@ -749,12 +752,12 @@ export default function AssessmentTestPage() {
                     </div>
                   )}
 
-                {!questionDetailLoading && activeTab === "Editorial" && (
+                {/* {!questionDetailLoading && activeTab === "Editorial" && (
                   <p className="text-gray-400">Editorial coming soon...</p>
                 )}
                 {!questionDetailLoading && activeTab === "Solutions" && (
                   <p className="text-gray-400">Solutions coming soon...</p>
-                )}
+                )} */}
               </div>
             </div>
 
