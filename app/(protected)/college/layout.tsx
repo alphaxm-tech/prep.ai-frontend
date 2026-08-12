@@ -14,9 +14,9 @@ export default async function CollegeLayout({
     redirect(LOGIN);
   }
 
-  if (!CollegeAdminRoles.includes(user?.role?.name)) {
-    redirect(UNAUTHORIZED_ROUTE);
-  }
+  // if (!CollegeAdminRoles.includes(user?.role?.name)) {
+  //   redirect(UNAUTHORIZED_ROUTE);
+  // }
 
   return <>{children}</>;
 }
