@@ -296,8 +296,10 @@ export default function ResumeBuilderPage() {
     () => technicalSkills.map((skill) => skill.text),
     [technicalSkills],
   );
+  // Filter placeholder IDs (-1) from optimistic "add it" tags whose
+  // request-skill call hasn't resolved yet — the backend rejects ids < 1.
   const technicalSkillIds = useMemo(
-    () => technicalSkills.map((s) => s.skillId),
+    () => technicalSkills.map((s) => s.skillId).filter((id) => id > 0),
     [technicalSkills],
   );
   const [selectedResume, setSelectedResume] = useState<Resume | null>(null);

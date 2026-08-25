@@ -20,6 +20,9 @@ export const GET_SKILLS_MASTER = `get-skills-master`;
 export const POST_SAVE_RESUME = `save-resume`;
 export const GET_USERS_ALL_RESUMES = `get-users-all-resumes`;
 export const GET_COMPLETE_RESUME_BY_ID = `get-complete-resume-by-id`;
+export const POST_REQUEST_SKILL = `request-skill`;
+export const GET_PENDING_SKILLS = `skills-admin/pending`;
+export const SKILLS_ADMIN = `skills-admin`;
 
 /// AUTH endpoints ///
 export const VERIFY_USER_EMAIL = `verify-user-email`;

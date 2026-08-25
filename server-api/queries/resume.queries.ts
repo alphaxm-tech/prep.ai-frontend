@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   GetResumeFormatsResponse,
   GetSkillsMasterResponse,
+  PendingSkillsResponse,
   ResumeResponse,
   UsersResumeResponse,
 } from "../api/types/resume.types";
@@ -37,6 +38,16 @@ export const useGetUsersAllResumes = () => {
     gcTime: 10 * 60 * 1000, // 10 minutes (v5)
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
+  });
+};
+
+// Super-admin review queue: fresh data matters more than caching here,
+// so no staleTime — a new pending skill should show up on next visit.
+export const useGetPendingSkills = () => {
+  return useQuery<PendingSkillsResponse>({
+    queryKey: ["resume", "pending-skills"],
+    queryFn: resumeService.getPendingSkills,
+    refetchOnWindowFocus: false,
   });
 };
 

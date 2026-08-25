@@ -1,17 +1,22 @@
 import {
   BASE_API_URL,
   GET_COMPLETE_RESUME_BY_ID,
+  GET_PENDING_SKILLS,
   GET_RESUME_FORMATS,
   GET_SKILLS_MASTER,
   GET_USERS_ALL_RESUMES,
+  POST_REQUEST_SKILL,
   POST_SAVE_RESUME,
   RESUME,
+  SKILLS_ADMIN,
 } from "../../constants/api-endpoints";
 import api from "@/server-api/api/axios";
 import {
   AddResumeRequest,
   GetResumeFormatsResponse,
   GetSkillsMasterResponse,
+  PendingSkillsResponse,
+  RequestSkillResponse,
   ResumeFormat,
   ResumeResponse,
   UsersResumeResponse,
@@ -52,6 +57,32 @@ export const resumeService = {
   getCompleteResumeByID: async (resumeId: string): Promise<ResumeResponse> => {
     const response = await api.get(
       `${BASE_API_URL}/${RESUME}/${GET_COMPLETE_RESUME_BY_ID}/${resumeId}`,
+    );
+    return response.data;
+  },
+
+  requestSkill: async (name: string): Promise<RequestSkillResponse> => {
+    const response = await api.post(
+      `${BASE_API_URL}/${RESUME}/${POST_REQUEST_SKILL}`,
+      { name },
+    );
+    return response.data;
+  },
+
+  getPendingSkills: async (): Promise<PendingSkillsResponse> => {
+    const response = await api.get(
+      `${BASE_API_URL}/${RESUME}/${GET_PENDING_SKILLS}`,
+    );
+    return response.data;
+  },
+
+  reviewSkill: async (params: {
+    skillId: number;
+    action: "approve" | "reject";
+  }): Promise<{ message: string }> => {
+    const response = await api.post(
+      `${BASE_API_URL}/${RESUME}/${SKILLS_ADMIN}/${params.skillId}/review`,
+      { action: params.action },
     );
     return response.data;
   },

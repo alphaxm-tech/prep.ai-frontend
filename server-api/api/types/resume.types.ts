@@ -14,12 +14,23 @@ export interface GetSkillsMasterResponse {
   softskills: SoftSkillsMaster[];
 }
 
-type SkillsMaster = {
+export type SkillStatus = "pending" | "approved" | "rejected";
+
+export type SkillsMaster = {
   SkillID: number;
   SkillKey: string;
   DisplayName: string;
   Category: string;
+  Status: SkillStatus;
 };
+
+export interface RequestSkillResponse {
+  skill: SkillsMaster;
+}
+
+export interface PendingSkillsResponse {
+  skills: SkillsMaster[];
+}
 
 type SoftSkillsMaster = {
   SoftSkillID: number;
