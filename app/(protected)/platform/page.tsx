@@ -194,6 +194,13 @@ export default function PlatformDashboard() {
       bar: "from-rose-500 to-pink-500",
       href: "/platform/audit",
     },
+    {
+      title: "Skill Review",
+      desc: "Approve student-submitted resume skills",
+      icon: "🧩",
+      bar: "from-teal-500 to-cyan-500",
+      href: "/platform/skill-review",
+    },
   ];
 
   const intelligence = [

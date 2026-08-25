@@ -1,12 +1,16 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { PlusIcon } from "@heroicons/react/24/outline";
+import { useRequestSkill } from "@/server-api/mutations/resume.mutations";
 
 export type Tag = {
   id: string;
   skillId: number;
   text: string;
   proficiency?: "Basic" | "Intermediate" | "Advanced" | null;
+  // Set for user-requested skills; "pending" renders a review badge in the
+  // builder only — exported resumes never show it.
+  status?: "pending" | "approved" | "rejected";
 };
 
 function uid(prefix = "id") {
@@ -23,9 +27,9 @@ export function SkillsPanel({
 }: {
   skillsMaster: any;
   skills: Tag[];
-  setSkills: (t: Tag[]) => void;
+  setSkills: React.Dispatch<React.SetStateAction<Tag[]>>;
   softSkills: Tag[];
-  setSoftSkills: (t: Tag[]) => void;
+  setSoftSkills: React.Dispatch<React.SetStateAction<Tag[]>>;
   validation?: {
     skillsMissing?: boolean;
     softSkillsMissing?: boolean;
@@ -107,10 +111,71 @@ export function SkillsPanel({
     });
   }, [softSkillQuery, softSkills, skillsMaster]);
 
+  const requestSkillMutation = useRequestSkill();
+  const [requestSkillError, setRequestSkillError] = useState<string | null>(
+    null,
+  );
+
   const handleSelectSkill = (skill: any) => {
     addTag(skills, setSkills, skill.DisplayName, skill.SkillID);
     setSkillQuery("");
     setShowSkillDropdown(false);
+  };
+
+  // "Can't find 'X'? Add it" — optimistic: the tag lands immediately and
+  // the user keeps working; the backend creates (or links) a pending
+  // skill_master row and we patch the real SkillID in when it responds.
+  // On failure the tag is rolled back with an inline error.
+  const handleRequestSkill = () => {
+    const name = skillQuery.trim();
+    if (!name || requestSkillMutation.isPending) return;
+
+    // If it actually matches an existing option or tag, just reuse it.
+    const existing = (skillsMaster?.skills ?? []).find(
+      (s: any) => s.DisplayName.toLowerCase() === name.toLowerCase(),
+    );
+    if (existing) {
+      handleSelectSkill(existing);
+      return;
+    }
+    if (skills.some((t) => t.text.toLowerCase() === name.toLowerCase())) {
+      setSkillQuery("");
+      setShowSkillDropdown(false);
+      return;
+    }
+
+    const tagId = uid("tag");
+    setSkills((prev) => [
+      ...prev,
+      { id: tagId, skillId: -1, text: name, status: "pending" },
+    ]);
+    setSkillQuery("");
+    setShowSkillDropdown(false);
+    setRequestSkillError(null);
+
+    requestSkillMutation.mutate(name, {
+      onSuccess: (res) => {
+        const skill = res.skill;
+        setSkills((prev) =>
+          prev.map((t) =>
+            t.id === tagId
+              ? {
+                  ...t,
+                  skillId: skill.SkillID,
+                  text: skill.DisplayName,
+                  status: skill.Status,
+                }
+              : t,
+          ),
+        );
+      },
+      onError: () => {
+        setSkills((prev) => prev.filter((t) => t.id !== tagId));
+        setRequestSkillError(
+          `Couldn't add "${name}". Please try again.`,
+        );
+      },
+    });
   };
 
   const handleSelectSoftSkill = (skill: any) => {
@@ -120,7 +185,11 @@ export function SkillsPanel({
   };
 
   const handleAddSkill = () => {
-    if (filteredSkills.length === 0) return;
+    if (filteredSkills.length === 0) {
+      // No match — Enter / plus falls through to the request-skill flow.
+      handleRequestSkill();
+      return;
+    }
     handleSelectSkill(filteredSkills[0]);
   };
 
@@ -247,6 +316,7 @@ export function SkillsPanel({
             value={skillQuery}
             onChange={(e) => {
               setSkillQuery(e.target.value);
+              setRequestSkillError(null);
               openSkillDropdown();
             }}
             onFocus={openSkillDropdown}
@@ -277,9 +347,24 @@ export function SkillsPanel({
                 className="z-50 max-h-56 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg"
               >
                 {filteredSkills.length === 0 ? (
-                  <div className="px-4 py-2 text-sm text-gray-400">
-                    No matching skills
-                  </div>
+                  skillQuery.trim() ? (
+                    <button
+                      type="button"
+                      onClick={handleRequestSkill}
+                      className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-gray-700 hover:bg-yellow-50"
+                    >
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-yellow-400 text-white">
+                        <PlusIcon className="h-3 w-3" strokeWidth={3} />
+                      </span>
+                      <span className="break-words">
+                        Can&apos;t find &quot;{skillQuery.trim()}&quot;? Add it
+                      </span>
+                    </button>
+                  ) : (
+                    <div className="px-4 py-2 text-sm text-gray-400">
+                      No matching skills
+                    </div>
+                  )
                 ) : (
                   filteredSkills.map((skill: any) => (
                     <button
@@ -310,6 +395,10 @@ export function SkillsPanel({
           </p>
         )}
 
+        {requestSkillError && (
+          <p className="mt-1 text-xs text-red-600">{requestSkillError}</p>
+        )}
+
         <div className="mt-3 flex flex-wrap gap-2">
           {skills.map((t) => (
             <span
@@ -317,6 +406,11 @@ export function SkillsPanel({
               className="inline-flex items-center px-3 py-1 bg-white border border-gray-200 rounded-full text-sm text-gray-700 shadow-sm"
             >
               {t.text}
+              {t.status === "pending" && (
+                <span className="ml-1.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">
+                  pending review
+                </span>
+              )}
               <button
                 onClick={() => removeTag(setSkills, skills, t.id)}
                 className="ml-2 text-gray-400 hover:text-gray-600"
